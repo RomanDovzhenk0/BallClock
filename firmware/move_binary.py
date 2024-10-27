@@ -41,7 +41,7 @@ def move_firmware_files(source, target, env):
                 dest_file = os.path.join(dest_folder, file)
 
                 # Перемещаем файл
-                shutil.move(src_file, dest_file)
+                shutil.copy(src_file, dest_file)
                 print(f"Moved: {src_file} -> {dest_file}")
 
 # Добавляем пост-действие после сборки

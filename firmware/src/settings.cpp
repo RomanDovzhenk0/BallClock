@@ -99,6 +99,14 @@ static void build(sets::Builder& b) {
             Looper.pushEvent("wifi_connect");
         }
     }
+    {
+        sets::Group g(b, "Update");
+        b.Label("current_version"_h, "Текущая версия прошивки", PROJECT_VER);
+        if (b.Button("check_updates"_h, "Проверить обновления")) {
+            Looper.pushEvent("check_updates");
+        }
+    }
+
 
     if (b.Confirm("ota_update"_h)) {
         if (b.build.value.toBool()) {
@@ -121,6 +129,10 @@ static void build(sets::Builder& b) {
 LP_LISTENER_("wifi_connect", []() {
     db.update();
     WiFiConnector.connect(db[kk::wifi_ssid], db[kk::wifi_pass]);
+});
+
+LP_LISTENER_("check_updates", []() {
+    ota.checkUpdate();
 });
 
 LP_TICKER([]() {
