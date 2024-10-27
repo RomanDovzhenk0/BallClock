@@ -8,7 +8,7 @@
       "chipFamily": "ESP8266",
       "parts": [
         {
-          "path": "https://raw.githubusercontent.com/RomanDovzhenk0/BallClock/main/bin/firmware.bin",
+          "path": "https://raw.githubusercontent.com/RomanDovzhenk0/BallClock/main/firmware/bin/d1_mini/firmware.bin",
           "offset": 0
         }
       ]
