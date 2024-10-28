@@ -27,6 +27,7 @@ DB_KEYS(
     night_trsh,
 
     clock_style,
+    clock_style_zero,
     clock_color,
 
     back_mode,  // 0 none, 1 grad, 2 perlin

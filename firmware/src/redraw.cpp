@@ -82,6 +82,32 @@ static void dots(int x1, int x2) {
     matrix.setLED(x2, 4, color2);
 }
 
+static void drawTime(Datime& dt, int font, int cursorX, int cursorY, int dotX, int dotY) {
+    matrix.setCursor(cursorX, cursorY);
+    if (dt.hour < 10) {
+        if (db[kk::clock_style_zero]) {
+            matrix.print(dt.hour / 10);
+        }
+        else {
+            matrix.print(" ");
+        }
+    }
+    else {
+        matrix.print(dt.hour / 10);
+    }
+    
+    matrix.setCursor(cursorX + 4, cursorY);
+    matrix.print(dt.hour % 10);
+
+    matrix.setCursor(cursorX + 10, cursorY);
+    matrix.print(dt.minute / 10);
+
+    matrix.setCursor(cursorX + 14, cursorY);
+    matrix.print(dt.minute % 10);
+
+    dots(dotX, dotY);
+}
+
 static void drawClock() {
     uint8_t font = db[kk::clock_style].toInt();
     if (!font) return;
@@ -99,51 +125,20 @@ static void drawClock() {
 
     Datime dt(NTP);
 
-    switch (db[kk::clock_style].toInt()) {
+    switch (font) {
         case 1:
             matrix.setFont(gfx_font_3x5);
-
-            matrix.setCursor(1, 1);
-            if (dt.hour < 10) matrix.print(' ');
-            matrix.print(dt.hour);
-
-            matrix.setCursor(11, 1);
-            if (dt.minute < 10) matrix.print(0);
-            matrix.print(dt.minute);
-
-            dots(9, 9);
+            drawTime(dt, font, 1, 1, 9, 9);
             break;
 
         case 2:
             matrix.setFont(font_3x5_diag);
-
-            matrix.setCursor(1, 1);
-            if (dt.hour < 10) matrix.print(' ');
-            matrix.print(dt.hour);
-
-            matrix.setCursor(11, 1);
-            if (dt.minute < 10) matrix.print(0);
-            matrix.print(dt.minute);
-
-            dots(9, 9);
+            drawTime(dt, font, 1, 1, 9, 9);
             break;
 
         case 3:
             matrix.setFont(font_4x5);
-
-            if (dt.hour >= 10) {
-                matrix.setCursor(1, 1);
-                matrix.print(dt.hour / 10);
-            }
-            matrix.setCursor(5, 1);
-            matrix.print(dt.hour % 10);
-
-            matrix.setCursor(11, 1);
-            matrix.print(dt.minute / 10);
-            matrix.setCursor(15, 1);
-            matrix.print(dt.minute % 10);
-
-            dots(9, 10);
+            drawTime(dt, font, 1, 1, 9, 10);
             break;
     }
 }
