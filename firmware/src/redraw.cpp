@@ -189,15 +189,57 @@ static void drawBack() {
     }
 }
 
+bool isTimeBetween(int currentHour, int currentMinute, int startHour, int startMinute, int endHour, int endMinute) {
+    // Преобразуем всё в минуты с начала суток
+    int currentTime = currentHour * 60 + currentMinute;
+    int startTime = startHour * 60 + startMinute;
+    int endTime = endHour * 60 + endMinute;
+
+    // Если диапазон времени не переходит через полночь
+    if (startTime < endTime) {
+        return (currentTime >= startTime && currentTime < endTime);
+    }
+    // Если диапазон времени переходит через полночь
+    else {
+        return (currentTime >= startTime || currentTime < endTime);
+    }
+}
+
 LP_TIMER_("redraw", 50, []() {
     Looper.thisTimer()->restart(50);
     
     applyBright();
 
     if (db[kk::night_mode] && photo.getFilt() < db[kk::night_trsh].toInt()) {
-        matrix.clear();
-        matrix.setColor24(db[kk::night_color]);
-        drawClock();
+        if (db[kk::night_mode_auto]) {
+            Datime dt(NTP);
+
+            // Получаем время начала и конца авто ночного режима в секундах
+            long startTimeSeconds = db[kk::night_mode_auto_since].toInt();
+            long endTimeSeconds = db[kk::night_mode_auto_to].toInt();
+
+            // Преобразуем время в секунды в часы и минуты
+            int startHour = (startTimeSeconds / 3600) % 24; // 3600 секунд в часе
+            int startMinute = (startTimeSeconds % 3600) / 60; // остаток от часов делим на 60
+            int endHour = (endTimeSeconds / 3600) % 24;
+            int endMinute = (endTimeSeconds % 3600) / 60;
+
+            if (isTimeBetween(dt.hour, dt.minute, startHour, startMinute, endHour, endMinute)) {
+                // Время находится в диапазоне, включаем ночной режим
+                matrix.clear();
+                matrix.setColor24(db[kk::night_color]);
+                drawClock();
+            } else {
+                // Время вне диапазона, обычный режим
+                drawBack();
+                matrix.setColor24(db[kk::clock_color]);
+                drawClock();
+            }
+        } else {
+            matrix.clear();
+            matrix.setColor24(db[kk::night_color]);
+            drawClock();    
+        }
     } else {
         drawBack();
         matrix.setColor24(db[kk::clock_color]);

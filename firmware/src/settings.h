@@ -23,6 +23,9 @@ DB_KEYS(
     adc_max,
 
     night_mode,
+    night_mode_auto,
+    night_mode_auto_since,
+    night_mode_auto_to,
     night_color,
     night_trsh,
 

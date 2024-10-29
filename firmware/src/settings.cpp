@@ -80,7 +80,13 @@ static void build(sets::Builder& b) {
 
         if (db[kk::night_mode]) {
             b.Color(kk::night_color, "Цвет");
-            b.Slider(kk::night_trsh, "Порог", 0, 1023);
+
+            if (b.Switch(kk::night_mode_auto, "Автоматический режим")) b.reload();
+            
+            if (db[kk::night_mode_auto]) {
+                b.Time(kk::night_mode_auto_since, "Время включения");
+                b.Time(kk::night_mode_auto_to, "Время отключения");
+            }
         }
     }
     {
@@ -158,6 +164,9 @@ LP_TICKER([]() {
         db.init(kk::adc_max, 1023);
 
         db.init(kk::night_mode, false);
+        db.init(kk::night_mode_auto, false);
+        db.init(kk::night_mode_auto_since, 0);
+        db.init(kk::night_mode_auto_to, 0);
         db.init(kk::night_color, 0xff0000);
         db.init(kk::night_trsh, 50);
 
