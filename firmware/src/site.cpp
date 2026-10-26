@@ -9,8 +9,11 @@ static void handleSite() {
     srv->sendHeader(F("ETag"), F(SITE_PAGE_ETAG));
     srv->sendHeader(F("Cache-Control"), F("no-cache"));
 
-    // the browser has this very page: no body
-    if (strstr_P(srv->header(F("If-None-Match")).c_str(), PSTR(SITE_PAGE_ETAG))) {
+    // the browser has this very page: no body.
+    // The core resets collected headers with String::clear(), which keeps the old bytes:
+    // c_str() of an absent header can still hold the previous request's value, so check the length.
+    const String& inm = srv->header(F("If-None-Match"));
+    if (inm.length() && strstr_P(inm.c_str(), PSTR(SITE_PAGE_ETAG))) {
         logHttpCode(304);
         srv->send(304);
         return;
