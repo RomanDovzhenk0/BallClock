@@ -147,7 +147,9 @@ export function paint(v, leds, gain, clip) {
         const m = Math.max(R, G, B), l = m / 255;
         if (v.simple) {
             const a = l <= 0.012 ? 0 : 0.3 + 0.7 * Math.sqrt(l), k = m ? 255 / m : 0;
-            c.fillStyle = "rgba(" + (u[0] + (R * k - u[0]) * a | 0) + "," + (u[1] + (G * k - u[1]) * a | 0) + "," + (u[2] + (B * k - u[2]) * a | 0) + "," + (al + (1 - al) * a).toFixed(3) + ")";
+            const rgb = (u[0] + (R * k - u[0]) * a | 0) + "," + (u[1] + (G * k - u[1]) * a | 0) + "," + (u[2] + (B * k - u[2]) * a | 0);
+            // opaque unlit balls (the default) need no alpha: the tiles paint thousands of these a second
+            c.fillStyle = al === 1 ? "rgb(" + rgb + ")" : "rgba(" + rgb + "," + ((al + (1 - al) * a) * 1000 | 0) / 1000 + ")";
             c.beginPath();
             c.arc(x, y, r, 0, 6.2832);
             c.fill();

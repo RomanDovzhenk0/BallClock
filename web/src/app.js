@@ -667,9 +667,12 @@ function draw() {
     P.frames = (P.frames || 0) + 1;
     const wall = $("#wall");
     wall.classList.toggle("cmp", P.src === "cmp");
-    const d = frameDraft();
+    const d = frameDraft(), mini = document.body.classList.contains("minion");
     let shown = d;
-    if (P.src === "cmp") {
+    if (mini) {
+        // the big preview is out of view: only the mini bar shows the frame
+        if (P.src === "now") shown = frameNow();
+    } else if (P.src === "cmp") {
         const n = frameNow(), x = Math.round(view.L.W * P.cmp);
         paint(view, n.leds, n.gain, [0, x]);
         paint(view, d.leds, d.gain, [x, view.L.W]);
@@ -681,7 +684,7 @@ function draw() {
         $("#badge").textContent = status(shown, P.src);
     }
     $("#pst").textContent = P.src === "cmp" ? "Слева «Сейчас», справа «Черновик»: тяните границу." : P.src === "now" ? (shown.mirror ? "«Сейчас»: кадры часов, 4 раза в секунду." : "«Сейчас»: расчёт на странице по состоянию часов.") : "«Черновик»: расчёт на странице по тем же данным.";
-    if (view2 && document.body.classList.contains("minion")) paint(view2, shown.leds, shown.gain);
+    if (view2 && mini) paint(view2, shown.leds, shown.gain);
     P.night = !!d.night;
     // the duck of the draft: one step a frame
     P.duck = duckStep(P.duck, !!(d.play && !(d.night && S().kaia_night === 2) && S().kaia_anim));
@@ -733,6 +736,9 @@ function markKs() {
         const k = c.dataset.ks;
         c.classList.toggle("on", k === "off" ? !P.M : k !== "cur" && +k === P.ev);
     });
+    // the phone's chips scroll sideways: the event's one in view
+    const c = $('#ks [data-ks="' + P.ev + '"]'), sc = c.parentNode;
+    if (sc.scrollWidth > sc.clientWidth + 2 && (c.offsetLeft < sc.scrollLeft || c.offsetLeft + c.offsetWidth > sc.scrollLeft + sc.clientWidth)) sc.scrollLeft = c.offsetLeft - sc.offsetLeft - 8;
 }
 
 // ================= the tiles and the thumbnails: they animate only while visible =================
@@ -745,7 +751,7 @@ function bindTiles() {
     tiles = $$(".tile canvas,.er canvas").map((c) => {
         if (c.dataset.th != null) return { c, n: +c.dataset.th, id: -1, t0: now - +c.dataset.th * 230, v: null, w: 0, play: false };
         const [n, id] = c.closest(".tile").dataset.tc.split(":").map(Number);
-        return { c, n, id, t0: now - id * 130, v: null, w: 0, play: false };
+        return { c, n, id, t0: now - id * 370, v: null, w: 0, play: false };  // spread over the cycle: some play while others pause
     });
     if ("IntersectionObserver" in window) {
         if (tileIO) tileIO.disconnect();
@@ -786,8 +792,9 @@ function overlayOn(b, play) {
 
 // a tile plays its look, a thumbnail its event's choice: a wake with 1.5 s of listening after it, a one-shot and a
 // pause, a state on and on
-function tilesTick(force) {
-    const live = tiles.filter((t) => t.v && t.c.isConnected && t.c.offsetParent && (!tileIO || seen.has(t.c) || force));
+// half: 0 or 1 paints every other tile (the loop alternates, so each tile still moves 10 times a second)
+function tilesTick(force, half) {
+    const live = tiles.filter((t, k) => t.v && t.c.isConnected && t.c.offsetParent && (!tileIO || seen.has(t.c) || force) && (half == null || (k & 1) === half));
     if (!live.length) return;
     const b = tileBase(), s = b.s, now = performance.now();
     for (const tl of live) {
@@ -810,9 +817,9 @@ function loop(now) {
     if (now - lastT < 48) return;
     lastT = now;
     draw();
-    if (now - lastTiles >= 98) {
+    if (now - lastTiles >= 48) {
         lastTiles = now;
-        tilesTick(false);
+        tilesTick(false, (P.frames || 0) & 1);
         if (P.CL) clUI();
     }
     if (now - lastLive >= 500) {
@@ -1254,5 +1261,5 @@ requestAnimationFrame(loop);
 setTimeout(() => S().kaia_anim && !P.M && play(ANIM_NAMES[P.ev]), 600);
 window.ballclock = {
     P, api, S, play, setSrc, setLive, showTab, setEvent, setSheet, mock, sync, unlit, setU,
-    tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; },
+    tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; }, get tiles() { return tiles; },
 };

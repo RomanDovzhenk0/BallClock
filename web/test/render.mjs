@@ -136,12 +136,13 @@ const STATES = [
     // the phone: the preview stays in view while a palette or an animation is picked
     { name: "phone-preview", go: "ballclock.showTab('look'); document.querySelector('.brows').scrollIntoView(); document.querySelector('[data-pick=\"45\"]').click()", wait: 700,
         expect: "innerWidth > 900 || (() => { const h = document.getElementById('hero').getBoundingClientRect(); return h.top > -2 && h.bottom > 200; })()" },
-    // the unlit balls at transparency 0, 50 and 100 %: kept in localStorage, never sent to the clock (reset after the shot)
-    { name: "unlit-0", go: "ballclock.setU(0x4a4d55, 0)", wait: 400, after: "ballclock.setU(0xc8c3b4, 0)",
+    // the unlit balls at transparency 0, 50 and 100 % over a draft without background: kept in localStorage, never sent
+    // to the clock (reset after the shot)
+    { name: "unlit-0", go: "const sel = document.querySelector('[data-k=back_mode]'); sel.value = 0; sel.dispatchEvent(new Event('input', { bubbles: true })); ballclock.setU(0x4a4d55, 0); ballclock.play('off')", wait: 400, after: "ballclock.setU(0xc8c3b4, 0)",
         expect: "localStorage.getItem('ballclock.unlit') === '{\"c\":\"#4a4d55\",\"tr\":0}'" },
-    { name: "unlit-50", go: "document.getElementById('gear').click(); ballclock.setU(0xdfe6ee, 50); ballclock.setEvent(4, false)", wait: 600, after: "ballclock.setU(0xc8c3b4, 0)",
+    { name: "unlit-50", go: "const sel = document.querySelector('[data-k=back_mode]'); sel.value = 0; sel.dispatchEvent(new Event('input', { bubbles: true })); document.getElementById('gear').click(); ballclock.setU(0xdfe6ee, 50); ballclock.play('off')", wait: 600, after: "ballclock.setU(0xc8c3b4, 0)",
         expect: "!document.getElementById('pop').hidden && document.getElementById('utro').textContent === '50 %' && JSON.parse(localStorage.getItem('ballclock.unlit')).tr === 50" },
-    { name: "unlit-100", go: "ballclock.setU(0xc8c3b4, 100)", wait: 400, after: "ballclock.setU(0xc8c3b4, 0)",
+    { name: "unlit-100", go: "const sel = document.querySelector('[data-k=back_mode]'); sel.value = 0; sel.dispatchEvent(new Event('input', { bubbles: true })); ballclock.setU(0xc8c3b4, 100); ballclock.play('off')", wait: 400, after: "ballclock.setU(0xc8c3b4, 0)",
         expect: "JSON.parse(localStorage.getItem('ballclock.unlit')).tr === 100 && !ballclock.mock.M.settings.unlit" },
     // 20 frames a second with the CPU 4× slower, a wake on the big preview and the gallery in view
     { name: "fps", go: "ballclock.setEvent(0, true); document.querySelector('.wg').scrollIntoView(); ballclock.play('wake'); window.__f0 = ballclock.P.frames; setTimeout(() => (window.__fps = (ballclock.P.frames - window.__f0) / 3), 3000)", wait: 3300, cpu: 4,
@@ -209,7 +210,7 @@ try {
                 await sleep(900);
             }
             if (st.el && !(st.desk && size.phone)) {
-                const b = await s("Runtime.evaluate", { expression: "(() => { const e = document.querySelector('" + st.el + "'); e.scrollIntoView(); const r = e.getBoundingClientRect(); return [r.x + scrollX, r.y + scrollY, r.width, Math.min(r.height, 700)]; })()", returnByValue: true });
+                const b = await s("Runtime.evaluate", { expression: "(() => { const e = document.querySelector('" + st.el + "'); const top = innerWidth > 900 ? 120 : 0; scrollTo(0, e.getBoundingClientRect().top + scrollY - top); const r = e.getBoundingClientRect(); return [r.x + scrollX, r.y + scrollY, r.width, Math.min(r.height, innerHeight - top)]; })()", returnByValue: true });
                 const [x, y, w, h] = b.result.value;
                 clip = { x, y, width: w, height: h, scale: 2 };
             }
