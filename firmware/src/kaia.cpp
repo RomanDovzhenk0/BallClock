@@ -159,7 +159,7 @@ static void buildTables() {
         ring_len[r]++;
 
         float m = b[i].a < 0.5f ? b[i].a * 2 : (1 - b[i].a) * 2;
-        uint8_t arc = min(5, (int)(m * 6));
+        uint8_t arc = m < 5 / 6.0f ? (uint8_t)(m * 6) : 5;
 
         float lx = (b[i].x - CX) / 2.6f, ly = (b[i].y - CY) / 3.6f, e = lx * lx + ly * ly;
         uint8_t lens = e < 0.2f ? 3 : e < 0.55f ? 2 : e < 1 ? 1 : 0;
