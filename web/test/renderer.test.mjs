@@ -56,7 +56,7 @@ test("blend (FastLED nblend with blend8, BLEND_FIXED) and the RGB565 round trips
 test("inoise16 (FastLED 3.7.7) on the lattice and at a worked-out point", () => {
     assert.equal(inoise16(0, 0, 0), 32745);  // 19052·440 >> 8
     assert.equal(inoise16(0x30000, 0x70000, 0x10000), 32745);
-    assert.equal(inoise16(0x8000, 0x8000, 0), 25705);  // ans = -4096 (see the README)
+    assert.equal(inoise16(0x8000, 0x8000, 0), 25705);  // by hand: X1 = 0, X2 = -8192, Y1 = -4096; (-4096 + 19052)·440 >> 8
 });
 
 test("palettes: a gradient palette as FastLED converts it, and ColorFromPalette16", () => {
