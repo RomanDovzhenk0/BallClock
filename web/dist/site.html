@@ -137,7 +137,24 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 140px;color:var(--muted);fo
 body.minion .mini{display:none}
 }
 @media(min-width:521px) and (max-width:900px){.hl{max-width:560px;width:100%;margin:0 auto}.ksg{justify-content:center}}
-@media(max-width:520px){.wg{grid-template-columns:repeat(2,minmax(0,1fr))}.seg button{padding:5px 8px}.card{padding:12px}.frames{grid-template-columns:repeat(3,minmax(0,1fr))}}</style></head><body>
+@media(max-width:520px){.wg{grid-template-columns:repeat(2,minmax(0,1fr))}.seg button{padding:5px 8px}.card{padding:12px}.frames{grid-template-columns:repeat(3,minmax(0,1fr))}}
+[hidden]{display:none!important}
+.top .btn{min-height:32px;padding:4px 10px}
+.wall canvas{touch-action:pan-y}
+.tile{color:inherit;font:inherit}
+code{font:12px Consolas,monospace;color:var(--acc);overflow-wrap:anywhere}
+@media(max-width:900px){
+.seg button,.chip,.btn,.btn.sm,.top .btn,.tab{min-height:44px}
+.chip{min-width:44px}
+select,input[type=text],input[type=password],input[type=time]{min-height:44px}
+input[type=color]{height:44px;width:52px}
+input[type=range]{min-height:44px}
+.step button{width:44px;height:44px}
+.rv{min-width:44px;min-height:44px;justify-content:center;align-items:center}
+.fld.is-chg .rv{display:inline-flex}
+.sw{height:44px;width:52px}.sw i{inset:9px 3px}
+footer a,details.all summary{display:inline-flex;align-items:center;min-height:44px}
+}</style></head><body>
 <div class="mock" id="mockbar" hidden><b>Макет</b><span>часы на странице, данные примера:</span><span class="seg" id="mk"><button data-m="ok" class="on">Норма</button><button data-m="auth">Пароль (401)</button><button data-m="offline">Нет связи</button><button data-m="ap">Точка доступа</button><button data-m="upd">Есть обновление</button><button data-m="text">Бегущая строка</button></span></div>
 <header class="top"><span class="logo"></span><h1>BallClock</h1><span class="ver" id="ver">…</span><span class="sp"></span><span class="stat"><i class="dot warn" id="sdot"></i><span id="stxt">подключаюсь…</span></span><button class="btn sm" id="logout" hidden>Выйти</button></header>
 <div id="ban"></div>
@@ -1746,7 +1763,7 @@ const ms = millis(), [path, qs] = url.split("?");
 const offline = M.mode === "offline" || ms < M.down;
 return new Promise((ok, no) => setTimeout(() => (offline ? no(new Error("offline")) : ok(answer(path, new URLSearchParams(qs || ""), millis()))), offline ? 400 : 30 + Math.random() * 60));
 }
-return { M, send, isState };
+return { M, send };
 }
 const D = 39.9, S3 = Math.sqrt(3) / 2;
 const ballX = new Float32Array(MX_LED_AMOUNT), ballY = new Float32Array(MX_LED_AMOUNT);
@@ -2209,7 +2226,8 @@ polling = false;
 banners();
 markDirty();
 refreshLive();
-if (P.conn !== "auth") pollT = setTimeout(() => poll(false), 5000);
+if (P.conn !== "auth") pollT = setTimeout(() => !document.hidden && poll(false), 5000);
+if (mirrorWanted()) mirrorLoop();
 }
 let mirrorOn = false;
 const textNow = () => !!(LIVE && LIVE.overlay === "text");
@@ -2323,6 +2341,7 @@ c.restore();
 }
 function draw() {
 if (!view) return;
+P.frames = (P.frames || 0) + 1;
 const wall = $("#wall");
 wall.classList.toggle("cmp", P.src === "cmp");
 const d = frameDraft();
@@ -2338,7 +2357,7 @@ shown = P.src === "now" ? frameNow() : d;
 paint(view, shown.leds, shown.gain);
 $("#badge").textContent = status(shown, P.src);
 }
-$("#pst").textContent = P.src === "cmp" ? "Слева «Сейчас», справа «Черновик»: тяните границу." : P.src === "now" ? (P.live === "mirror" ? "«Сейчас»: кадры часов, 4 раза в секунду." : "«Сейчас»: расчёт на странице по состоянию часов.") : "«Черновик»: расчёт на странице по тем же данным.";
+$("#pst").textContent = P.src === "cmp" ? "Слева «Сейчас», справа «Черновик»: тяните границу." : P.src === "now" ? (shown.mirror ? "«Сейчас»: кадры часов, 4 раза в секунду." : "«Сейчас»: расчёт на странице по состоянию часов.") : "«Черновик»: расчёт на странице по тем же данным.";
 if (view2 && document.body.classList.contains("minion")) paint(view2, shown.leds, shown.gain);
 P.duck = duckStep(P.duck, !!(d.play && !(d.night && S().kaia_night === 2) && S().kaia_anim));
 }
@@ -2790,5 +2809,5 @@ banners();
 poll(true);
 requestAnimationFrame(loop);
 setTimeout(() => S().kaia_anim && !P.M && play("wake"), 600);
-window.ballclock = { P, api, S, play, setSrc, setLive, showTab, mock, sync, get LIVE() { return LIVE; } };
+window.ballclock = { P, api, S, play, setSrc, setLive, showTab, mock, sync, tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; } };
 })();</script></body></html>

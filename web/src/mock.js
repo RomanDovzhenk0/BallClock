@@ -3,7 +3,7 @@
 import { hash32, keyId, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, ledsHex } from "./api.js";
 import { A_WAKE, ANIM_NAMES, dimAll, useMatrix } from "./kaia.js";
 import { BallMatrix, gfx_font_3x5 } from "./matrix.js";
-import { duckAfter, isState, playColor, renderFrame, resolvePlay } from "./frame.js";
+import { duckAfter, playColor, renderFrame, resolvePlay } from "./frame.js";
 import { brightNow, isNight } from "./redraw.js";
 import { DEFAULTS, TEXT_KEYS } from "./settings.js";
 
@@ -142,5 +142,5 @@ export function createMock() {
         return new Promise((ok, no) => setTimeout(() => (offline ? no(new Error("offline")) : ok(answer(path, new URLSearchParams(qs || ""), millis()))), offline ? 400 : 30 + Math.random() * 60));
     }
 
-    return { M, send, isState };
+    return { M, send };
 }

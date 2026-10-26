@@ -133,3 +133,21 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 140px;color:var(--muted);fo
 }
 @media(min-width:521px) and (max-width:900px){.hl{max-width:560px;width:100%;margin:0 auto}.ksg{justify-content:center}}
 @media(max-width:520px){.wg{grid-template-columns:repeat(2,minmax(0,1fr))}.seg button{padding:5px 8px}.card{padding:12px}.frames{grid-template-columns:repeat(3,minmax(0,1fr))}}
+[hidden]{display:none!important}
+.top .btn{min-height:32px;padding:4px 10px}
+.wall canvas{touch-action:pan-y}
+.tile{color:inherit;font:inherit}
+code{font:12px Consolas,monospace;color:var(--acc);overflow-wrap:anywhere}
+/* the phone: every touch target 44 px */
+@media(max-width:900px){
+ .seg button,.chip,.btn,.btn.sm,.top .btn,.tab{min-height:44px}
+ .chip{min-width:44px}
+ select,input[type=text],input[type=password],input[type=time]{min-height:44px}
+ input[type=color]{height:44px;width:52px}
+ input[type=range]{min-height:44px}
+ .step button{width:44px;height:44px}
+ .rv{min-width:44px;min-height:44px;justify-content:center;align-items:center}
+ .fld.is-chg .rv{display:inline-flex}
+ .sw{height:44px;width:52px}.sw i{inset:9px 3px}
+ footer a,details.all summary{display:inline-flex;align-items:center;min-height:44px}
+}

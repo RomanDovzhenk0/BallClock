@@ -2,14 +2,14 @@
 // beside it, the settings in tabs under it, the wake gallery and the save bar.
 import { AuthError, ClockApi, fetchSend, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, keyId, OfflineError, parseLeds } from "./api.js";
 import { ClockSync, parseTime } from "./clock.js";
-import { animOf, duckStep, frameOf, isState, kaiaDraw, renderFrame, resolvePlay } from "./frame.js";
+import { animOf, duckStep, isState, kaiaDraw, renderFrame, resolvePlay } from "./frame.js";
 import { A_WAKE, ANIM_NAMES, shot_ms, useMatrix } from "./kaia.js";
 import { BallMatrix } from "./matrix.js";
 import { createMock, MOCK_PASS } from "./mock.js";
 import { fitCanvas, paint } from "./paint.js";
 import { PAL_NAMES, PALETTES } from "./palettes.js";
 import { brightNow, isNight } from "./redraw.js";
-import { DEFAULTS, normalize, rawOf } from "./settings.js";
+import { normalize, rawOf } from "./settings.js";
 import { WAKE_COUNT, WAKE_NAMES, wake_ms, wakeLength } from "./wakes.js";
 
 const QS = new URLSearchParams(location.search);
@@ -390,7 +390,9 @@ async function poll(wifiToo) {
     banners();
     markDirty();
     refreshLive();
-    if (P.conn !== "auth") pollT = setTimeout(() => poll(false), 5000);
+    // every 5 s while the tab is visible; visibilitychange reads it again when it comes back
+    if (P.conn !== "auth") pollT = setTimeout(() => !document.hidden && poll(false), 5000);
+    if (mirrorWanted()) mirrorLoop();
 }
 
 // /kaia/frame: at most 4 a second, one at a time, only while the mirror is shown and the tab is visible
@@ -525,6 +527,7 @@ function wipe(c, L) {
 
 function draw() {
     if (!view) return;
+    P.frames = (P.frames || 0) + 1;
     const wall = $("#wall");
     wall.classList.toggle("cmp", P.src === "cmp");
     const d = frameDraft();
@@ -540,7 +543,7 @@ function draw() {
         paint(view, shown.leds, shown.gain);
         $("#badge").textContent = status(shown, P.src);
     }
-    $("#pst").textContent = P.src === "cmp" ? "Слева «Сейчас», справа «Черновик»: тяните границу." : P.src === "now" ? (P.live === "mirror" ? "«Сейчас»: кадры часов, 4 раза в секунду." : "«Сейчас»: расчёт на странице по состоянию часов.") : "«Черновик»: расчёт на странице по тем же данным.";
+    $("#pst").textContent = P.src === "cmp" ? "Слева «Сейчас», справа «Черновик»: тяните границу." : P.src === "now" ? (shown.mirror ? "«Сейчас»: кадры часов, 4 раза в секунду." : "«Сейчас»: расчёт на странице по состоянию часов.") : "«Черновик»: расчёт на странице по тем же данным.";
     if (view2 && document.body.classList.contains("minion")) paint(view2, shown.leds, shown.gain);
     // the duck of the draft: one step a frame
     P.duck = duckStep(P.duck, !!(d.play && !(d.night && S().kaia_night === 2) && S().kaia_anim));
@@ -1044,4 +1047,4 @@ banners();
 poll(true);
 requestAnimationFrame(loop);
 setTimeout(() => S().kaia_anim && !P.M && play("wake"), 600);
-window.ballclock = { P, api, S, play, setSrc, setLive, showTab, mock, sync, get LIVE() { return LIVE; } };
+window.ballclock = { P, api, S, play, setSrc, setLive, showTab, mock, sync, tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; } };
