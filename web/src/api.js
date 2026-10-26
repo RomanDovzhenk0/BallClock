@@ -1,6 +1,9 @@
-// The clock's API (BallClock v1.5), as the page calls it: same origin, relative URLs, GET, one request at a
+// The clock's API (BallClock v1.6), as the page calls it: same origin, relative URLs, GET, one request at a
 // time (the ESP8266 answers one at a time), 5 s each. With a page password every call carries
 // auth = hash32(password) in lowercase hex, as Home does (Home/src/gyver/driver.ts). 401 = ask for the password.
+
+import { ANIM_NAMES } from "./kaia.js";
+import { LOOK_KEYS } from "./settings.js";
 
 // h = h·33 + c over the string's bytes (UTF-8), uint32 from 0: StringUtils su::hash
 export function hash32(s) {
@@ -77,7 +80,7 @@ export class ClockApi {
         return this.call("kaia/wifi");
     }
 
-    // name: wake | listening | …; extra: {style, wake, speed, color, ms}
+    // name: wake | listening | …; extra: {style, look, speed, color, ms}
     anim(name, extra = {}) {
         return this.call("kaia/anim", { name, ...extra });
     }
@@ -90,6 +93,19 @@ export class ClockApi {
     click(id) {
         return this.call("settings", { action: "click", id: (id >>> 0).toString(16) });
     }
+}
+
+// how long a state plays as a try-out, ms
+export const TRY_STATE_MS = 6000;
+
+// «Показать на часах»: the event with the draft's choice (s), nothing saved:
+// kaia/anim?name=<event>&style=…&look=…, plus &speed=… for the wake and &ms=6000 for a state
+export function tryOut(name, s) {
+    const n = ANIM_NAMES.indexOf(name);
+    const q = { style: s.kaia_anim, look: s[LOOK_KEYS[n]] };
+    if (n === 0) q.speed = s.kaia_wake_speed;
+    if (n >= 1 && n <= 3) q.ms = TRY_STATE_MS;
+    return q;
 }
 
 // the browser's transport: the answer may be the classic page as BSON (set, click): it is not read

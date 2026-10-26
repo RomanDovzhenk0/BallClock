@@ -84,12 +84,14 @@ const CHECK = String.raw`(() => {
     if (tw > bw + 0.3 || e.scrollWidth > e.clientWidth + 1) out.push("cut text: " + name(e) + " " + Math.round(tw) + " in " + Math.round(bw));
   }
   // overlapping controls in the same layer (the fixed bars float over the page by design)
-  const layer = (e) => (e.closest(".sbar,.tabs,.mini,.modal,.toast,.hero") || document.body);
+  const layer = (e) => (e.closest(".sbar,.tabs,.mini,.modal,.toast,.pop,.kb.open .evd,.hero") || document.body);
   const ctl = [...document.querySelectorAll("button,input,select,a,label.sw,summary")].filter((e) => vis(e) && !(e.tagName === "INPUT" && e.closest("label.sw")));
   for (let i = 0; i < ctl.length; i++) for (let j = i + 1; j < ctl.length; j++) {
     const a = ctl[i], b = ctl[j];
     if (a.contains(b) || b.contains(a) || layer(a) !== layer(b)) continue;
-    const p = a.getBoundingClientRect(), q = b.getBoundingClientRect();
+    // what shows of each: a control scrolled out of its strip (the chips beside «▶ На часах») is clipped by it
+    const shown = (e) => { const r = e.getBoundingClientRect(), sc = scroller(e); if (!sc) return r; const c = sc.getBoundingClientRect(); return { left: Math.max(r.left, c.left), right: Math.min(r.right, c.right), top: Math.max(r.top, c.top), bottom: Math.min(r.bottom, c.bottom) }; };
+    const p = shown(a), q = shown(b);
     const w = Math.min(p.right, q.right) - Math.max(p.left, q.left), h = Math.min(p.bottom, q.bottom) - Math.max(p.top, q.top);
     if (w > 1 && h > 1) {
       const sa = scroller(a), sb = scroller(b);
@@ -115,22 +117,46 @@ const STATES = [
     { name: "light", go: "ballclock.showTab('light')" },
     { name: "net", go: "ballclock.showTab('net')" },
     { name: "sys", go: "ballclock.showTab('sys')" },
-    { name: "draft", go: "document.querySelector('[data-tw=\"8\"]').click(); document.querySelector('[data-sp=\"150\"]').click()", wait: 900 },
+    { name: "draft", go: "document.querySelector('[data-tc=\"0:8\"]').click(); document.querySelector('[data-sp=\"150\"]').click()", wait: 900 },
     { name: "password", go: "document.querySelector('[data-m=auth]').click()", wait: 900 },
     { name: "offline", go: "document.querySelector('[data-m=offline]').click()", wait: 1500 },
     { name: "access-point", go: "document.querySelector('[data-m=ap]').click()", wait: 900 },
     { name: "update", go: "document.querySelector('[data-m=upd]').click()", wait: 900 },
     { name: "text", go: "document.querySelector('[data-m=text]').click(); ballclock.setSrc('now')", wait: 1500 },
     { name: "reduced-motion", go: "", rm: true },
-    { name: "tiles", go: "ballclock.tilesAt(600)", wait: 250, el: ".wg" },
+    { name: "tiles", go: "ballclock.setEvent(0, true); ballclock.tilesAt(600)", wait: 350, el: ".wg", desk: true },
+    // the palette picker: a tap and a step put the palette in the draft and on the preview
+    { name: "picker", go: "ballclock.showTab('look'); document.querySelector('[data-pick=\"52\"]').click()", wait: 500, el: "[data-f=back_pal]",
+        expect: "ballclock.S().back_pal === 52 && document.getElementById('pcn').textContent === 'Неон' && /На часах: Океан/.test(document.getElementById('pcs').textContent)" },
+    { name: "picker-step", go: "ballclock.showTab('look'); document.querySelector('[data-pstep=\"1\"]').click(); document.querySelector('[data-pstep=\"1\"]').click()", wait: 500,
+        expect: "ballclock.S().back_pal === 38 && document.querySelector('.pc.sel').dataset.pick === '38'" },
+    // each event's gallery: beside the list on the desktop, a sheet under the preview on the phone
+    ...["wake", "listening", "thinking", "speaking", "done", "error", "notify"].map((e, n) => ({ name: "gallery-" + e, go: "ballclock.setEvent(" + n + ", true)", wait: 900, el: "#kb", desk: true,
+        expect: "document.querySelectorAll('#evg .tile').length === " + (n ? 9 : 15) + " && document.querySelector('.er.on').dataset.ev === '" + n + "' && document.querySelector('[data-ks=\"" + n + "\"]').classList.contains('on')" })),
+    // the phone: the preview stays in view while a palette or an animation is picked
+    { name: "phone-preview", go: "ballclock.showTab('look'); document.querySelector('.brows').scrollIntoView(); document.querySelector('[data-pick=\"45\"]').click()", wait: 700,
+        expect: "innerWidth > 900 || (() => { const h = document.getElementById('hero').getBoundingClientRect(); return h.top > -2 && h.bottom > 200; })()" },
+    // the unlit balls at transparency 0, 50 and 100 % over a draft without background: kept in localStorage, never sent
+    // to the clock (reset after the shot)
+    { name: "unlit-0", go: "const sel = document.querySelector('[data-k=back_mode]'); sel.value = 0; sel.dispatchEvent(new Event('input', { bubbles: true })); ballclock.setU(0x4a4d55, 0); ballclock.play('off')", wait: 400, after: "ballclock.setU(0xc8c3b4, 0)",
+        expect: "localStorage.getItem('ballclock.unlit') === '{\"c\":\"#4a4d55\",\"tr\":0}'" },
+    { name: "unlit-50", go: "const sel = document.querySelector('[data-k=back_mode]'); sel.value = 0; sel.dispatchEvent(new Event('input', { bubbles: true })); document.getElementById('gear').click(); ballclock.setU(0xdfe6ee, 50); ballclock.play('off')", wait: 600, after: "ballclock.setU(0xc8c3b4, 0)",
+        expect: "!document.getElementById('pop').hidden && document.getElementById('utro').textContent === '50 %' && JSON.parse(localStorage.getItem('ballclock.unlit')).tr === 50" },
+    { name: "unlit-100", go: "const sel = document.querySelector('[data-k=back_mode]'); sel.value = 0; sel.dispatchEvent(new Event('input', { bubbles: true })); ballclock.setU(0xc8c3b4, 100); ballclock.play('off')", wait: 400, after: "ballclock.setU(0xc8c3b4, 0)",
+        expect: "JSON.parse(localStorage.getItem('ballclock.unlit')).tr === 100 && !ballclock.mock.M.settings.unlit" },
     // 20 frames a second with the CPU 4× slower, a wake on the big preview and the gallery in view
-    { name: "fps", go: "document.querySelector('.wg').scrollIntoView(); ballclock.play('wake'); window.__f0 = ballclock.P.frames; setTimeout(() => (window.__fps = (ballclock.P.frames - window.__f0) / 3), 3000)", wait: 3300, cpu: 4,
+    { name: "fps", go: "ballclock.setEvent(0, true); document.querySelector('.wg').scrollIntoView(); ballclock.play('wake'); window.__f0 = ballclock.P.frames; setTimeout(() => (window.__fps = (ballclock.P.frames - window.__f0) / 3), 3000)", wait: 3300, cpu: 4,
         expect: "window.__fps >= 18 || (console.log('fps ' + window.__fps), false)", report: "window.__fps" },
     // the flows: what the mock clock got
-    { name: "saved", go: "document.querySelector('[data-tw=\"6\"]').click(); document.querySelector('[data-sp=\"200\"]').click(); setTimeout(() => document.getElementById('sbsave').click(), 300)", wait: 2500,
-        expect: "ballclock.mock.M.settings.kaia_wake === 6 && ballclock.mock.M.settings.kaia_wake_speed === 200 && document.getElementById('sbar').hidden" },
-    { name: "try-out", go: "document.querySelector('[data-tw=\"10\"]').click(); ballclock.showTab('kaia'); document.querySelector('.spd [data-act=onclock]').click()", wait: 900,
-        expect: "ballclock.mock.M.play && ballclock.mock.M.play.wake === 10 && ballclock.mock.M.settings.kaia_wake === 0" },
+    { name: "saved", go: "document.querySelector('[data-tc=\"0:6\"]').click(); document.querySelector('[data-sp=\"200\"]').click(); ballclock.setEvent(4, false); document.querySelector('[data-tc=\"4:7\"]').click(); setTimeout(() => document.getElementById('sbsave').click(), 300)", wait: 2500,
+        expect: "ballclock.mock.M.settings.kaia_wake === 6 && ballclock.mock.M.settings.kaia_wake_speed === 200 && ballclock.mock.M.settings.kaia_done === 7 && document.getElementById('sbar').hidden" },
+    // the try-out for every kind: a wake with its speed, a state for 6 s, a one-shot; nothing saved
+    { name: "try-out", go: "ballclock.setEvent(0, true); document.querySelector('[data-tc=\"0:13\"]').click(); document.querySelector('.gfoot [data-act=onclock]').click()", wait: 900,
+        expect: "ballclock.mock.M.play && ballclock.mock.M.play.look === 13 && ballclock.mock.M.play.speed === 100 && ballclock.mock.M.settings.kaia_wake === 0 && /Идёт на часах: Пробуждение · 13 Зайчик/.test(document.querySelector('.gfoot .cl-st').textContent)" },
+    { name: "try-out-state", go: "ballclock.setEvent(1, true); document.querySelector('[data-tc=\"1:5\"]').click(); document.querySelector('.gfoot [data-act=onclock]').click()", wait: 900,
+        expect: "ballclock.mock.M.play && ballclock.mock.M.play.anim === 1 && ballclock.mock.M.play.look === 5 && ballclock.mock.M.play.ms === 6000 && ballclock.mock.M.settings.kaia_listen === 0" },
+    { name: "try-out-shot", go: "ballclock.setEvent(4, false); document.querySelector('[data-tc=\"4:6\"]').click(); document.querySelector('.pvf [data-act=onclock]').click()", wait: 700,
+        expect: "ballclock.mock.M.play && ballclock.mock.M.play.anim === 4 && ballclock.mock.M.play.look === 6 && ballclock.mock.M.settings.kaia_done === 0 && ballclock.LIVE.play && ballclock.LIVE.play.look === 6" },
     { name: "login", go: "document.querySelector('[data-m=auth]').click(); setTimeout(() => { document.getElementById('lp').value = 'kaia'; document.getElementById('lg').click(); }, 900)", wait: 2200,
         expect: "ballclock.P.conn === 'ok' && document.getElementById('modal').hidden && !document.getElementById('logout').hidden" },
 ];
@@ -183,13 +209,14 @@ try {
                 await s("Emulation.setDeviceMetricsOverride", { width: size.w, height: Math.min(6000, Math.ceil(m.cssContentSize.height)), deviceScaleFactor: 1, mobile: !!size.phone });
                 await sleep(900);
             }
-            if (st.el) {
-                const b = await s("Runtime.evaluate", { expression: "(() => { const e = document.querySelector('" + st.el + "'); e.scrollIntoView(); const r = e.getBoundingClientRect(); return [r.x + scrollX, r.y + scrollY, r.width, Math.min(r.height, 700)]; })()", returnByValue: true });
+            if (st.el && !(st.desk && size.phone)) {
+                const b = await s("Runtime.evaluate", { expression: "(() => { const e = document.querySelector('" + st.el + "'); const top = innerWidth > 900 ? 120 : 0; scrollTo(0, e.getBoundingClientRect().top + scrollY - top); const r = e.getBoundingClientRect(); return [r.x + scrollX, r.y + scrollY, r.width, Math.min(r.height, innerHeight - top)]; })()", returnByValue: true });
                 const [x, y, w, h] = b.result.value;
                 clip = { x, y, width: w, height: h, scale: 2 };
             }
             const shot = await s("Page.captureScreenshot", { format: "png", captureBeyondViewport: false, clip });
             writeFileSync(join(shots, tag + ".png"), Buffer.from(shot.data, "base64"));
+            if (st.after) await s("Runtime.evaluate", { expression: st.after });
         }
     }
     await c.send("Browser.close");

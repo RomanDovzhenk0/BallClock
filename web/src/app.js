@@ -1,16 +1,18 @@
-// The page (KAIA-161 variant B «Сцена»): a big preview with «Сейчас» / «Черновик» / «Сравнить», Kaya's states
-// beside it, the settings in tabs under it, the wake gallery and the save bar.
-import { AuthError, ClockApi, fetchSend, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, keyId, OfflineError, parseLeds } from "./api.js";
+// The page (KAIA-161 variant B «Сцена», v1.6 as KAIA-172 variant b): a big preview with «Сейчас» / «Черновик» /
+// «Сравнить», Kaya's events beside it, the settings in tabs under it, the palette picker, Kaya's look per event with
+// live thumbnails and a gallery (a sheet on the phone), the try-out on the clock and the save bar.
+import { AuthError, ClockApi, fetchSend, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, keyId, OfflineError, parseLeds, TRY_STATE_MS, tryOut } from "./api.js";
 import { ClockSync, parseTime } from "./clock.js";
 import { animOf, duckStep, isState, kaiaDraw, renderFrame, resolvePlay } from "./frame.js";
-import { A_WAKE, ANIM_NAMES, shot_ms, useMatrix } from "./kaia.js";
+import { A_WAKE, ANIM_NAMES, useMatrix } from "./kaia.js";
+import { LOOK_COUNT, LOOK_NAMES, shotLength } from "./looks.js";
 import { BallMatrix } from "./matrix.js";
 import { createMock, MOCK_PASS } from "./mock.js";
-import { fitCanvas, paint } from "./paint.js";
-import { PAL_NAMES, PALETTES } from "./palettes.js";
+import { fitCanvas, IVORY, paint, readUnlit, setUnlit, unlit } from "./paint.js";
+import { PAL_GROUP, PAL_GROUPS, PAL_NAMES, PAL_ORDER, PAL_RU, PALETTES } from "./palettes.js";
 import { brightNow, isNight } from "./redraw.js";
-import { normalize, rawOf } from "./settings.js";
-import { WAKE_COUNT, WAKE_NAMES, wake_ms, wakeLength } from "./wakes.js";
+import { LOOK_KEYS, normalize, rawOf } from "./settings.js";
+import { WAKE_COUNT, wakeLength } from "./wakes.js";
 
 const QS = new URLSearchParams(location.search);
 const MOCK = QS.has("mock");
@@ -18,6 +20,12 @@ const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const mock = MOCK ? createMock() : null;
 const api = new ClockApi(mock ? mock.send : fetchSend);
 const PASS_KEY = "ballclock.pass";
+let store = null;
+try {
+    store = localStorage;
+} catch {
+    // no storage: the password and the unlit balls live only in this tab
+}
 
 const lsGet = (k) => {
     try {
@@ -35,6 +43,7 @@ const lsSet = (k, v) => {
     }
 };
 api.pass = lsGet(PASS_KEY);
+if (store) setUnlit(readUnlit(store));
 
 // ================= state =================
 
@@ -43,7 +52,9 @@ const DRAFT = {};
 const W = { ssid: "", pass: "" };  // the Wi-Fi fields: applied with «Подключить», not with Save
 let LIVE = null, recvAt = 0, WIFI = null, FRAME = null, everOk = false;
 const sync = new ClockSync();
-const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, cmp: 0.5, tab: "kaia", saving: false, upd: "" };
+// ev: the event in view (anim, A_WAKE … A_NOTIFY): the preview's chips and the Kaya tab's list are the same choice;
+// CL: the try-out on the clock {n, label, t0, dur, done}; open: the gallery's sheet on the phone
+const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, cmp: 0.5, tab: "kaia", saving: false, upd: "", ev: A_WAKE, CL: null, open: false };
 
 const S = () => Object.assign({}, SAVED, DRAFT);
 const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => [...(r || document).querySelectorAll(s)];
@@ -58,44 +69,36 @@ const unhm = (s) => {
 };
 const rgb = (c) => ((c >> 16) & 255) + "," + ((c >> 8) & 255) + "," + (c & 255);
 const palCss = (p) => "linear-gradient(90deg," + PALETTES[p].map((c) => "rgb(" + rgb(c) + ")").join(",") + ")";
-const STYLES = ["Выкл", "Рябь из центра", "Орбита по краю", "Искры в знак"];
-const wakeId = (s, w) => (w ? w : s.kaia_anim || 1);
+const STY = ["Выкл", "Рябь", "Орбита", "Искры"];
+
+// the 7 events by anim: name, when it plays, its theme
+const EV = [
+    ["Пробуждение", "когда Кая услышала своё имя", "пробуждение"],
+    ["Слушает", "пока Кая ждёт вашу команду", "внимание, слух"],
+    ["Думает", "пока Кая готовит ответ", "размышление, работа"],
+    ["Говорит", "пока Кая отвечает голосом", "звук, голос"],
+    ["Готово", "задача выполнена", "готовность, успех"],
+    ["Ошибка", "что-то пошло не так", "тревога, сбой"],
+    ["Уведомление", "сообщение, на которое не нужно отвечать", "сигнал, внимание"],
+];
+const looksOf = (n) => (n === A_WAKE ? WAKE_COUNT : LOOK_COUNT);
+const lookName = (n, c) => LOOK_NAMES[n][c] || LOOK_NAMES[n][0];
+// the style a look stands for (look 0 = the saved style); the wake's id
+const styOf = (s, c) => (c >= 1 && c <= 3 ? c : s.kaia_anim || 1);
+const wakeIdOf = (s, c) => (c ? c : s.kaia_anim || 1);
+// a one-shot's or the wake's length with the draft (0 for a state)
+const lenOf = (n, c, s) => (n === A_WAKE ? wakeLength(wakeIdOf(s, c), s.kaia_wake_speed) : isState(n) ? 0 : shotLength(n, c, s.kaia_anim || 1));
 
 // ================= the settings groups =================
 
-const WDOC = {
-    1: ["Как сейчас (rippleShot). Три кольца расходятся от центра, белёсая вспышка в начале; со 1,1 с проявляется слушание стиля.",
-        "r_k = (t-220k)*0.544            // k = 0..2, 1/16 четверти шара\nf_k = (832-r_k)/832\na   = max( fl*tent(16d,176), max_k tent(16d-r_k,88)*f_k ) * 242/255\nfl  = 255*(1-t/350); цвет к белому на 70% при fl", "0–1,9 с; слушание с 1,1 с", "b_dist (уже есть)"],
-    2: ["Как сейчас (orbitShot). Комета разгоняется по ободу, потом кольца схлопываются, как диафрагма.",
-        "h = 6tc + 50.69tc³ (шаров), tail = 6 + 36.4tc, tc = min(t,1100)/1000\nободок: a = 26 + 230*comet(pos,h,n0,tail)/255\nt>1100: кольца r=1..3 вспыхивают в 1100+150r мс: 217*tent(t-…,220)", "0–2,0 с; слушание с 1,5 с", "b_pos, b_ring, ring_len (уже есть)"],
-    3: ["Как сейчас (sparksShot). 18 искр летят с обода к центру, знак вспыхивает и оседает.",
-        "j = (u/750)^1.6 * len;  хвост 4 шара 255/153/77/31  (u = t-45*((7k)%18))\nt>1500: кольцо 102*tent(16d-r,80), r = (t-1500)*0.64\nmark(g): g = 217*прилетело/18 → вспышка 1550 → «дыхание»", "0–2,0 с; слушание с 1,6 с", "spark[18][12], b_lens (уже есть)"],
-    4: ["Заря поднимается от нижнего ряда до верхнего: кромка белее, у середины ярче. Время видно.",
-        "F  = smooth(0,1500,u)*140/255            // кромка, 1/16 ряда от низа\ndp = F - 16*(6-row)\ndp<-24: 0;  -24..0: ореол 90*(24+dp)/24\ndp>=0: a = (70 + 185*max(0,96-dp)/96) * (190 + 65*(255-4*|x-19|)/255)/255\nцвет = mix(Кая, белый, 140*max(0,48-dp)/48)\nfo = smooth(du,du-400,u)   // гаснет", "0–1,5 с подъём, до 1,6 держит, до 2,0 гаснет; слушание с 1,2 с", "row, x"],
-    5: ["Луч обходит центр один раз по часовой от 12 часов, за ним шлейф; часть шаров «засвечивается» метками. Время видно.",
-        "th = u*256/1400                           // угол луча 0..256\ndl = th - ang[i];  dl<0: ничего\nшлейф: ((96-dl)/96)² при dl<96;  голова dl<12 → белее\nметка: h1[i]<34 && dl<150 → max(a, 215*(150-dl)/150), белая\nвес по радиусу: (150 + 105*d/38)/255;  ступица tent(u-100,300) при d<10", "0–1,4 с оборот, до 1,8 с гаснет", "b_ang, b_dist + h1"],
-    6: ["Два рукава-спирали раскручиваются из центра к краю и вращаются. Время видно.",
-        "R   = smooth(0,1250,u)*46/255              // фронт, четверти шара\nrho = u*256/1700\nv   = (2*ang + 7*d - rho) & 255;  dd = min(v, 256-v)\na   = tent(dd,56) * (255-3d)/255   при d<=R\nфронт (R-d<7) белее;  центр: вспышка tent(u-150,350)*(9-d)/9 при u<500", "0–1,25 с рукава растут, вращаются до 2,0 с", "b_ang, b_dist"],
-    7: ["Время нарочно уходит: сердце пульсирует дважды («тум-тум») и растворяется в слушании.",
-        "beat(q,pk) = q<90 ? pk*q/90 : max(0, pk - pk*(q-90)/380)\nenv  = max( beat(u-150,255), beat(u-540,190) )\nhide = smooth(0,140,u) * fo/255;  dimAll(255 - 200*hide)\nсердце 0x36 0x7f 0x7f 0x3e 0x08: a = 60 + 195*env/255, к белому 110*env/255\nореол: шары линзы 1 — 70*env/255", "удары в 0,15 и 0,54 с, держит до 1,5 с, гаснет до 1,9 с", "b_lens + pict()"],
-    8: ["Щель по средней строке раскрывается в глаз; зрачок смотрит влево, вправо и возвращается; глаз моргает. Фон и время приглушены.",
-        "w = smooth(0,250,u)*17/255                    // длина щели, полушаров\no = smooth(250,950,u)*(255 - 215*smooth(1750,1980,u)/255)/255\nax = |x-19|, dr = row-3\nH = o*(255 - (255*ax/17)²/255)/255;  m = H - 85*|dr|\nm>=0: 45 (белок); a = max(a, 230*tent(m,64)/255)   // веко\nзрачок: px = 4(x-19) - off; d2 = px² + (7dr)²; d2<=169 → 255, до 340 спад", "0–0,25 щель, до 0,95 раскрытие, взгляд 1,0–1,7, моргание 1,75–1,98, до 2,2 с", "row, x"],
-    9: ["Звёзды мерцают всё гуще, затем общая вспышка от центра.",
-        "dth = 10 + smooth(0,1250,u)*240/255\nh1[i] < dth → звезда: ph = h2[i] + u*(220+(h3[i]&63))/1000\ns = 255 - 2*|ph-128|;  a = s²/255\nвспышка: f = tent(u-1500,200) * (255-3d)/255, белая", "0–1,25 с гуще, вспышка 1,3–1,7 с, до 2,0 с", "h1, h2, h3"],
-    10: ["Ракета взлетает по средней колонке к центру и разрывается: 18 лучей по путям искр, затем россыпь.",
-        "ракета (u<780): hr = 96 - smooth(0,720,u)*48/255;  колонка |x-19|<=1\nвзрыв q = u-780: вспышка tent(q-70,160)*tent(d,16)\nлучи: head = (len-1)*e, e = x(2-x), x = min(q,650)/650\nроссыпь q>400: t2 = q-400-h2*5/3; 0..500 → 220*(500-t2)/500 при h3<120, d>10", "ракета 0–0,78 с, взрыв 0,78–1,43, россыпь до 2,1, до 2,2 с", "spark, row, x, h2, h3"],
-    11: ["Капли бегут по диагоналям решётки: влево-вниз и вправо-вниз; за ними остаётся лёгкий след. Время видно.",
-        "поток A: key = col;  поток B: key = col - row + 6\nhead = (u - delay(key))*128/1000 - 16        // 8 рядов/с\ndelay_A = ((37key+11)&31)*26;  delay_B = ((29key+5)&31)*26 + 110\ndf = head - 16*row;  0<=df<96: ((96-df)/96)²;  df>=96: 26 (след)", "капли 0–1,7 с, след до 2,0 с", "col, row"],
-};
-
 const GROUPS = [
-    { id: "clock", tab: "look", title: "Часы", f: [
+    { id: "clock", tab: "look", wide: 1, cls: "three", title: "Часы", f: [
         { k: "clock_style", t: "sel", l: "Шрифт", o: ["Нет", "Тип 1", "Тип 2", "Тип 3"] },
         { k: "clock_style_zero", t: "sw", l: "Ведущий ноль", h: "09:05 вместо 9:05" },
         { k: "clock_color", t: "col", l: "Цвет" }] },
-    { id: "back", tab: "look", title: "Фон", f: [
+    { id: "back", tab: "look", wide: 1, cls: "two", title: "Фон", f: [
         { k: "back_mode", t: "sel", l: "Режим", o: ["Нет", "Градиент", "Перлин"] },
-        { k: "back_pal", t: "pal", l: "Палитра", w: 1, if: (s) => s.back_mode > 0 },
+        { k: "back_pal", t: "pal", l: "Палитра", if: (s) => s.back_mode > 0 },
         { k: "back_bright", t: "rng", l: "Яркость", min: 0, max: 255, w: 1, if: (s) => s.back_mode > 0 },
         { k: "back_speed", t: "rng", l: "Скорость", min: 0, max: 100, w: 1, if: (s) => s.back_mode > 0 },
         { k: "back_scale", t: "rng", l: "Масштаб", min: 0, max: 100, w: 1, if: (s) => s.back_mode > 0 },
@@ -115,13 +118,14 @@ const GROUPS = [
         { k: "night_mode_auto_since", t: "time", l: "С", if: (s) => s.night_mode && s.night_mode_auto },
         { k: "night_mode_auto_to", t: "time", l: "До", if: (s) => s.night_mode && s.night_mode_auto },
         { k: "_thr", t: "live", l: "Порог датчика", live: "thr", h: "Ночью, пока сигнал ниже порога. На странице порог не меняется.", if: (s) => s.night_mode }] },
-    { id: "kaia", tab: "kaia", wide: 1, title: "Кая", f: [
-        { k: "kaia_anim", t: "sel", l: "Анимации", o: STYLES },
-        { k: "kaia_wake", t: "wake", l: "Пробуждение", w: 1, if: (s) => s.kaia_anim > 0 },
-        { k: "kaia_wake_speed", t: "spd", l: "Скорость пробуждения", w: 1, if: (s) => s.kaia_anim > 0 },
-        { k: "kaia_color", t: "col", l: "Цвет Каи", if: (s) => s.kaia_anim > 0 },
-        { k: "kaia_bright", t: "rng", l: "Яркость", min: 0, max: 255, w: 1, if: (s) => s.kaia_anim > 0 },
-        { k: "kaia_night", t: "sel", l: "Ночью", o: ["Как обычно", "Тусклее", "Не показывать"], if: (s) => s.kaia_anim > 0 }] },
+    // the Kaya tab is drawn by kayaHTML; its keys are here for the save bar and the list of changes
+    { id: "kaia", tab: "kaia", wide: 1, title: "Кая", custom: (s) => kayaHTML(s), f: [
+        { k: "kaia_anim", t: "sel", l: "Стиль", o: STY },
+        ...LOOK_KEYS.map((k, n) => ({ k, t: "look", l: EV[n][0], n })),
+        { k: "kaia_wake_speed", t: "spd", l: "Скорость пробуждения" },
+        { k: "kaia_color", t: "col", l: "Цвет Каи" },
+        { k: "kaia_bright", t: "rng", l: "Яркость Каи", min: 0, max: 255 },
+        { k: "kaia_night", t: "sel", l: "Ночью", o: ["Как обычно", "Тусклее", "Не показывать"] }] },
     { id: "time", tab: "net", title: "Время", f: [
         { k: "ntp_gmt", t: "num", l: "Часовой пояс", min: -12, max: 14 },
         { k: "ntp_host", t: "txt", l: "NTP-сервер", w: 1 },
@@ -162,8 +166,8 @@ function fmtAny(k, v) {
         case "sw": return v ? "вкл" : "выкл";
         case "col": return hexs(v);
         case "time": return hm(v);
-        case "pal": return PAL_NAMES[v];
-        case "wake": return WAKE_NAMES[v];
+        case "pal": return PAL_RU[v];
+        case "look": return v + " · " + lookName(f.n, v);
         case "pwd": return v ? "••••" : "пусто";
         case "num": return (v > 0 ? "+" : "") + v;
         case "spd": case "rng": return fmtVal(k, v);
@@ -173,16 +177,18 @@ function fmtAny(k, v) {
 
 const RVB = (k) => '<button class="rv" data-rv="' + k + '" title="Вернуть сохранённое" aria-label="Вернуть сохранённое">↺</button>';
 const opts = (list, v) => list.map((o, i) => '<option value="' + i + '"' + (i === v ? " selected" : "") + ">" + esc(o) + "</option>").join("");
+const fld = (k, lab, hint, ctl, stack) => '<div class="fld' + (stack ? " stack" : "") + '" data-f="' + k + '"><div class="fl"><span>' + lab + (hint ? "<small>" + hint + "</small>" : "") + "</span>" + RVB(k) + "</div>" + ctl + "</div>";
+const rngCtl = (k, v, min, max, step, lab) => '<div class="rng"><input type="range" data-k="' + k + '" min="' + min + '" max="' + max + '"' + (step ? ' step="' + step + '"' : "") + ' value="' + v + '" aria-label="' + lab + '"><output>' + fmtVal(k, v) + "</output></div>";
 
 function fieldHTML(f, s) {
-    const v = s[f.k], stack = f.w ? " stack" : "", lab = esc(f.l);
-    const wrap = (c, rv = true) => '<div class="fld' + stack + '" data-f="' + f.k + '"><div class="fl"><span>' + lab + (f.h ? "<small>" + esc(f.h) + "</small>" : "") + "</span>" + (rv ? RVB(f.k) : "") + "</div>" + c + "</div>";
+    const v = s[f.k], lab = esc(f.l);
+    const wrap = (c, rv = true) => '<div class="fld' + (f.w ? " stack" : "") + '" data-f="' + f.k + '"><div class="fl"><span>' + lab + (f.h ? "<small>" + esc(f.h) + "</small>" : "") + "</span>" + (rv ? RVB(f.k) : "") + "</div>" + c + "</div>";
     switch (f.t) {
         case "sw": return wrap('<label class="sw"><input type="checkbox" data-k="' + f.k + '"' + (v ? " checked" : "") + ' aria-label="' + lab + '"><i></i></label>');
         case "sel": return wrap('<select data-k="' + f.k + '" aria-label="' + lab + '">' + opts(f.o, v) + "</select>");
-        case "pal": return wrap('<div class="pal"><select data-k="' + f.k + '" aria-label="' + lab + '">' + opts(PAL_NAMES, v) + '</select><i class="palbar" style="background:' + palCss(v) + '"></i></div>');
+        case "pal": return pickerHTML(f);
         case "col": return wrap('<input type="color" data-k="' + f.k + '" value="' + hexs(v) + '" aria-label="' + lab + '">');
-        case "rng": return wrap('<div class="rng"><input type="range" data-k="' + f.k + '" min="' + f.min + '" max="' + f.max + '" value="' + v + '" aria-label="' + lab + '"><output>' + fmtVal(f.k, v) + "</output></div>");
+        case "rng": return wrap(rngCtl(f.k, v, f.min, f.max, 0, lab));
         case "txt": return wrap('<input type="text" data-k="' + f.k + '" value="' + esc(v) + '" autocomplete="off" aria-label="' + lab + '">');
         case "pwd": return wrap('<input type="password" data-k="' + f.k + '" value="' + esc(DRAFT.page_pass || "") + '" autocomplete="new-password" placeholder="' + (api.pass ? "задан; новый — сюда" : "без пароля") + '" aria-label="' + lab + '">');
         case "wtxt": return wrap('<input type="text" data-w="ssid" value="' + esc(W.ssid) + '" autocomplete="off" aria-label="' + lab + '">', false);
@@ -194,48 +200,182 @@ function fieldHTML(f, s) {
         case "btns": return wrap('<div class="btns"><button class="btn sm" data-act="admin">Запомнить мин.</button><button class="btn sm" data-act="admax">Запомнить макс.</button></div>', false);
         case "btnw": return '<div class="fld stack"><div class="btns"><button class="btn pri" data-act="wifi">Подключить</button></div><div class="fl"><span><small>' + esc(f.h) + "</small></span></div></div>";
         case "btnc": return '<div class="fld stack"><div class="btns"><button class="btn" data-act="check">Проверить обновления</button>' + (LIVE && LIVE.update ? '<button class="btn pri" data-act="upd">Доступно обновление → Обновить</button>' : "") + '</div><div class="fl"><span><small id="chkst">' + esc(P.upd || (LIVE && LIVE.update ? "Доступна новая прошивка (сейчас " + LIVE.version + ")" : "Новых версий не видно")) + "</small></span></div></div>";
-        case "wake": {
-            const sty = s.kaia_anim || 1;
-            const tiles = [];
-            for (let id = 0; id < WAKE_COUNT; id++) {
-                const eff = wakeId(s, id);
-                tiles.push('<button class="tile' + (v === id ? " sel" : "") + '" data-tw="' + id + '"><canvas></canvas><span class="tn"><b>' + id + " · " + WAKE_NAMES[id] + "</b><i>" + (id ? fmtS(wakeLength(eff, s.kaia_wake_speed)) : "сейчас: " + WAKE_NAMES[sty]) + "</i></span></button>");
-            }
-            return '<div class="fld stack" data-f="' + f.k + '"><div class="fl"><span>' + lab + "<small>Отдельно от стиля. Нажмите плитку: она сыграет на большом превью выше.</small></span>" + RVB(f.k) + '</div><div class="wg">' + tiles.join("") + '</div><div id="wdoc">' + docHTML(v, s) + "</div>" + allDocs() + "</div>";
-        }
-        case "spd":
-            return '<div class="fld stack spd" data-f="' + f.k + '"><div class="fl"><span>' + lab + "<small>Меняет только пробуждение; слушание после него идёт в своём темпе.</small></span><output>" + fmtVal(f.k, v) + "</output>" + RVB(f.k) + "</div>" +
-                '<input type="range" data-k="' + f.k + '" min="50" max="200" step="5" value="' + v + '" aria-label="' + lab + '">' +
-                '<div class="row">' + [[50, "½×"], [100, "1×"], [150, "1,5×"], [200, "2×"]].map((a) => '<button class="chip' + (v === a[0] ? " on" : "") + '" data-sp="' + a[0] + '">' + a[1] + "</button>").join("") + "</div>" +
-                '<div class="btns"><button class="btn pri" data-act="onclock">Показать на часах</button></div><small class="hint">Играет на часах без сохранения: <code>/kaia/anim?name=wake&amp;style=…&amp;wake=…&amp;speed=…</code></small></div>';
     }
     return "";
 }
 
-function docHTML(id, s) {
-    const eff = wakeId(s, id), d = WDOC[eff];
-    return '<div class="doc"><h4>' + (id ? "№ " + id : "№ 0 → № " + eff) + " · " + WAKE_NAMES[eff] + "<span>" + fmtS(wake_ms[eff]) + " при 1× · " + fmtS(wakeLength(eff, s.kaia_wake_speed)) + " при " + s.kaia_wake_speed + " %</span></h4><p>" + d[0] + "</p><pre>" + esc(d[1]) + "</pre><p>Тайминг: " + d[2] + ". Таблицы: " + d[3] + ".</p></div>";
+// ================= the palette picker (KAIA-172 b): the current one big with ‹ ›, then one strip per group =================
+
+function pickerHTML(f) {
+    const strips = PAL_GROUPS.map((g, k) => {
+        const items = PAL_ORDER.filter((i) => PAL_GROUP[i] === k);
+        return '<div class="brow"><h4>' + g + "<small>" + items.length + '</small></h4><div class="bscr">' +
+            items.map((i) => '<button class="pc" data-pick="' + i + '" title="' + PAL_NAMES[i] + '"><i class="pb" style="background:' + palCss(i) + '"></i><span>' + esc(PAL_RU[i]) + "</span></button>").join("") + "</div></div>";
+    });
+    return '<div class="fld stack" data-f="' + f.k + '"><div class="fl"><span>' + esc(f.l) + "<small>Нажмите образец или листайте ‹ ›: превью меняется сразу. Кружок ● — палитра, которая сейчас на часах.</small></span>" + RVB(f.k) + "</div>" +
+        '<div class="bk"><button class="ico" data-pstep="-1" aria-label="Предыдущая палитра">‹</button><div class="bkc"><div class="bkt"><b id="pcn"></b><small id="pcm"></small></div><i class="pb" id="pcb"></i><div class="pcs" id="pcs"></div></div><button class="ico" data-pstep="1" aria-label="Следующая палитра">›</button></div>' +
+        '<div class="brows">' + strips.join("") + "</div></div>";
 }
 
-function allDocs() {
-    let h = '<details class="all"><summary>Формулы и тайминги всех пробуждений (для прошивки)</summary>';
-    for (let i = 1; i < WAKE_COUNT; i++) h += '<div class="doc"><h4>№ ' + i + " · " + WAKE_NAMES[i] + "<span>" + fmtS(wake_ms[i]) + "</span></h4><p>" + WDOC[i][0] + "</p><pre>" + esc(WDOC[i][1]) + "</pre><p>Тайминг: " + WDOC[i][2] + ". Таблицы: " + WDOC[i][3] + ".</p></div>";
-    return h + "</details>";
+function updPal() {
+    const cur = S().back_pal, sav = SAVED.back_pal;
+    if (!$("#pcn")) return;
+    $("#pcn").textContent = PAL_RU[cur];
+    $("#pcm").textContent = PAL_GROUPS[PAL_GROUP[cur]] + " · №" + cur;
+    $("#pcb").style.background = palCss(cur);
+    $("#pcs").innerHTML = cur === sav ? "<span>Эта палитра сейчас на часах</span>" : "<span>На часах: " + esc(PAL_RU[sav]) + '</span><i class="pb" style="background:' + palCss(sav) + '"></i>';
+    $$(".pc").forEach((b) => {
+        const i = +b.dataset.pick;
+        b.classList.toggle("sel", i === cur);
+        b.classList.toggle("sv", i === sav);
+    });
+}
+
+// ‹ ›: the next palette in the picker's order, and its swatch scrolled into its strip
+function stepPal(d) {
+    const j = PAL_ORDER.indexOf(S().back_pal);
+    setVal("back_pal", PAL_ORDER[(j + d + PAL_ORDER.length) % PAL_ORDER.length]);
+    const b = $(".pc.sel");
+    if (b) {
+        const sc = b.parentNode;
+        if (sc.scrollWidth > sc.clientWidth + 2) sc.scrollLeft = b.offsetLeft - sc.offsetLeft - sc.clientWidth / 2 + b.offsetWidth / 2;
+    }
+}
+
+// ================= the Kaya tab (KAIA-172 b): the style, the 7 events with live thumbnails, the event's gallery =================
+
+const TRY = '<span class="long">▶ Показать на часах</span><span class="short">▶ На часах</span>';
+const shortOf = (n, c) => (c ? lookName(n, c) : "Как у стиля");
+
+function rowText(n, s) {
+    const c = s[LOOK_KEYS[n]], sv = SAVED[LOOK_KEYS[n]];
+    if (!s.kaia_anim) return "выкл";
+    return (c ? c + " · " : "") + shortOf(n, c) + (c !== sv ? " · было: " + shortOf(n, sv) : "");
+}
+
+// «0 → Рябь» or «13 · Зайчик»
+function choiceLabel(n, s) {
+    const c = s[LOOK_KEYS[n]];
+    return c ? c + " · " + lookName(n, c) : "0 → " + LOOK_NAMES[n][s.kaia_anim || 1];
+}
+
+function tileSub(n, id, s) {
+    const st = s.kaia_anim || 1, now = id ? "" : "сейчас: " + LOOK_NAMES[n][styOf(s, 0)] + " · ";
+    if (isState(n)) return id ? "непрерывно" : "сейчас: " + STY[st];
+    return now + fmtS(lenOf(n, id, s));
+}
+
+function tileHTML(n, id, s) {
+    const k = LOOK_KEYS[n], cur = s[k], sav = SAVED[k];
+    return '<button class="tile' + (cur === id ? " sel" : "") + '" data-tc="' + n + ":" + id + '"><canvas></canvas><span class="tn"><b>' + id + " · " + esc(lookName(n, id)) + "</b><i>" + tileSub(n, id, s) + "</i></span>" + (sav === id && cur !== id ? '<em class="pl">на часах</em>' : "") + "</button>";
+}
+
+const gh = (t, sub) => '<div class="gh"><h4>' + t + "</h4>" + (sub ? "<small>" + sub + "</small>" : "") + "</div>";
+const tilesFor = (n, a, b, s) => {
+    let h = "";
+    for (let id = a; id <= b; id++) h += tileHTML(n, id, s);
+    return '<div class="wg">' + h + "</div>";
+};
+
+function galleryHTML(n, s) {
+    let h = '<div class="gal' + (s.kaia_anim ? "" : " dis") + '">';
+    if (!s.kaia_anim) h += '<p class="note">Анимации Каи выключены в стиле. Выберите Рябь, Орбиту или Искры, и здесь можно выбирать анимацию для события.</p>';
+    h += gh("Как у стиля и версии стиля", "0 — следует за стилем · 1 Рябь · 2 Орбита · 3 Искры") + tilesFor(n, 0, 3, s);
+    if (n === A_WAKE) h += gh("Тематические пробуждения", "4–11") + tilesFor(n, 4, 11, s) + gh("Новые пробуждения", "12–" + (WAKE_COUNT - 1)) + tilesFor(n, 12, WAKE_COUNT - 1, s);
+    else h += gh("Новые по теме", "4–" + (LOOK_COUNT - 1) + " · " + EV[n][2]) + tilesFor(n, 4, LOOK_COUNT - 1, s);
+    return h + "</div>";
+}
+
+function speedHTML(s) {
+    const sp = s.kaia_wake_speed;
+    return fld("kaia_wake_speed", "Скорость пробуждения", "Только пробуждение; слушание после него идёт в своём темпе.", rngCtl("kaia_wake_speed", sp, 50, 200, 5, "Скорость пробуждения") +
+        '<div class="row">' + [[50, "½×"], [100, "1×"], [150, "1,5×"], [200, "2×"]].map((a) => '<button class="chip' + (sp === a[0] ? " on" : "") + '" data-sp="' + a[0] + '">' + a[1] + "</button>").join("") + "</div>", 1).replace('class="fld stack"', 'class="fld stack spd"');
+}
+
+function kayaHTML(s) {
+    const on = s.kaia_anim;
+    let h = '<div class="kopts one">' + fld("kaia_anim", "Стиль", "«Выкл» отключает все анимации Каи; «Как у стиля» следует за выбранным стилем.", '<div class="seg stseg">' + STY.map((t, i) => '<button data-sty="' + i + '"' + (on === i ? ' class="on"' : "") + ">" + t + "</button>").join("") + "</div>", 1) + "</div>";
+    h += '<div class="evh"><h3 class="sub">Анимация для каждого события</h3><small>В списке виден выбор для всех семи событий; нажмите событие, чтобы выбрать другую анимацию.</small></div>';
+    h += '<div class="kb' + (P.open ? " open" : "") + '" id="kb"><div class="evl">' + EV.map((e, n) => '<button class="er" data-ev="' + n + '"><canvas data-th="' + n + '"></canvas><span class="et"><b>' + e[0] + "</b><small></small></span><span class=\"chev\">›</span></button>").join("") + "</div>" +
+        '<div class="evd" id="evd"><div class="evdh"><button class="chip back" data-close aria-label="К списку событий">‹ События</button><div class="evt"><h3 id="evt"></h3><small id="evs"></small></div></div><div id="evg"></div>' +
+        '<div class="gfoot"><button class="btn pri" data-act="onclock">' + TRY + '</button><small class="cl-st"></small></div></div></div>';
+    if (on) {
+        h += '<div class="evh"><h3 class="sub">Цвет и яркость Каи</h3></div><div class="kopts">' + fld("kaia_color", "Цвет Каи", "", '<input type="color" data-k="kaia_color" value="' + hexs(s.kaia_color) + '" aria-label="Цвет Каи">') +
+            fld("kaia_bright", "Яркость", "", rngCtl("kaia_bright", s.kaia_bright, 0, 255, 0, "Яркость Каи"), 1) +
+            fld("kaia_night", "Ночью", "", '<select data-k="kaia_night" aria-label="Ночью">' + opts(FLD.kaia_night.o, s.kaia_night) + "</select>") + "</div>";
+    }
+    return h;
+}
+
+// the event's gallery (and the wake's speed under it)
+function fillEv() {
+    const s = S(), n = P.ev;
+    if (!$("#evg")) return;
+    $("#evt").textContent = EV[n][0];
+    $("#evs").textContent = EV[n][1];
+    $("#evg").innerHTML = galleryHTML(n, s) + (n === A_WAKE && s.kaia_anim ? speedHTML(s) : "");
+}
+
+// the list, the tiles' marks and lengths, after a change of the draft
+function updKaya() {
+    const s = S();
+    $$(".er").forEach((b) => {
+        const n = +b.dataset.ev;
+        b.classList.toggle("on", n === P.ev);
+        b.classList.toggle("chg", LOOK_KEYS[n] in DRAFT);
+        b.querySelector("small").textContent = rowText(n, s);
+    });
+    $$(".tile[data-tc]").forEach((t) => {
+        const [n, id] = t.dataset.tc.split(":").map(Number), k = LOOK_KEYS[n], cur = s[k], sav = SAVED[k];
+        t.classList.toggle("sel", cur === id);
+        t.querySelector("i").textContent = tileSub(n, id, s);
+        const pl = t.querySelector(".pl"), want = sav === id && cur !== id;
+        if (want && !pl) t.insertAdjacentHTML("beforeend", '<em class="pl">на часах</em>');
+        else if (!want && pl) pl.remove();
+    });
+    $$("[data-sp]").forEach((b) => b.classList.toggle("on", +b.dataset.sp === s.kaia_wake_speed));
+    $$('[data-f="kaia_wake_speed"] output').forEach((o) => (o.textContent = fmtVal("kaia_wake_speed", s.kaia_wake_speed)));
+}
+
+// the gallery as a sheet under the sticky preview (the phone)
+function setSheet(o) {
+    P.open = o;
+    const kb = $("#kb");
+    if (kb) kb.classList.toggle("open", o);
+    document.body.classList.toggle("sheet", o);
+    if (o) document.documentElement.style.setProperty("--hh", Math.round($("#hero").getBoundingClientRect().bottom) + "px");
+}
+
+// the event in view: the preview's chips and the Kaya tab follow it, and the preview plays it
+function setEvent(n, open) {
+    P.ev = n;
+    if (open) setSheet(true);
+    fillEv();
+    bindTiles();
+    updKaya();
+    markKs();
+    hsum();
+    clUI();
+    play(ANIM_NAMES[n]);
 }
 
 // ================= rendering the groups =================
 
 let tiles = [];
-let filmT = 0;
 
 function renderGroup(g) {
     const el = document.getElementById("g-" + g.id), s = S();
     if (!el) return;
-    el.querySelector(".gbody").innerHTML = g.f.filter((f) => !f.if || f.if(s)).map((f) => fieldHTML(f, s)).join("");
-    if (g.id === "kaia") bindTiles();
+    el.querySelector(".gbody").innerHTML = g.custom ? g.custom(s) : g.f.filter((f) => !f.if || f.if(s)).map((f) => fieldHTML(f, s)).join("");
+    if (g.id === "kaia") {
+        fillEv();
+        bindTiles();
+        updKaya();
+        clUI();
+    }
+    if (g.id === "back") updPal();
     markDirty();
     refreshLive();
-    filmSoon();
 }
 
 function renderAll() {
@@ -243,19 +383,16 @@ function renderAll() {
 }
 
 function buildGroups() {
-    $("#groups").innerHTML = GROUPS.map((g) => '<section class="card grp' + (g.wide ? " wide" : "") + '" id="g-' + g.id + '" data-tab="' + g.tab + '"><h2>' + g.title + '</h2><div class="gbody"></div></section>').join("") +
-        '<section class="card film grp wide" id="film" data-tab="kaia"><h2>Пробуждения по кадрам</h2><p class="hint">Те же формулы, шесть моментов каждого пробуждения при 100 %, с вашими фоном, шрифтом и цветом Каи.</p><div id="filmbody"></div></section>';
+    $("#groups").innerHTML = GROUPS.map((g) => '<section class="card grp' + (g.wide ? " wide" : "") + '" id="g-' + g.id + '" data-tab="' + g.tab + '"><h2>' + g.title + '</h2><div class="gbody' + (g.cls ? " " + g.cls : "") + '"></div></section>').join("");
     $("#tabs").innerHTML = TABS.map((t) => '<button class="tab" data-tab="' + t.id + '"><svg viewBox="0 0 24 24">' + t.i + "</svg><span>" + t.t + "</span></button>").join("");
 }
 
 function showTab(id) {
     P.tab = id;
+    if (id !== "kaia") setSheet(false);
     $$(".tab").forEach((b) => b.classList.toggle("on", b.dataset.tab === id));
     $$("#groups>.grp").forEach((g) => (g.hidden = g.dataset.tab !== id));
-    requestAnimationFrame(() => {
-        sizeTiles();
-        if (id === "kaia") buildFilm();
-    });
+    requestAnimationFrame(sizeTiles);
 }
 
 const groupOf = (k) => GROUPS.find((g) => g.f.some((f) => f.k === k));
@@ -272,8 +409,14 @@ function markDirty() {
 }
 
 function hsum() {
-    const s = S(), id = wakeId(s, s.kaia_wake);
-    $("#hsum").innerHTML = s.kaia_anim ? "Пробуждение: <b>" + (s.kaia_wake ? s.kaia_wake + " · " : "0 → ") + WAKE_NAMES[id] + "</b><br>" + s.kaia_wake_speed + " % · " + fmtS(wakeLength(id, s.kaia_wake_speed)) + " · затем слушание «" + STYLES[s.kaia_anim] + "»" : "Анимации Каи выключены.";
+    const s = S(), n = P.ev;
+    let d = "Анимации Каи выключены.";
+    if (s.kaia_anim) {
+        d = "Событие: <b>" + EV[n][0] + "</b><br>Анимация: <b>" + esc(choiceLabel(n, s)) + "</b><br>";
+        if (n === A_WAKE) d += fmtS(lenOf(n, s.kaia_wake, s)) + " при " + s.kaia_wake_speed + " % · затем слушание «" + esc(shortOf(1, s.kaia_listen)) + "»";
+        else d += isState(n) ? "идёт, пока Кая в этом состоянии" : "один раз · " + fmtS(lenOf(n, s[LOOK_KEYS[n]], s));
+    }
+    $("#hsum").innerHTML = d;
 }
 
 function setVal(k, v) {
@@ -282,20 +425,11 @@ function setVal(k, v) {
     if (k === "page_pass" && v === "") delete DRAFT[k];
     if (P.src === "now") setSrc("draft");
     markDirty();
-    if (k === "kaia_wake_speed" || k === "kaia_wake") updWakeUI();
-    filmSoon();
-}
-
-function updWakeUI() {
-    const s = S(), d = $("#wdoc");
-    if (d) d.innerHTML = docHTML(s.kaia_wake, s);
-    $$(".tile").forEach((t) => {
-        const id = +t.dataset.tw, eff = wakeId(s, id);
-        t.classList.toggle("sel", id === s.kaia_wake);
-        t.querySelector("i").textContent = id ? fmtS(wakeLength(eff, s.kaia_wake_speed)) : "сейчас: " + WAKE_NAMES[eff];
-    });
-    $$("[data-sp]").forEach((b) => b.classList.toggle("on", +b.dataset.sp === s.kaia_wake_speed));
-    $$('[data-f="kaia_wake_speed"] output').forEach((o) => (o.textContent = fmtVal("kaia_wake_speed", s.kaia_wake_speed)));
+    if (k.startsWith("kaia_")) {
+        updKaya();
+        clUI();
+    }
+    if (k === "back_pal") updPal();
 }
 
 // ================= the live values =================
@@ -326,6 +460,8 @@ function refreshLive() {
     $("#stxt").textContent = st[1];
     $("#ver").textContent = L ? "v" + L.version : "…";
     $("#logout").hidden = !api.pass;
+    // День / Ночь: the one the draft shows (on the phone only that one, a tap switches it)
+    $$("#day button").forEach((b) => b.classList.toggle("on", +b.dataset.d === (P.forceNight != null ? P.forceNight : +!!P.night)));
 }
 
 function banners() {
@@ -422,7 +558,6 @@ async function mirrorLoop() {
 
 // ================= the preview =================
 
-const KS = [["wake", "Пробуждение"], ["listening", "Слушает"], ["thinking", "Думает"], ["speaking", "Говорит"], ["done", "Готово"], ["error", "Ошибка"], ["notify", "Уведомление"], ["off", "Стоп"]];
 const gainOf = (b) => 0.3 + (0.7 * b) / 255;
 let view = null, view2 = null;
 
@@ -436,20 +571,20 @@ function timeNow() {
     return { millis: ms, synced: true, hour: d.getHours(), minute: d.getMinutes(), ms: d.getMilliseconds() };
 }
 
-// what the clock plays now, from the state, at this moment
+// what the clock plays now, from the state, at this moment (v1.5's state has wake, not look)
 function playNow() {
     const p = LIVE && LIVE.play;
     if (!p) return null;
-    const el = performance.now() - recvAt;
-    return { anim: animOf(p.name), style: p.style, wake: p.wake || 0, speed: p.speed || 100, t: p.t + el, color: p.color ? parseInt(p.color, 16) : null };
+    const el = performance.now() - recvAt, anim = animOf(p.name);
+    return { anim, style: p.style, look: p.look != null ? p.look : anim === A_WAKE ? p.wake || 0 : 0, lk: SAVED.kaia_listen, speed: p.speed || 100, t: p.t + el, color: p.color ? parseInt(p.color, 16) : null };
 }
 
-// the draft's play: the button or tile pressed, on the draft's settings
+// the draft's play: the event pressed, in the draft's look of it
 function playDraft(s) {
     const M = P.M;
     if (!M) return null;
-    const t = RM && M.still ? M.still : performance.now() - M.t0;
-    return { anim: M.anim, style: s.kaia_anim || 1, wake: M.wake != null ? M.wake : s.kaia_wake, speed: M.speed || s.kaia_wake_speed, t, color: null, ms: 7000 };
+    const t = RM && M.still != null ? M.still : performance.now() - M.t0;
+    return { anim: M.anim, style: s.kaia_anim || 1, look: s[LOOK_KEYS[M.anim]], lk: s.kaia_listen, speed: s.kaia_wake_speed, t, color: null, ms: 7000 };
 }
 
 const lightNow = () => (LIVE ? LIVE.light : 500);
@@ -484,23 +619,25 @@ function frameDraft() {
     return { leds: Uint32Array.from(leds), gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1), night, play };
 }
 
+// «Готово · 6 · Конфетти» for what plays
+function playLabel(p) {
+    let t = EV[p.anim][0] + " · " + (p.look ? p.look + " · " + lookName(p.anim, p.look) : "0 → " + lookName(p.anim, p.style));
+    if (p.anim === A_WAKE) t += " · " + p.speed + " % · " + fmtS(wakeLength(p.look || p.style, p.speed));
+    return t;
+}
+
 function status(fr, src) {
     const pre = src === "now" ? "Сейчас · " : "Черновик · ";
     if (src === "now") {
         if (P.conn === "offline") return "нет связи · последний кадр";
         if (fr.mirror) return pre + (textNow() ? "бегущая строка · кадры с часов" : "зеркало · кадры с часов");
-        const p = playNow(), r = resolvePlay(p);
-        if (!r) return pre + (fr.night ? "ночь" : "день") + ", без анимации";
-        return pre + KS.find((k) => k[0] === ANIM_NAMES[r.anim])[1] + (r.anim === A_WAKE ? " · " + WAKE_NAMES[wakeId({ kaia_anim: r.style }, r.wake)] : "");
+        const r = resolvePlay(playNow());
+        return pre + (r ? playLabel(r) : (fr.night ? "ночь" : "день") + ", без анимации");
     }
-    const s = S(), p = fr.play && resolvePlay(fr.play);
+    if (P.CL) return clText(P.CL);
+    const p = fr.play && resolvePlay(fr.play);
     if (!p) return pre + (fr.night ? "ночь" : "день") + ", без анимации";
-    let t = pre + KS.find((k) => k[0] === ANIM_NAMES[p.anim])[1];
-    if (p.anim === A_WAKE) {
-        const id = wakeId(s, p.wake);
-        t += " · " + WAKE_NAMES[id] + " · " + p.speed + " % · " + fmtS(wakeLength(id, p.speed));
-    } else if (isState(p.anim)) t += " · пока не нажмёте «Стоп»";
-    return t;
+    return pre + playLabel(p) + (isState(p.anim) ? " · пока не нажмёте «Стоп»" : "");
 }
 
 function wipe(c, L) {
@@ -530,9 +667,12 @@ function draw() {
     P.frames = (P.frames || 0) + 1;
     const wall = $("#wall");
     wall.classList.toggle("cmp", P.src === "cmp");
-    const d = frameDraft();
+    const d = frameDraft(), mini = document.body.classList.contains("minion");
     let shown = d;
-    if (P.src === "cmp") {
+    if (mini) {
+        // the big preview is out of view: only the mini bar shows the frame
+        if (P.src === "now") shown = frameNow();
+    } else if (P.src === "cmp") {
         const n = frameNow(), x = Math.round(view.L.W * P.cmp);
         paint(view, n.leds, n.gain, [0, x]);
         paint(view, d.leds, d.gain, [x, view.L.W]);
@@ -544,7 +684,8 @@ function draw() {
         $("#badge").textContent = status(shown, P.src);
     }
     $("#pst").textContent = P.src === "cmp" ? "Слева «Сейчас», справа «Черновик»: тяните границу." : P.src === "now" ? (shown.mirror ? "«Сейчас»: кадры часов, 4 раза в секунду." : "«Сейчас»: расчёт на странице по состоянию часов.") : "«Черновик»: расчёт на странице по тем же данным.";
-    if (view2 && document.body.classList.contains("minion")) paint(view2, shown.leds, shown.gain);
+    if (view2 && mini) paint(view2, shown.leds, shown.gain);
+    P.night = !!d.night;
     // the duck of the draft: one step a frame
     P.duck = duckStep(P.duck, !!(d.play && !(d.night && S().kaia_night === 2) && S().kaia_anim));
 }
@@ -555,6 +696,7 @@ function fit() {
     if (w > 0 && (!view || view.L.W !== w)) view = fitCanvas($("#cv"), w);
     if (!view2) view2 = fitCanvas($("#cv2"), 240);
     sizeTiles();
+    if (P.open) setSheet(true);
 }
 
 function setSrc(v) {
@@ -571,7 +713,7 @@ function setLive(v) {
     if (mirrorWanted()) mirrorLoop();
 }
 
-function play(name, over) {
+function play(name) {
     if (name === "off") {
         P.M = null;
         markKs();
@@ -579,34 +721,45 @@ function play(name, over) {
     }
     const s = S();
     if (!s.kaia_anim) {
-        toast("Анимации выключены: выберите стиль в группе «Кая»");
+        toast("Анимации выключены: выберите стиль во вкладке «Кая»");
         return;
     }
     if (P.src === "now") setSrc("draft");
-    const anim = ANIM_NAMES.indexOf(name);
-    P.M = Object.assign({ anim, t0: performance.now() }, over || {});
-    if (RM) P.M.still = anim === A_WAKE ? (wakeLength(wakeId(s, P.M.wake != null ? P.M.wake : s.kaia_wake), P.M.speed || s.kaia_wake_speed) / 2) | 0 : isState(anim) ? 1200 : (shot_ms[(s.kaia_anim || 1) - 1][anim - 3] / 2) | 0;
+    const anim = ANIM_NAMES.indexOf(name), len = lenOf(anim, s[LOOK_KEYS[anim]], s);
+    P.M = { anim, t0: performance.now() };
+    if (RM) P.M.still = isState(anim) ? 1200 : (len / 2) | 0;
     markKs();
 }
 
 function markKs() {
-    $$("[data-ks]").forEach((c) => c.classList.toggle("on", !!P.M && c.dataset.ks === ANIM_NAMES[P.M.anim]));
+    $$("[data-ks]").forEach((c) => {
+        const k = c.dataset.ks;
+        c.classList.toggle("on", k === "off" ? !P.M : k !== "cur" && +k === P.ev);
+    });
+    // the phone's chips scroll sideways: the event's one in view
+    const c = $('#ks [data-ks="' + P.ev + '"]'), sc = c.parentNode;
+    if (sc.scrollWidth > sc.clientWidth + 2 && (c.offsetLeft < sc.scrollLeft || c.offsetLeft + c.offsetWidth > sc.scrollLeft + sc.clientWidth)) sc.scrollLeft = c.offsetLeft - sc.offsetLeft - 8;
 }
 
-// ================= the gallery =================
+// ================= the tiles and the thumbnails: they animate only while visible =================
 
 let tileIO = null;
 const seen = new Set();
 
 function bindTiles() {
-    tiles = $$(".tile canvas").map((c) => ({ c, id: +c.closest(".tile").dataset.tw, t0: performance.now() - +c.closest(".tile").dataset.tw * 130, v: null, w: 0, play: false }));
+    const now = performance.now();
+    tiles = $$(".tile canvas,.er canvas").map((c) => {
+        if (c.dataset.th != null) return { c, n: +c.dataset.th, id: -1, t0: now - +c.dataset.th * 230, v: null, w: 0, play: false };
+        const [n, id] = c.closest(".tile").dataset.tc.split(":").map(Number);
+        return { c, n, id, t0: now - id * 370, v: null, w: 0, play: false };  // spread over the cycle: some play while others pause
+    });
     if ("IntersectionObserver" in window) {
         if (tileIO) tileIO.disconnect();
         seen.clear();
         tileIO = new IntersectionObserver((es) => es.forEach((e) => (e.isIntersecting ? seen.add(e.target) : seen.delete(e.target))));
         tiles.forEach((t) => tileIO.observe(t.c));
     }
-    sizeTiles();
+    requestAnimationFrame(sizeTiles);
 }
 
 function sizeTiles() {
@@ -620,13 +773,13 @@ function sizeTiles() {
     tilesTick(true);
 }
 
-// the clock under the tiles: the draft's background and time, with any style a wake can play over
+// the clock under the tiles: the draft's background and time, with a style the looks can play over
 function tileBase() {
     const s0 = S(), s = Object.assign({}, s0, { kaia_anim: s0.kaia_anim || 1, kaia_night: s0.kaia_night === 2 ? 1 : s0.kaia_night });
     const tm = timeNow(), night = nightFor(s, tm);
     const base = new BallMatrix();
     renderFrame(base, s, { ...tm, night, play: null, duck: 255 });
-    return { s, night, base, gain: gainOf(brightNow(s, lightNow())) };
+    return { s, night, base, gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1) };
 }
 
 function overlayOn(b, play) {
@@ -637,47 +790,20 @@ function overlayOn(b, play) {
     return work.leds;
 }
 
-function tilesTick(force) {
-    const live = tiles.filter((t) => t.v && t.c.isConnected && t.c.offsetParent && (!tileIO || seen.has(t.c) || force));
+// a tile plays its look, a thumbnail its event's choice: a wake with 1.5 s of listening after it, a one-shot and a
+// pause, a state on and on
+// half: 0 or 1 paints every other tile (the loop alternates, so each tile still moves 10 times a second)
+function tilesTick(force, half) {
+    const live = tiles.filter((t, k) => t.v && t.c.isConnected && t.c.offsetParent && (!tileIO || seen.has(t.c) || force) && (half == null || (k & 1) === half));
     if (!live.length) return;
-    const b = tileBase(), now = performance.now();
+    const b = tileBase(), s = b.s, now = performance.now();
     for (const tl of live) {
-        const id = wakeId(b.s, tl.id), len = wakeLength(id, b.s.kaia_wake_speed), cyc = len + 1500;
         if (RM && !tl.play && !force) continue;
-        let el = RM && !tl.play ? (len / 2) | 0 : (now - tl.t0) % cyc;
-        if (RM && tl.play && now - tl.t0 > cyc) {
-            tl.play = false;
-            el = (len / 2) | 0;
-        }
-        paint(tl.v, overlayOn(b, { anim: A_WAKE, style: b.s.kaia_anim, wake: tl.id, speed: b.s.kaia_wake_speed, t: el, color: null }), b.gain);
-    }
-}
-
-function filmSoon() {
-    clearTimeout(filmT);
-    filmT = setTimeout(buildFilm, 350);
-}
-
-function buildFilm() {
-    const root = $("#filmbody");
-    if (!root || !root.offsetParent) return;
-    const b = tileBase(), cols = innerWidth <= 520 ? 3 : 6, Wd = Math.max(60, Math.floor((root.clientWidth - (cols - 1) * 6) / cols) - 8);
-    root.innerHTML = "";
-    for (let id = 1; id < WAKE_COUNT; id++) {
-        const box = document.createElement("div");
-        box.className = "shot";
-        box.innerHTML = '<div class="nm">№ ' + id + " · " + WAKE_NAMES[id] + "<span>" + fmtS(wake_ms[id]) + ' при 1×</span></div><div class="frames"></div>';
-        const fr = box.lastChild;
-        for (let k = 0; k < 6; k++) {
-            const u = Math.round((wake_ms[id] * (k + 0.5)) / 6), cell = document.createElement("div"), c = document.createElement("canvas");
-            cell.appendChild(c);
-            cell.insertAdjacentHTML("beforeend", "<small>" + (u / 1000).toFixed(2).replace(".", ",") + " с</small>");
-            fr.appendChild(cell);
-            const v = fitCanvas(c, Wd);
-            v.simple = true;
-            paint(v, overlayOn(b, { anim: A_WAKE, style: b.s.kaia_anim, wake: id, speed: 100, t: u, color: null }), b.gain);
-        }
-        root.appendChild(box);
+        const n = tl.n, look = tl.id < 0 ? s[LOOK_KEYS[n]] : tl.id, len = lenOf(n, look, s), cyc = isState(n) ? 0 : len + (n === A_WAKE ? 1500 : 1100);
+        let el = RM && !tl.play ? (isState(n) ? 1200 : (len / 2) | 0) : now - tl.t0;
+        if (cyc) el %= cyc;
+        if (RM && tl.play && now - tl.t0 > (cyc || 3000)) tl.play = false;
+        paint(tl.v, overlayOn(b, { anim: n, style: s.kaia_anim, look, lk: s.kaia_listen, speed: s.kaia_wake_speed, t: el, color: null, ms: 1e9 }), b.gain);
     }
 }
 
@@ -691,9 +817,10 @@ function loop(now) {
     if (now - lastT < 48) return;
     lastT = now;
     draw();
-    if (now - lastTiles >= 98) {
+    if (now - lastTiles >= 48) {
         lastTiles = now;
-        tilesTick(false);
+        tilesTick(false, (P.frames || 0) & 1);
+        if (P.CL) clUI();
     }
     if (now - lastLive >= 500) {
         lastLive = now;
@@ -839,26 +966,55 @@ function showChanges() {
     modal('<h3>Не сохранено</h3><ul class="chl">' + Object.keys(DRAFT).map((k) => "<li><b>" + esc(FLD[k].g + " · " + FLD[k].l) + "</b><span>" + esc(fmtAny(k, SAVED[k])) + " → " + esc(fmtAny(k, DRAFT[k])) + "</span></li>").join("") + '</ul><div class="acts"><button class="btn" id="mc">Закрыть</button></div>', () => ($("#mc").onclick = closeModal));
 }
 
-// «Показать на часах»: a try-out, nothing is saved
+// ================= «Показать на часах»: the event in view with the draft's choice, nothing saved =================
+
+const clText = (cl) => (cl.done ? "Сыграно на часах: " + cl.label + ". Ничего не сохранено." : "Идёт на часах: " + cl.label + " · ещё " + fmtS(Math.max(0, cl.t0 + cl.dur - performance.now())));
+
 async function onclock() {
-    const s = S();
+    const s = S(), n = P.ev, name = ANIM_NAMES[n];
     if (!s.kaia_anim) {
-        toast("Анимации выключены: выберите стиль в группе «Кая»");
+        toast("Анимации выключены: выберите стиль во вкладке «Кая»");
         return;
     }
     if (P.conn !== "ok") {
         toast("Нет связи с часами");
         return;
     }
-    const q = { style: s.kaia_anim, wake: s.kaia_wake, speed: s.kaia_wake_speed };
-    play("wake");
+    const q = tryOut(name, s), c = q.look;
+    const dur = isState(n) ? TRY_STATE_MS : lenOf(n, c, s);
+    P.CL = { n, label: EV[n][0] + " · " + (c ? c + " " + lookName(n, c) : "Как у стиля"), t0: performance.now(), dur, done: false };
+    play(name);
+    clUI();
     try {
-        await api.anim("wake", q);
-        toast("Играет на часах, ничего не сохраняется<br><code>GET kaia/anim?name=wake&amp;style=" + q.style + "&amp;wake=" + q.wake + "&amp;speed=" + q.speed + "</code>");
+        await api.anim(name, q);
+        toast("Играет на часах" + (isState(n) ? " " + TRY_STATE_MS / 1000 + " с" : "") + ", ничего не сохраняется<br><code>GET kaia/anim?" + esc(new URLSearchParams({ name, ...q }).toString()) + "</code>");
         setTimeout(() => poll(false), 400);
     } catch (e) {
+        P.CL = null;
+        clUI();
         failed(e);
     }
+}
+
+// what the try-out says, under both buttons, and the buttons while it plays
+function clUI() {
+    const cl = P.CL, now = performance.now();
+    if (cl && !cl.done && now >= cl.t0 + cl.dur) {
+        cl.done = true;
+        cl.te = now;
+    } else if (cl && cl.done && now - cl.te > 6000) P.CL = null;
+    const run = !!P.CL && !P.CL.done, txt = P.CL ? clText(P.CL) : "Играет на часах без сохранения.";
+    $$(".cl-st").forEach((e) => {
+        if (e.textContent !== txt) e.textContent = txt;
+    });
+    const h = run ? '<span class="long">Играет на часах…</span><span class="short">Играет…</span>' : TRY;
+    $$("[data-act=onclock]").forEach((b) => {
+        b.disabled = run;
+        if (b.dataset.h !== h) {
+            b.dataset.h = h;
+            b.innerHTML = h;
+        }
+    });
 }
 
 async function clickBtn(id, msg) {
@@ -871,10 +1027,40 @@ async function clickBtn(id, msg) {
     }
 }
 
+// ================= the unlit balls (⚙ on the preview): this page's look only =================
+
+const UP = { ivory: { c: IVORY, tr: 0 }, white: { c: 0xf2f2f2, tr: 0 }, graphite: { c: 0x4a4d55, tr: 0 }, glass: { c: 0xdfe6ee, tr: 70 } };
+
+function syncU() {
+    $("#ucol").value = hexs(unlit.c);
+    $("#utr").value = unlit.tr;
+    $("#utro").textContent = unlit.tr + " %";
+    $("#gear").classList.toggle("chg", unlit.c !== IVORY || unlit.tr !== 0);
+    $$("#upre [data-up]").forEach((b) => {
+        const p = UP[b.dataset.up];
+        b.classList.toggle("on", p.c === unlit.c && p.tr === unlit.tr);
+    });
+}
+
+function setU(c, tr) {
+    setUnlit({ c, tr }, store);
+    syncU();
+    tilesTick(true);
+}
+
+function popOpen(o) {
+    $("#pop").hidden = !o;
+    $("#gear").setAttribute("aria-expanded", String(o));
+    $("#gear").classList.toggle("on", o);
+    if (o) syncU();
+}
+
 // ================= events =================
 
 document.addEventListener("input", (e) => {
     const t = e.target, k = t.dataset && t.dataset.k;
+    if (t.id === "ucol") return setU(unhex(t.value), unlit.tr);
+    if (t.id === "utr") return setU(unlit.c, +t.value);
     if (t.dataset && t.dataset.w) {
         W[t.dataset.w] = t.value;
         return;
@@ -890,21 +1076,26 @@ document.addEventListener("input", (e) => {
     if (t.type === "range") {
         const o = t.closest(".fld").querySelector("output");
         if (o) o.textContent = fmtVal(k, v);
-        if (k === "kaia_wake_speed") $$("[data-sp]").forEach((b) => b.classList.toggle("on", +b.dataset.sp === v));
     }
-    if (t.type === "checkbox" || t.tagName === "SELECT") renderGroup(groupOf(k));
-    if ((k === "kaia_color" || k === "kaia_anim") && !P.M && S().kaia_anim) play("listening");
+    if (t.type === "checkbox" || (t.tagName === "SELECT" && !k.startsWith("kaia_"))) renderGroup(groupOf(k));
+    if (k === "kaia_color" && !P.M && S().kaia_anim) play(ANIM_NAMES[P.ev]);
 });
 
 document.addEventListener("click", (e) => {
+    if (!$("#pop").hidden && !e.target.closest("#pop,#gear")) popOpen(false);
     const t = e.target.closest("button,a,.sb-t");
     if (!t) return;
     const d = t.dataset;
+    if (t.id === "gear") return popOpen($("#pop").hidden);
+    if (t.id === "ubreset") return setU(IVORY, 0);
+    if (d.up) return setU(UP[d.up].c, UP[d.up].tr);
     if (d.rv) {
         delete DRAFT[d.rv];
         renderGroup(groupOf(d.rv));
         return;
     }
+    if (d.pick != null) return setVal("back_pal", +d.pick);
+    if (d.pstep) return stepPal(+d.pstep);
     if (d.step) {
         const k = d.k2, f = FLD[k], v = Math.max(f.min, Math.min(f.max, S()[k] + +d.step));
         setVal(k, v);
@@ -913,34 +1104,52 @@ document.addEventListener("click", (e) => {
     }
     if (d.tab) {
         showTab(d.tab);
-        if (d.tab === "kaia" && !P.M && P.conn !== "offline" && S().kaia_anim) setTimeout(() => play("wake"), 250);
+        if (d.tab === "kaia" && !P.M && P.conn !== "offline" && S().kaia_anim) setTimeout(() => play(ANIM_NAMES[P.ev]), 250);
         return;
     }
-    if (d.tw != null) {
-        const id = +d.tw;
-        setVal("kaia_wake", id);
-        const tl = tiles.find((x) => x.id === id);
+    if (d.sty != null) {
+        setVal("kaia_anim", +d.sty);
+        renderGroup(groupOf("kaia_anim"));
+        if (+d.sty) play(ANIM_NAMES[P.ev]);
+        else play("off");
+        return;
+    }
+    if (d.tc) {
+        const [n, id] = d.tc.split(":").map(Number);
+        P.ev = n;
+        setVal(LOOK_KEYS[n], id);
+        const tl = tiles.find((x) => x.n === n && x.id === id);
         if (tl && RM) {
             tl.play = true;
             tl.t0 = performance.now();
         }
-        play("wake");
+        markKs();
+        hsum();
+        play(ANIM_NAMES[n]);
         return;
     }
+    if (d.ev != null) return setEvent(+d.ev, true);
+    if (d.close != null) return setSheet(false);
     if (d.sp) {
         setVal("kaia_wake_speed", +d.sp);
-        renderGroup(groupOf("kaia_wake_speed"));
+        $$('[data-k="kaia_wake_speed"]').forEach((r) => (r.value = +d.sp));
         play("wake");
         return;
     }
-    if (d.ks) return play(d.ks);
+    if (d.ks) {
+        if (d.ks === "off") play("off");
+        else if (d.ks === "cur") play(ANIM_NAMES[P.ev]);
+        else setEvent(+d.ks, false);
+        return;
+    }
     if (d.s) return setSrc(d.s);
     if (d.l) return setLive(d.l);
     if (d.d != null) {
-        P.forceNight = +d.d;
-        $$("#day button").forEach((b) => b.classList.toggle("on", b === t));
+        // on the phone one button shows the state and switches it
+        const narrow = matchMedia("(max-width:900px)").matches;
+        P.forceNight = narrow && t.classList.contains("on") ? 1 - +d.d : +d.d;
+        refreshLive();
         tilesTick(true);
-        filmSoon();
         return;
     }
     if (d.m) return mockMode(d.m);
@@ -1036,15 +1245,21 @@ $("#cv").addEventListener("pointerup", () => (drag = false));
 
 if (MOCK) $("#mockbar").hidden = false;
 buildGroups();
-$("#ks").innerHTML = KS.map((k) => '<button class="chip" data-ks="' + k[0] + '">' + k[1] + "</button>").join("");
+$("#ks").innerHTML = EV.map((e, n) => '<button class="chip" data-ks="' + n + '">' + e[0] + "</button>").join("") + '<button class="chip" data-ks="off">Стоп</button>';
 renderAll();
 showTab("kaia");
 setSrc("draft");
+syncU();
+clUI();
 new ResizeObserver(() => requestAnimationFrame(fit)).observe($("#wall"));
+window.addEventListener("resize", () => requestAnimationFrame(sizeTiles));
 if ("IntersectionObserver" in window) new IntersectionObserver((es) => document.body.classList.toggle("minion", !es[0].isIntersecting && innerWidth > 900)).observe($("#hero"));
 fit();
 banners();
 poll(true);
 requestAnimationFrame(loop);
-setTimeout(() => S().kaia_anim && !P.M && play("wake"), 600);
-window.ballclock = { P, api, S, play, setSrc, setLive, showTab, mock, sync, tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; } };
+setTimeout(() => S().kaia_anim && !P.M && play(ANIM_NAMES[P.ev]), 600);
+window.ballclock = {
+    P, api, S, play, setSrc, setLive, showTab, setEvent, setSheet, mock, sync, unlit, setU,
+    tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; }, get tiles() { return tiles; },
+};

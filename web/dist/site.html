@@ -35,7 +35,7 @@ a{color:var(--acc)}
 .ban.err{border-color:rgba(255,59,48,.55);background:rgba(255,59,48,.1)}.ban.warn{border-color:rgba(255,176,32,.55);background:rgba(255,176,32,.09)}.ban.acc{border-color:rgba(0,209,255,.5);background:rgba(0,209,255,.08)}
 #ban{padding:0 16px}
 .b{max-width:1280px;margin:0 auto;padding:0 16px 130px}
-.hero{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,1fr);gap:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.hero{position:relative;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,1fr);gap:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
 .hl,.hr{min-width:0}
 .pvh{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap}
 .wall{position:relative;overflow:hidden;border-radius:10px;background:radial-gradient(120% 140% at 50% 40%,#1b1f26 0,#0c0e11 70%);padding:24px 8px 10px;border:1px solid var(--line)}
@@ -50,6 +50,15 @@ canvas{display:block;max-width:100%}
 .ksg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .ksg .chip{border-radius:10px;text-align:left;padding:8px 12px}
 .hsum{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--muted)}.hsum b{color:var(--text)}
+.pvr{display:flex;gap:8px;align-items:center}
+.pvf{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.cl-st{color:var(--muted);font-size:13px;line-height:1.3}
+.short{display:none}
+.pop{position:absolute;right:14px;top:60px;z-index:30;width:min(330px,calc(100% - 28px));background:#242a31;border:1px solid var(--line2);border-radius:14px;padding:14px;box-shadow:0 12px 36px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:12px}
+.pop h4{font-size:15px}.pop small{color:var(--muted);font-size:12.5px;line-height:1.3;display:block}
+.prow{display:flex;align-items:center;gap:12px;justify-content:space-between}.prow output{color:var(--muted);font-variant-numeric:tabular-nums}
+.pre{display:flex;gap:6px;flex-wrap:wrap}
+#gear{background:var(--field)}
 .mini{position:fixed;top:0;left:0;right:0;z-index:45;display:none;gap:14px;align-items:center;justify-content:center;background:rgba(14,17,21,.96);border-bottom:1px solid var(--line2);padding:8px 16px;backdrop-filter:blur(6px)}
 body.minion .mini{display:flex}
 .mini canvas{width:240px}.mc{display:flex;flex-direction:column;gap:6px}.ks2{display:flex;gap:6px}
@@ -77,32 +86,65 @@ select,input[type=text],input[type=password],input[type=time]{background:var(--f
 input[type=text],input[type=password]{width:100%}
 input[type=color]{width:46px;height:36px;padding:0;border:1px solid var(--line2);border-radius:10px;background:var(--field)}
 input[type=range]{accent-color:var(--acc);width:100%;min-height:28px}
-.rng{display:flex;align-items:center;gap:12px}.rng output{min-width:52px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+.rng{display:flex;align-items:center;gap:12px}.rng output{min-width:52px;white-space:nowrap;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
 .sw{position:relative;display:inline-block;width:46px;height:26px}
 .sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;z-index:1}
 .sw i{position:absolute;inset:0;border-radius:99px;background:var(--tab);border:1px solid var(--line2)}
 .sw i::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:.15s}
 .sw input:checked+i{background:var(--acc);border-color:transparent}.sw input:checked+i::after{left:22px;background:var(--on)}
-.pal{display:flex;flex-direction:column;gap:6px}.palbar{display:block;height:10px;border-radius:6px;border:1px solid var(--line)}
+.ico{width:40px;height:40px;flex:none;border-radius:10px;border:1px solid var(--line2);background:var(--tab);color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:20px;line-height:1;padding:0;position:relative}
+.ico svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ico:hover{color:var(--text)}.ico.on{border-color:var(--acc);color:var(--acc)}
+.ico.chg::after{content:"";position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--acc)}
+.gbody.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 28px}.gbody.three .fld{border-top:0}
+.gbody.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 32px;align-items:start}.gbody.two .fld:first-child{border-top:0}
+.gbody.two .fld[data-f=back_pal]{grid-column:1/-1;order:-1;border-top:0;border-bottom:1px solid var(--line);padding-top:4px}
+.bk{display:flex;align-items:center;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:8px}
+.bkc{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.bkt{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.bkt b{font-size:16px}.bkt small{color:var(--muted);font-size:12.5px}
+.bkc .pb{height:34px}
+.pcs{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px}.pcs .pb{flex:1;height:10px;min-width:50px}
+.pb{display:block;position:relative;height:30px;border-radius:6px;border:1px solid var(--line)}
+.brows{display:flex;flex-direction:column;margin-top:6px}
+.brow h4{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px;display:flex;gap:8px;align-items:baseline}.brow h4 small{font-size:12px;text-transform:none;letter-spacing:0;font-weight:400}
+.bscr{position:relative;display:flex;flex-wrap:wrap;gap:8px}
+.pc{flex:0 0 auto;width:116px;display:flex;flex-direction:column;gap:5px;padding:6px;border-radius:10px;border:1px solid var(--line);background:var(--field);cursor:pointer;text-align:left;color:inherit;font:inherit}
+.pc:hover{border-color:var(--line2)}.pc.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+.pc .pb{height:34px}.pc span{font-size:12.5px;line-height:1.25;overflow-wrap:anywhere}
+.pc.sv .pb::after{content:"";position:absolute;right:5px;top:50%;margin-top:-5px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #0b0d10;box-shadow:0 0 0 1px rgba(255,255,255,.5)}
 .step{display:inline-flex;align-items:center;gap:4px}.step button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line2);background:var(--tab);cursor:pointer;font-size:18px}.step output{min-width:46px;text-align:center}
 .val{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;overflow-wrap:anywhere}
 .led{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}.led i{width:10px;height:10px;border-radius:50%;background:var(--err)}.led.on i{background:var(--ok);box-shadow:0 0 8px var(--ok)}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
+.kopts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 28px}
+.kopts .fld{border-top:0;border-bottom:1px solid var(--line)}
+.kopts.one{display:block}.kopts.one .fld{border-bottom:0}
+.stseg{display:flex}.stseg button{flex:1}
+.sub{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.evh{display:flex;flex-direction:column;gap:2px;margin:12px 0 8px}.evh small{color:var(--muted);font-size:13px}
+.kb{display:grid;grid-template-columns:minmax(250px,320px) minmax(0,1fr);gap:16px;align-items:start}
+.evl{display:flex;flex-direction:column;gap:8px}
+.er{position:relative;display:flex;align-items:center;gap:12px;padding:8px 12px 8px 8px;border-radius:12px;border:1px solid var(--line2);background:var(--field);cursor:pointer;text-align:left;min-height:56px;color:inherit;font:inherit}
+.er canvas{width:84px;flex:none;border-radius:6px}
+.er .et{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}.er .et small{color:var(--muted);font-size:12.5px}
+.er .chev{color:var(--muted);font-size:22px;line-height:1}
+.er.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset;background:var(--tab)}
+.er.chg .et b::after{content:" ●";color:var(--acc);font-size:10px}
+.evd{min-width:0;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px}
+.evdh{display:flex;gap:12px;align-items:center}.evdh .back{display:none}
+.evt h3{font-size:18px}.evt small{color:var(--muted);font-size:13.5px}
+.gh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:14px 0 8px}.gh h4{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}.gh small{color:var(--muted);font-size:12.5px}
+.note{margin:8px 0;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,176,32,.55);background:rgba(255,176,32,.09);color:var(--text);font-size:13.5px}
+.gal.dis .wg{opacity:.4;pointer-events:none}
+.gfoot{display:flex;gap:6px 14px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.gfoot .cl-st{flex:1 1 200px}
+.pl{position:absolute;top:10px;right:10px;font:600 10.5px/1.5 "Segoe UI",system-ui,sans-serif;font-style:normal;padding:0 7px;border-radius:99px;background:rgba(0,0,0,.62);color:var(--text)}
 .wg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.tile{display:flex;flex-direction:column;gap:6px;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:6px;cursor:pointer;text-align:left;min-width:0}
+.tile{position:relative;display:flex;flex-direction:column;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px;cursor:pointer;text-align:left;min-width:0}
 .tile:hover{border-color:var(--line2)}.tile.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
 .tile canvas{border-radius:6px;width:100%}
 .tn{display:flex;flex-direction:column;line-height:1.25;min-width:0}.tn b{font-weight:600;font-size:13.5px;overflow-wrap:anywhere}.tn i{font-style:normal;color:var(--muted);font-size:12px}
 .spd .row{display:flex;gap:6px;flex-wrap:wrap}
-.doc{margin-top:10px;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-.doc h4{font-size:14px;margin-bottom:4px}.doc h4 span{color:var(--muted);font-weight:400;margin-left:6px;font-size:12.5px}
-.doc p{margin:4px 0;color:var(--muted);font-size:13px}
-pre{margin:6px 0;padding:8px 10px;background:#0e1115;border:1px solid var(--line);border-radius:8px;font:12px/1.5 Consolas,"Cascadia Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:#cfd6dd}
-details.all{margin-top:10px}details.all summary{cursor:pointer;color:var(--acc);padding:4px 0}
-.film .shot{margin-top:10px}.film .nm{font-weight:600;margin-bottom:4px}.film .nm span{color:var(--muted);font-weight:400;font-size:13px;margin-left:6px}
-.frames{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
-.frames div{background:#0c0e11;border:1px solid var(--line);border-radius:6px;padding:3px}
-.frames canvas{width:100%;border-radius:3px}.frames small{display:block;text-align:center;color:var(--muted);font:11px Consolas,monospace}
 .card>.hint{margin:0 0 6px}
 .sbar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:40;display:flex;gap:10px;align-items:center;width:min(720px,calc(100% - 24px));background:#242a31;border:1px solid var(--acc);border-radius:14px;padding:10px 12px;box-shadow:0 8px 30px rgba(0,0,0,.55)}
 .sbar[hidden]{display:none}
@@ -118,10 +160,22 @@ details.all{margin-top:10px}details.all summary{cursor:pointer;color:var(--acc);
 .off .grp{opacity:.5;pointer-events:none}.off .wall canvas{filter:saturate(.3)}
 .auth .wall canvas{filter:blur(3px)}
 footer{max-width:1280px;margin:0 auto;padding:0 16px 140px;color:var(--muted);font-size:13px;display:flex;gap:16px;flex-wrap:wrap}
+@media(min-width:901px){.er .chev{display:none}}
 @media(max-width:900px){
 .b{padding:0 12px 150px}
 .hero{grid-template-columns:minmax(0,1fr);gap:6px;position:sticky;top:0;z-index:20;margin:0 -12px 10px;border-radius:0 0 16px 16px;padding:8px 12px;border-top:0}
-.hr h3,.hsum,.hr .pvf,.hl .hint{display:none}
+.hr{flex-direction:row;align-items:center;gap:8px}.hr h3,.hsum,.hl .hint,.pvf .long,.pvf .cl-st{display:none}
+.hr .ksg{flex:1;min-width:0}.pvf .short{display:inline}.pvf{flex:none}
+.pvh{flex-wrap:nowrap}.seg button{padding:5px 8px}
+#day button:not(.on){display:none}
+.pop{position:fixed;left:12px;right:12px;bottom:136px;top:auto;width:auto}
+.kb{display:block}
+.evd{display:none}
+.kb.open .evd{display:flex;position:fixed;left:0;right:0;bottom:0;top:var(--hh,330px);z-index:55;flex-direction:column;background:var(--card);border:0;border-top:1px solid var(--acc);border-radius:16px 16px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.5);padding:0}
+.evd .evdh{flex:none;padding:10px 12px;border-bottom:1px solid var(--line)}.evdh .back{display:inline-flex;align-items:center}
+.evd #evg{flex:1;min-height:0;overflow-y:auto;padding:0 12px 8px}
+.evd .gfoot{flex:none;margin:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#12161a;border-top:1px solid var(--line2);border-radius:0}
+body.sheet{overflow:hidden}
 .ksg{display:flex;overflow-x:auto;scrollbar-width:none;gap:6px}.ksg::-webkit-scrollbar{display:none}
 .ksg .chip{flex:none;border-radius:99px;padding:5px 12px}
 .wall{padding:22px 4px 6px}
@@ -135,34 +189,37 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 140px;color:var(--muted);fo
 .fld.is-chg::before{left:-12px}
 .wg{grid-template-columns:repeat(3,minmax(0,1fr))}
 body.minion .mini{display:none}
+.gbody.three,.gbody.two{display:block}
+.pc{width:104px;scroll-snap-align:start}
+.bscr{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;padding:2px}.bscr::-webkit-scrollbar{display:none}
 }
 @media(min-width:521px) and (max-width:900px){.hl{max-width:560px;width:100%;margin:0 auto}.ksg{justify-content:center}}
-@media(max-width:520px){.wg{grid-template-columns:repeat(2,minmax(0,1fr))}.seg button{padding:5px 8px}.card{padding:12px}.frames{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:520px){.wg{grid-template-columns:repeat(2,minmax(0,1fr))}.seg button{padding:5px 8px}.card{padding:12px}}
 [hidden]{display:none!important}
 .top .btn{min-height:32px;padding:4px 10px}
 .wall canvas{touch-action:pan-y}
 .tile{color:inherit;font:inherit}
 code{font:12px Consolas,monospace;color:var(--acc);overflow-wrap:anywhere}
 @media(max-width:900px){
-.seg button,.chip,.btn,.btn.sm,.top .btn,.tab{min-height:44px}
+.seg button,.chip,.btn,.btn.sm,.top .btn,.tab,.er{min-height:44px}
 .chip{min-width:44px}
 select,input[type=text],input[type=password],input[type=time]{min-height:44px}
 input[type=color]{height:44px;width:52px}
 input[type=range]{min-height:44px}
-.step button{width:44px;height:44px}
+.step button,.ico{width:44px;height:44px}
 .rv{min-width:44px;min-height:44px;justify-content:center;align-items:center}
 .fld.is-chg .rv{display:inline-flex}
 .sw{height:44px;width:52px}.sw i{inset:9px 3px}
-footer a,details.all summary{display:inline-flex;align-items:center;min-height:44px}
+footer a{display:inline-flex;align-items:center;min-height:44px}
 }</style></head><body>
 <div class="mock" id="mockbar" hidden><b>Макет</b><span>часы на странице, данные примера:</span><span class="seg" id="mk"><button data-m="ok" class="on">Норма</button><button data-m="auth">Пароль (401)</button><button data-m="offline">Нет связи</button><button data-m="ap">Точка доступа</button><button data-m="upd">Есть обновление</button><button data-m="text">Бегущая строка</button></span></div>
 <header class="top"><span class="logo"></span><h1>BallClock</h1><span class="ver" id="ver">…</span><span class="sp"></span><span class="stat"><i class="dot warn" id="sdot"></i><span id="stxt">подключаюсь…</span></span><button class="btn sm" id="logout" hidden>Выйти</button></header>
 <div id="ban"></div>
-<div class="mini" id="mini"><canvas id="cv2"></canvas><div class="mc"><span class="seg"><button data-s="now">Сейчас</button><button data-s="draft">Черновик</button><button data-s="cmp">Сравнить</button></span><div class="ks2"><button class="chip" data-ks="wake">Пробуждение</button><button class="chip" data-ks="off">Стоп</button></div></div></div>
+<div class="mini" id="mini"><canvas id="cv2"></canvas><div class="mc"><span class="seg"><button data-s="now">Сейчас</button><button data-s="draft">Черновик</button><button data-s="cmp">Сравнить</button></span><div class="ks2"><button class="chip" data-ks="cur">Играть снова</button><button class="chip" data-ks="off">Стоп</button></div></div></div>
 <div class="b">
 <section class="hero" id="hero">
 <div class="hl">
-<div class="pvh"><span class="seg" id="src"><button data-s="now">Сейчас</button><button data-s="draft" class="on">Черновик</button><button data-s="cmp">Сравнить</button></span><span class="seg" id="day"><button data-d="0">День</button><button data-d="1">Ночь</button></span><span class="seg" id="live" hidden><button data-l="calc" class="on">Расчёт</button><button data-l="mirror">Зеркало</button></span></div>
+<div class="pvh"><span class="seg" id="src"><button data-s="now">Сейчас</button><button data-s="draft" class="on">Черновик</button><button data-s="cmp">Сравнить</button></span><span class="pvr"><span class="seg" id="day"><button data-d="0">День</button><button data-d="1">Ночь</button></span><span class="seg" id="live" hidden><button data-l="calc" class="on">Расчёт</button><button data-l="mirror">Зеркало</button></span><button class="ico" id="gear" aria-label="Шарики без света" aria-expanded="false" title="Шарики без света"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></span></div>
 <div class="wall" id="wall"><canvas id="cv"></canvas><span class="badge" id="badge"></span><span class="lbl l">Сейчас</span><span class="lbl r">Черновик</span></div>
 <small class="hint" id="pst"></small>
 </div>
@@ -170,7 +227,14 @@ footer a,details.all summary{display:inline-flex;align-items:center;min-height:4
 <h3>Кая на превью</h3>
 <div class="ksg" id="ks"></div>
 <div class="hsum" id="hsum"></div>
-<div class="pvf"><button class="btn pri" data-act="onclock">Показать на часах</button></div>
+<div class="pvf"><button class="btn pri" data-act="onclock"></button><small class="cl-st"></small></div>
+</div>
+<div class="pop" id="pop" hidden>
+<div class="prow"><h4>Шарики без света</h4><button class="btn sm" id="ubreset">Как в v1.5.2</button></div>
+<small>Только вид этой страницы: хранится в этом браузере и на часы не отправляется. Действует на превью и на плитки.</small>
+<div class="pre" id="upre"><button class="chip" data-up="ivory">Слоновая кость</button><button class="chip" data-up="white">Белые</button><button class="chip" data-up="graphite">Графит</button><button class="chip" data-up="glass">Стекло</button></div>
+<div class="prow"><span>Цвет</span><input type="color" id="ucol" value="#c8c3b4" aria-label="Цвет шариков без света"></div>
+<div><div class="prow"><span>Прозрачность</span><output id="utro">0 %</output></div><input type="range" id="utr" min="0" max="100" value="0" aria-label="Прозрачность шариков без света"></div>
 </div>
 </section>
 <nav class="tabs" id="tabs"></nav>
@@ -181,150 +245,6 @@ footer a,details.all summary{display:inline-flex;align-items:center;min-height:4
 <div class="modal" id="modal" hidden></div>
 <div class="toast" id="toast" hidden></div>
 <script>(()=>{"use strict";
-function hash32(s) {
-let h = 0;
-for (const c of new TextEncoder().encode(s)) h = (h + (h << 5) + c) >>> 0;
-return h;
-}
-const keyId = (key) => hash32(key) & 0x1fffffff;
-const ID_WIFI_SAVE = hash32("wifi_save"), ID_CHECK_UPDATES = hash32("check_updates"), ID_OTA_UPDATE = hash32("ota_update");
-class AuthError extends Error {}
-class OfflineError extends Error {}
-class ClockApi {
-constructor(send, timeoutMs = 5000) {
-this.send = send;
-this.timeoutMs = timeoutMs;
-this.pass = "";
-this.tail = Promise.resolve();
-this.busy = 0;
-}
-call(path, params = {}) {
-const run = () => this.once(path, params);
-const p = this.tail.then(run, run);
-this.tail = p.catch(() => {});
-return p;
-}
-async once(path, params) {
-const qs = new URLSearchParams(params);
-if (this.pass) qs.set("auth", hash32(this.pass).toString(16));
-const q = qs.toString(), url = path + (q ? "?" + q : "");
-const ac = typeof AbortController === "function" ? new AbortController() : null;
-let timer = 0;
-this.busy++;
-try {
-const res = await Promise.race([
-this.send(url, ac && ac.signal),
-new Promise((_, no) => {
-timer = setTimeout(() => {
-if (ac) ac.abort();
-no(new OfflineError("timeout"));
-}, this.timeoutMs);
-}),
-]);
-if (res.status === 401) throw new AuthError("401");
-if (res.status < 200 || res.status > 299) throw new Error(path + ": HTTP " + res.status);
-return res.json;
-} catch (e) {
-if (e instanceof AuthError || e instanceof OfflineError || /HTTP/.test(e.message)) throw e;
-throw new OfflineError(e.message || "offline");
-} finally {
-clearTimeout(timer);
-this.busy--;
-}
-}
-state() {
-return this.call("kaia/state");
-}
-frame() {
-return this.call("kaia/frame");
-}
-wifi() {
-return this.call("kaia/wifi");
-}
-anim(name, extra = {}) {
-return this.call("kaia/anim", { name, ...extra });
-}
-set(id, raw) {
-return this.call("settings", { action: "set", id: (id >>> 0).toString(16), value: String(raw) });
-}
-click(id) {
-return this.call("settings", { action: "click", id: (id >>> 0).toString(16) });
-}
-}
-async function fetchSend(url, signal) {
-const res = await fetch(url, { cache: "no-store", signal });
-let json = null;
-if ((res.headers.get("content-type") || "").includes("json")) {
-try {
-json = await res.json();
-} catch {
-json = null;
-}
-}
-return { status: res.status, json };
-}
-function parseLeds(hex) {
-const out = new Uint32Array(128);
-if (typeof hex !== "string") return out;
-for (let i = 0; i < 128; i++) out[i] = parseInt(hex.substr(i * 6, 6), 16) || 0;
-return out;
-}
-function ledsHex(leds) {
-let s = "";
-for (let i = 0; i < 128; i++) s += (leds[i] >>> 0).toString(16).padStart(6, "0");
-return s;
-}
-const STEP = 5;  // φ candidates every 5 ms
-function parseTime(text) {
-const m = /(\d{1,2}):(\d{2}):(\d{2})/.exec(text || "");
-return m ? +m[1] * 3600 + +m[2] * 60 + +m[3] : 0;
-}
-class ClockSync {
-constructor() {
-this.ref = null;  // the first answer of the run: {sec, ms}
-this.last = null;
-this.cand = null;
-}
-add(sec, ms) {
-if (this.last && ms < this.last.ms) this.ref = null;  // the clock rebooted
-if (!this.ref) {
-this.ref = { sec, ms };
-this.cand = [];
-for (let p = 0; p < 1000; p += STEP) this.cand.push(p);
-} else {
-const want = (((sec - this.ref.sec) % 86400) + 86400) % 86400;
-const keep = this.cand.filter((p) => Math.floor((ms - p) / 1000) - Math.floor((this.ref.ms - p) / 1000) === want);
-if (keep.length) this.cand = keep;
-else this.reset(sec, ms);  // NTP stepped: start over from this answer
-}
-this.last = { sec, ms };
-}
-reset(sec, ms) {
-this.ref = null;
-this.add(sec, ms);
-}
-phase() {
-const c = this.cand;
-if (!c || !c.length || c.length * STEP >= 1000) return 0;
-let gap = 0, at = 0;
-for (let k = 0; k < c.length; k++) {
-const next = k + 1 < c.length ? c[k + 1] : c[0] + 1000, g = next - c[k];
-if (g > gap) gap = g, at = k + 1;
-}
-const start = c[at % c.length], span = 1000 - gap + STEP;
-return Math.round(start + span / 2 - STEP / 2) % 1000;
-}
-spread() {
-return this.cand ? Math.min(1000, this.cand.length * STEP) : 1000;
-}
-at(millis) {
-if (!this.last) return { hour: 0, minute: 0, second: 0, ms: 0 };
-const p = this.phase();
-const d = Math.floor((millis - p) / 1000) - Math.floor((this.last.ms - p) / 1000);
-const s = ((this.last.sec + d) % 86400 + 86400) % 86400;
-return { hour: (s / 3600) | 0, minute: ((s % 3600) / 60) | 0, second: s % 60, ms: (((millis - p) % 1000) + 1000) % 1000 };
-}
-}
 const b_m16_interleave = [0, 49, 49, 41, 90, 27, 117, 10];
 function sin8(theta) {
 theta &= 255;
@@ -705,6 +625,31 @@ function dimAll(k) {
 if (k >= 255) return;
 for (let i = 0; i < MX_LED_AMOUNT; i++) matrix.setLED(i, dim(matrix.getLED(i), k));
 }
+function ballRX(x, row) {
+if (row < 0 || row > 6) return -1;
+return ledDiag((x - 2 + row) >> 1, row);
+}
+function ballAt(p, q) {
+if (p < -80 || p > 80 || q < -24 || q > 24) return -1;
+return ballRX(((p + 76) * 2 + 4) / 8 | 0, ((q + 21) * 2 + 7) / 14 | 0);
+}
+function oct(dx, dy) {
+dx = abs(dx);
+dy = abs(dy);
+return dx > dy ? dx + (dy * 3 >> 3) : dy + (dx * 3 >> 3);
+}
+function segDist(p, q, s, v) {
+const dx = s[2] - s[0], dy = s[3] - s[1];
+let u = ((p - s[0]) * dx + (q - s[1]) * dy) * 256 / (dx * dx + dy * dy) | 0;
+u = u < 0 ? 0 : u > v ? v : u;
+return oct(p - s[0] - (dx * u / 256 | 0), q - s[1] - (dy * u / 256 | 0));
+}
+function hash8(n) {
+return Math.imul(n + 1, 2654435761) >>> 24;  // (uint32_t)(n + 1) * 2654435761u >> 24
+}
+function putb(i, color, a) {
+if (i >= 0) put(i, color, a);
+}
 function rippleState(n, t, col, k) {
 if (k <= 0) return;
 const c = n === A_THINKING ? mix(col, C_VIOLET, 128) : col;
@@ -993,317 +938,190 @@ default: sparksShot(n, t, du, col); break;
 }
 }
 buildTables();
-const NP = [
-151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225,
-140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, 190, 6, 148,
-247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32,
-57, 177, 33, 88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175,
-74, 165, 71, 134, 139, 48, 27, 166, 77, 146, 158, 231, 83, 111, 229, 122,
-60, 211, 133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244, 102, 143, 54,
-65, 25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169,
-200, 196, 135, 130, 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64,
-52, 217, 226, 250, 124, 123, 5, 202, 38, 147, 118, 126, 255, 82, 85, 212,
-207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28, 42, 223, 183, 170, 213,
-119, 248, 152, 2, 44, 154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9,
-129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104,
-218, 246, 97, 228, 251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241,
-81, 51, 145, 235, 249, 14, 239, 107, 49, 192, 214, 31, 181, 199, 106, 157,
-184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254, 138, 236, 205, 93,
-222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180,
-151];
-const s16 = (v) => (v << 16) >> 16;
-function grad16(hash, x, y, z) {
-hash &= 15;
-let u = hash < 8 ? x : y;
-let v = hash < 4 ? y : hash === 12 || hash === 14 ? x : z;
-if (hash & 1) u = s16(-u);
-if (hash & 2) v = s16(-v);
-return avg15(u, v);
-}
-function inoise16_raw(x, y, z) {
-const X = (x >>> 16) & 0xff, Y = (y >>> 16) & 0xff, Z = (z >>> 16) & 0xff;
-const A = (NP[X] + Y) & 255, AA = (NP[A] + Z) & 255, AB = (NP[A + 1] + Z) & 255;
-const B = (NP[X + 1] + Y) & 255, BA = (NP[B] + Z) & 255, BB = (NP[B + 1] + Z) & 255;
-let u = x & 0xffff, v = y & 0xffff, w = z & 0xffff;
-const xx = (u >> 1) & 0x7fff, yy = (v >> 1) & 0x7fff, zz = (w >> 1) & 0x7fff;
-const N = 0x8000;
-u = ease16InOutQuad(u);
-v = ease16InOutQuad(v);
-w = ease16InOutQuad(w);
-const X1 = lerp15by16(grad16(NP[AA], xx, yy, zz), grad16(NP[BA], s16(xx - N), yy, zz), u);
-const X2 = lerp15by16(grad16(NP[AB], xx, s16(yy - N), zz), grad16(NP[BB], s16(xx - N), s16(yy - N), zz), u);
-const X3 = lerp15by16(grad16(NP[AA + 1], xx, yy, s16(zz - N)), grad16(NP[BA + 1], s16(xx - N), yy, s16(zz - N)), u);
-const X4 = lerp15by16(grad16(NP[AB + 1], xx, s16(yy - N), s16(zz - N)), grad16(NP[BB + 1], s16(xx - N), s16(yy - N), s16(zz - N)), u);
-const Y1 = lerp15by16(X1, X2, v);
-const Y2 = lerp15by16(X3, X4, v);
-return lerp15by16(Y1, Y2, w);
-}
-function inoise16(x, y, z) {
-const ans = inoise16_raw(x >>> 0, y >>> 0, z >>> 0) + 19052;
-const pan = Math.imul(ans >>> 0, 440) >>> 0;
-return (pan >>> 8) & 0xffff;
-}
-const Black = 0x000000, Blue = 0x0000ff, DarkBlue = 0x00008b, SkyBlue = 0x87ceeb, LightBlue = 0xadd8e6, White = 0xffffff;
-const Maroon = 0x800000, DarkRed = 0x8b0000, Red = 0xff0000, Orange = 0xffa500;
-const SeaGreen = 0x2e8b57, MediumAquamarine = 0x66cdaa, Green = 0x008000, DarkGreen = 0x006400, ForestGreen = 0x228b22;
-const HeatColors_p = [0x000000, 0x330000, 0x660000, 0x990000, 0xcc0000, 0xff0000, 0xff3300, 0xff6600, 0xff9900, 0xffcc00, 0xffff00, 0xffff33, 0xffff66, 0xffff99, 0xffffcc, 0xffffff];
-const LavaColors_p = [Black, Maroon, Black, Maroon, DarkRed, DarkRed, Maroon, DarkRed, DarkRed, DarkRed, Red, Orange, White, Orange, Red, DarkRed];
-const PartyColors_p = [0x5500ab, 0x84007c, 0xb5004b, 0xe5001b, 0xe81700, 0xb84700, 0xab7700, 0xabab00, 0xab5500, 0xdd2200, 0xf2000e, 0xc2003e, 0x8f0071, 0x5f00a1, 0x2f00d0, 0x0007f9];
-const RainbowColors_p = [0xff0000, 0xd52a00, 0xab5500, 0xab7f00, 0xabab00, 0x56d500, 0x00ff00, 0x00d52a, 0x00ab55, 0x0056aa, 0x0000ff, 0x2a00d5, 0x5500ab, 0x7f0081, 0xab0055, 0xd5002b];
-const RainbowStripeColors_p = [0xff0000, 0, 0xab5500, 0, 0xabab00, 0, 0x00ff00, 0, 0x00ab55, 0, 0x0000ff, 0, 0x5500ab, 0, 0xab0055, 0];
-const CloudColors_p = [Blue, DarkBlue, DarkBlue, DarkBlue, DarkBlue, DarkBlue, DarkBlue, DarkBlue, Blue, DarkBlue, SkyBlue, SkyBlue, LightBlue, White, LightBlue, SkyBlue];
-const OceanColors_p = [0x191970, DarkBlue, 0x191970, 0x000080, DarkBlue, 0x0000cd, SeaGreen, 0x008080, 0x5f9ea0, Blue, 0x008b8b, 0x6495ed, 0x7fffd4, SeaGreen, 0x00ffff, 0x87cefa];
-const ForestColors_p = [DarkGreen, DarkGreen, 0x556b2f, DarkGreen, Green, ForestGreen, 0x6b8e23, Green, SeaGreen, MediumAquamarine, 0x32cd32, 0x9acd32, 0x90ee90, 0x7cfc00, MediumAquamarine, ForestGreen];
-const WoodFireColors_p = [Black, 0x330e00, 0x661c00, 0x992900, 0xcc3700, 0xff4500, 0xff5800, 0xff6b00, 0xff7f00, 0xff9200, Orange, 0xffaf00, 0xffb900, 0xffc300, 0xffcd00, 0xffd700];
-const NormalFire_p = [Black, 0x330000, 0x660000, 0x990000, 0xcc0000, Red, 0xff0c00, 0xff1800, 0xff2400, 0xff3000, 0xff3c00, 0xff4800, 0xff5400, 0xff6000, 0xff6c00, 0xff7800];
-const LithiumFireColors_p = [Black, 0x240707, 0x470e0e, 0x6b1414, 0x8e1b1b, 0xb22222, 0xc14244, 0xd16166, 0xe08187, 0xf0a0a9, 0xffc0cb, 0xff9ec0, 0xff7bb5, 0xff59a9, 0xff369e, 0xff1493];
-const SodiumFireColors_p = [Black, 0x332100, 0x664200, 0x996300, 0xcc8400, Orange, 0xffaf00, 0xffb900, 0xffc300, 0xffcd00, 0xffd700, 0xf8cd06, 0xf0c30d, 0xe9b913, 0xe1af1a, 0xdaa520];
-const CopperFireColors_p = [Black, 0x001a00, 0x003300, 0x004d00, 0x006600, Green, 0x239909, 0x45b313, 0x68cc1c, 0x8ae626, 0xadff2f, 0x94f530, 0x7ceb30, 0x63e131, 0x4bd731, 0x32cd32];
-const AlcoholFireColors_p = [Black, 0x000033, 0x000066, 0x000099, 0x0000cc, Blue, 0x0026ff, 0x004cff, 0x0073ff, 0x0099ff, 0x00bfff, 0x1bc2fe, 0x36c5fd, 0x51c8fc, 0x6ccbfb, 0x87cefa];
-const Fire_gp = [0, 0, 0, 0, 128, 255, 0, 0, 224, 255, 255, 0, 255, 255, 255, 255];
-const Sunset_Real_gp = [0, 120, 0, 0, 22, 179, 22, 0, 51, 255, 104, 0, 85, 167, 22, 18, 135, 100, 0, 103, 198, 16, 0, 130, 255, 0, 0, 160];
-const dkbluered_gp = [0, 1, 0, 4, 8, 1, 0, 13, 17, 1, 0, 29, 25, 1, 0, 52, 33, 1, 0, 83, 42, 1, 0, 123, 51, 1, 0, 174, 59, 1, 0, 235,
-68, 1, 2, 255, 76, 4, 17, 255, 84, 16, 45, 255, 93, 37, 82, 255, 102, 69, 127, 255, 110, 120, 168, 255, 119, 182, 217, 255,
-127, 255, 255, 255, 135, 255, 217, 184, 144, 255, 168, 123, 153, 255, 127, 73, 161, 255, 82, 40, 170, 255, 45, 18, 178, 255, 17, 5,
-186, 255, 2, 1, 195, 234, 0, 1, 204, 171, 0, 1, 212, 120, 0, 1, 221, 79, 0, 1, 229, 48, 0, 1, 237, 26, 0, 1, 246, 12, 0, 1, 255, 4, 0, 1];
-const Optimus_Prime_gp = [0, 5, 16, 18, 25, 5, 16, 18, 51, 7, 25, 39, 76, 8, 38, 71, 102, 64, 99, 106, 127, 194, 189, 151, 153, 182, 63, 42, 178, 167, 6, 2, 204, 100, 3, 1, 229, 53, 1, 1, 255, 53, 1, 1];
-const warmGrad_gp = [0, 252, 252, 172, 25, 239, 255, 61, 53, 247, 45, 17, 76, 197, 82, 19, 96, 239, 255, 61, 124, 83, 4, 1, 153, 247, 45, 17, 214, 23, 15, 17, 255, 1, 1, 1];
-const coldGrad_gp = [0, 66, 186, 192, 43, 1, 22, 71, 79, 2, 104, 142, 117, 66, 186, 192, 147, 2, 104, 142, 186, 1, 22, 71, 224, 2, 104, 142, 255, 4, 27, 28];
-const hotGrad_gp = [0, 157, 21, 2, 35, 229, 244, 16, 73, 255, 44, 7, 107, 142, 7, 1, 153, 229, 244, 16, 206, 142, 7, 1, 255, 135, 36, 0];
-const pinkGrad_gp = [0, 249, 32, 145, 28, 208, 1, 7, 43, 249, 1, 19, 56, 126, 152, 10, 73, 234, 23, 84, 89, 224, 45, 119, 107, 232, 127, 158, 127, 244, 13, 89, 150, 188, 6, 52, 175, 177, 70, 14, 221, 194, 1, 8, 255, 112, 0, 1];
-const comfy_gp = [0, 255, 255, 45, 43, 208, 93, 1, 137, 224, 1, 242, 181, 159, 1, 29, 255, 63, 4, 68];
-const cyperpunk_gp = [0, 3, 6, 72, 38, 12, 50, 188, 109, 217, 35, 1, 135, 242, 175, 12, 178, 161, 32, 87, 255, 24, 6, 108];
-const girl_gp = [0, 103, 1, 10, 33, 109, 1, 12, 76, 159, 5, 48, 119, 175, 55, 103, 127, 175, 55, 103, 178, 159, 5, 48, 221, 109, 1, 12, 255, 103, 1, 10];
-const xmas_gp = [0, 0, 12, 0, 40, 0, 55, 0, 66, 1, 117, 2, 77, 1, 84, 1, 81, 0, 55, 0, 119, 0, 12, 0, 153, 42, 0, 0, 181, 121, 0, 0, 204, 255, 12, 8, 224, 121, 0, 0, 244, 42, 0, 0, 255, 42, 0, 0];
-const acid_gp = [0, 0, 12, 0, 61, 153, 239, 112, 127, 0, 12, 0, 165, 106, 239, 2, 196, 167, 229, 71, 229, 106, 239, 2, 255, 0, 12, 0];
-const blueSmoke_gp = [0, 0, 0, 0, 12, 1, 1, 3, 53, 8, 1, 22, 80, 4, 6, 89, 119, 2, 25, 216, 145, 7, 10, 99, 186, 15, 2, 31, 233, 2, 1, 5, 255, 0, 0, 0];
-const gummy_gp = [0, 8, 47, 5, 31, 77, 122, 6, 63, 249, 237, 7, 95, 232, 51, 1, 127, 215, 0, 1, 159, 47, 1, 3, 191, 1, 7, 16, 223, 52, 22, 6, 255, 239, 45, 1];
-const leo_gp = [0, 0, 0, 0, 16, 0, 0, 0, 32, 0, 0, 0, 18, 0, 0, 0, 64, 16, 8, 0, 80, 80, 40, 0, 96, 16, 8, 0, 112, 0, 0, 0, 128, 0, 0, 0,
-144, 0, 0, 0, 160, 0, 0, 0, 176, 0, 0, 0, 192, 0, 0, 0, 208, 0, 0, 0, 224, 0, 0, 0, 240, 0, 0, 0, 255, 0, 0, 0];
-const aurora_gp = [0, 17, 177, 13, 64, 121, 242, 5, 128, 25, 173, 121, 192, 250, 77, 127, 255, 171, 101, 221];
-function fillGradientRGB(e, startpos, sc, endpos, ec) {
-if (endpos < startpos) {
-const t = endpos, tc = ec;
-ec = sc;
-endpos = startpos;
-startpos = t;
-sc = tc;
-}
-const s16 = (v) => (v << 16) >> 16;
-const ch = (c, s) => (c >> s) & 255;
-const divisor = endpos - startpos || 1;
-const d = [16, 8, 0].map((s) => s16(s16(s16((ch(ec, s) - ch(sc, s)) << 7) / divisor | 0) * 2));
-const acc = [16, 8, 0].map((s) => ch(sc, s) << 8);
-for (let i = startpos; i <= endpos; i++) {
-e[i] = ((acc[0] >> 8) << 16) | ((acc[1] >> 8) << 8) | (acc[2] >> 8);
-for (let c = 0; c < 3; c++) acc[c] = (acc[c] + d[c]) & 0xffff;
+const TEXT_KEYS = ["ntp_host", "log_host", "wifi_ssid", "wifi_pass", "page_pass"];
+const SECRET_KEYS = ["wifi_pass", "page_pass"];
+const DEFAULTS = {
+wifi_ssid: "", wifi_pass: "", show_ip: 1,
+ntp_host: "pool.ntp.org", ntp_gmt: 3,
+bright: 100, auto_bright: 0, bright_min: 10, bright_max: 255, adc_min: 0, adc_max: 1023,
+night_mode: 0, night_mode_auto: 0, night_mode_auto_since: 0, night_mode_auto_to: 0, night_color: 0xff0000, night_trsh: 50,
+clock_style: 1, clock_style_zero: 0, clock_color: 0xffffff,
+back_mode: 1, back_pal: 0, back_bright: 200, back_speed: 50, back_scale: 50, back_angle: 0,
+kaia_anim: 1, kaia_wake: 0, kaia_wake_speed: 100,
+kaia_listen: 0, kaia_think: 0, kaia_speak: 0, kaia_done: 0, kaia_error: 0, kaia_notify: 0,
+kaia_color: 0x00d1ff, kaia_bright: 255, kaia_night: 1,
+page_pass: "", log_host: "",
+};
+const LOOK_KEYS = ["kaia_wake", "kaia_listen", "kaia_think", "kaia_speak", "kaia_done", "kaia_error", "kaia_notify"];
+function normalize(raw) {
+const s = {};
+for (const k of Object.keys(DEFAULTS)) {
+const v = raw && raw[k];
+if (TEXT_KEYS.includes(k)) s[k] = v == null ? DEFAULTS[k] : String(v);
+else {
+const n = typeof v === "boolean" ? +v : Number(v);
+s[k] = v == null || v === "" || !Number.isFinite(n) ? DEFAULTS[k] : Math.trunc(n);
 }
 }
-function gradientTo16(gp) {
-const e = new Array(16).fill(0);
-let count = 0;
-do count++;
-while (gp[(count - 1) * 4] !== 255);
-const at = (k) => [gp[k * 4], (gp[k * 4 + 1] << 16) | (gp[k * 4 + 2] << 8) | gp[k * 4 + 3]];
-let lastSlotUsed = -1, k = 0;
-let rgbstart = at(0)[1], indexstart = 0;
-while (indexstart < 255) {
-k++;
-const [indexend, rgbend] = at(k);
-let istart8 = (indexstart / 16) | 0, iend8 = (indexend / 16) | 0;
-if (count < 16) {
-if (istart8 <= lastSlotUsed && lastSlotUsed < 15) {
-istart8 = lastSlotUsed + 1;
-if (iend8 < istart8) iend8 = istart8;
+return s;
 }
-lastSlotUsed = iend8;
+const rawOf = (k, v) => (TEXT_KEYS.includes(k) ? String(v) : String(Math.trunc(Number(v))));
+function hash32(s) {
+let h = 0;
+for (const c of new TextEncoder().encode(s)) h = (h + (h << 5) + c) >>> 0;
+return h;
 }
-fillGradientRGB(e, istart8, rgbstart, iend8, rgbend);
-indexstart = indexend;
-rgbstart = rgbend;
+const keyId = (key) => hash32(key) & 0x1fffffff;
+const ID_WIFI_SAVE = hash32("wifi_save"), ID_CHECK_UPDATES = hash32("check_updates"), ID_OTA_UPDATE = hash32("ota_update");
+class AuthError extends Error {}
+class OfflineError extends Error {}
+class ClockApi {
+constructor(send, timeoutMs = 5000) {
+this.send = send;
+this.timeoutMs = timeoutMs;
+this.pass = "";
+this.tail = Promise.resolve();
+this.busy = 0;
 }
-return e;
+call(path, params = {}) {
+const run = () => this.once(path, params);
+const p = this.tail.then(run, run);
+this.tail = p.catch(() => {});
+return p;
 }
-const PAL_NAMES = ["HeatColors", "Fire", "WoodFireColors", "NormalFire", "LithiumFireColors", "SodiumFireColors", "CopperFireColors",
-"AlcoholFireColors", "LavaColors", "PartyColors", "RainbowColors", "RainbowStripeColors", "CloudColors", "OceanColors", "ForestColors",
-"Sunset_Real", "Dkbluered", "OptimusPrime", "WarmGrad", "ColdGrad", "HotGrad", "PinkGrad", "Comfy", "Cyperpunk", "Girl", "Xmas", "Acid",
-"BlueSmoke", "Gummy", "Leo", "Aurora"];
-const PALETTES = [HeatColors_p, Fire_gp, WoodFireColors_p, NormalFire_p, LithiumFireColors_p, SodiumFireColors_p, CopperFireColors_p,
-AlcoholFireColors_p, LavaColors_p, PartyColors_p, RainbowColors_p, RainbowStripeColors_p, CloudColors_p, OceanColors_p, ForestColors_p,
-Sunset_Real_gp, dkbluered_gp, Optimus_Prime_gp, warmGrad_gp, coldGrad_gp, hotGrad_gp, pinkGrad_gp, comfy_gp, cyperpunk_gp, girl_gp,
-xmas_gp, acid_gp, blueSmoke_gp, gummy_gp, leo_gp, aurora_gp].map((p, i) => (i === 1 || i >= 15 ? gradientTo16(p) : p));  // the _gp ones
-function colorFromPalette16(pal, index, brightness) {
-index &= 0xffff;
-const index_4bit = index >> 12, offset = (index >> 4) & 255;
-const e1 = pal[index_4bit];
-let r = (e1 >> 16) & 255, g = (e1 >> 8) & 255, b = e1 & 255;
-if (offset) {
-const e2 = pal[index_4bit === 15 ? 0 : index_4bit + 1], f1 = 255 - offset;
-r = qadd8(scale8(r, f1), scale8((e2 >> 16) & 255, offset));
-g = qadd8(scale8(g, f1), scale8((e2 >> 8) & 255, offset));
-b = qadd8(scale8(b, f1), scale8(e2 & 255, offset));
+async once(path, params) {
+const qs = new URLSearchParams(params);
+if (this.pass) qs.set("auth", hash32(this.pass).toString(16));
+const q = qs.toString(), url = path + (q ? "?" + q : "");
+const ac = typeof AbortController === "function" ? new AbortController() : null;
+let timer = 0;
+this.busy++;
+try {
+const res = await Promise.race([
+this.send(url, ac && ac.signal),
+new Promise((_, no) => {
+timer = setTimeout(() => {
+if (ac) ac.abort();
+no(new OfflineError("timeout"));
+}, this.timeoutMs);
+}),
+]);
+if (res.status === 401) throw new AuthError("401");
+if (res.status < 200 || res.status > 299) throw new Error(path + ": HTTP " + res.status);
+return res.json;
+} catch (e) {
+if (e instanceof AuthError || e instanceof OfflineError || /HTTP/.test(e.message)) throw e;
+throw new OfflineError(e.message || "offline");
+} finally {
+clearTimeout(timer);
+this.busy--;
 }
-if (brightness !== 255) {
-r = scale8Video(r, brightness);
-g = scale8Video(g, brightness);
-b = scale8Video(b, brightness);
 }
-return (r << 16) | (g << 8) | b;
+state() {
+return this.call("kaia/state");
 }
-function getPaletteColor(pal, idx, bright) {
-return colorFromPalette16(PALETTES[pal] || PALETTES[0], idx, bright & 255);
+frame() {
+return this.call("kaia/frame");
 }
-function brezLine(x0, y0, x1, y1, add, ctx, set) {
-let dx = x1 - x0, dy = y1 - y0, sx = 1, sy = 1;
-if (dx < 0) dx = -dx, sx = -1;
-if (dy < 0) dy = -dy, sy = -1;
-const dx2 = dx * 2, dy2 = dy * 2;
-set(x0, y0, ctx);
-if (dx > dy) {
-let err = dy2 - dx;
-while (x0 !== x1) {
-x0 += sx;
-if (err >= 0) {
-y0 += sy;
-err -= dx2;
-if (add) set(x0 - sx, y0, ctx);
+wifi() {
+return this.call("kaia/wifi");
 }
-err += dy2;
-set(x0, y0, ctx);
+anim(name, extra = {}) {
+return this.call("kaia/anim", { name, ...extra });
 }
+set(id, raw) {
+return this.call("settings", { action: "set", id: (id >>> 0).toString(16), value: String(raw) });
+}
+click(id) {
+return this.call("settings", { action: "click", id: (id >>> 0).toString(16) });
+}
+}
+const TRY_STATE_MS = 6000;
+function tryOut(name, s) {
+const n = ANIM_NAMES.indexOf(name);
+const q = { style: s.kaia_anim, look: s[LOOK_KEYS[n]] };
+if (n === 0) q.speed = s.kaia_wake_speed;
+if (n >= 1 && n <= 3) q.ms = TRY_STATE_MS;
+return q;
+}
+async function fetchSend(url, signal) {
+const res = await fetch(url, { cache: "no-store", signal });
+let json = null;
+if ((res.headers.get("content-type") || "").includes("json")) {
+try {
+json = await res.json();
+} catch {
+json = null;
+}
+}
+return { status: res.status, json };
+}
+function parseLeds(hex) {
+const out = new Uint32Array(128);
+if (typeof hex !== "string") return out;
+for (let i = 0; i < 128; i++) out[i] = parseInt(hex.substr(i * 6, 6), 16) || 0;
+return out;
+}
+function ledsHex(leds) {
+let s = "";
+for (let i = 0; i < 128; i++) s += (leds[i] >>> 0).toString(16).padStart(6, "0");
+return s;
+}
+const STEP = 5;  // φ candidates every 5 ms
+function parseTime(text) {
+const m = /(\d{1,2}):(\d{2}):(\d{2})/.exec(text || "");
+return m ? +m[1] * 3600 + +m[2] * 60 + +m[3] : 0;
+}
+class ClockSync {
+constructor() {
+this.ref = null;  // the first answer of the run: {sec, ms}
+this.last = null;
+this.cand = null;
+}
+add(sec, ms) {
+if (this.last && ms < this.last.ms) this.ref = null;  // the clock rebooted
+if (!this.ref) {
+this.ref = { sec, ms };
+this.cand = [];
+for (let p = 0; p < 1000; p += STEP) this.cand.push(p);
 } else {
-let err = dx2 - dy;
-while (y0 !== y1) {
-y0 += sy;
-if (err >= 0) {
-x0 += sx;
-err -= dy2;
-if (add) set(x0, y0 - sy, ctx);
+const want = (((sec - this.ref.sec) % 86400) + 86400) % 86400;
+const keep = this.cand.filter((p) => Math.floor((ms - p) / 1000) - Math.floor((this.ref.ms - p) / 1000) === want);
+if (keep.length) this.cand = keep;
+else this.reset(sec, ms);  // NTP stepped: start over from this answer
 }
-err += dx2;
-set(x0, y0, ctx);
+this.last = { sec, ms };
 }
+reset(sec, ms) {
+this.ref = null;
+this.add(sec, ms);
 }
+phase() {
+const c = this.cand;
+if (!c || !c.length || c.length * STEP >= 1000) return 0;
+let gap = 0, at = 0;
+for (let k = 0; k < c.length; k++) {
+const next = k + 1 < c.length ? c[k + 1] : c[0] + 1000, g = next - c[k];
+if (g > gap) gap = g, at = k + 1;
 }
-const DEG_TO_RAD = 0.017453292519943295769236907684886;
-function gradData(x0, y0, w, h, angle) {
-const hypot = Math.trunc(Math.sqrt(w * w + h * h) / 2) & 0xffff;
-const sx = i16(Math.trunc(Math.cos(angle * DEG_TO_RAD) * hypot));
-const sy = i16(Math.trunc(Math.sin(angle * DEG_TO_RAD) * hypot));
-return { cx: i16(x0 + ((w / 2) | 0)), cy: i16(y0 + ((h / 2) | 0)), sx, sy, i: 0, len: Math.trunc(Math.sqrt(sx * sx + sy * sy) * 2) & 0xffff, pal: 0, bright: 0, scale: 0, count: 0 };
+const start = c[at % c.length], span = 1000 - gap + STEP;
+return Math.round(start + span / 2 - STEP / 2) % 1000;
 }
-function brightNow(S, light) {
-if (!S.auto_bright) return S.bright & 255;
-if (S.adc_min === S.adc_max) return ((S.bright_min + S.bright_max) / 2) | 0;
-const b = (((light - S.adc_min) * (S.bright_max - S.bright_min)) / (S.adc_max - S.adc_min) | 0) + S.bright_min;
-return b < 0 ? 0 : b > 255 ? 255 : b;
+spread() {
+return this.cand ? Math.min(1000, this.cand.length * STEP) : 1000;
 }
-function isTimeBetween(ch, cm, sh, sm, eh, em) {
-const c = ch * 60 + cm, s = sh * 60 + sm, e = eh * 60 + em;
-return s < e ? c >= s && c < e : c >= s || c < e;
-}
-function isNight(S, light, hour, minute) {
-if (!S.night_mode || light >= S.night_trsh) return false;
-if (!S.night_mode_auto) return true;
-const a = S.night_mode_auto_since, b = S.night_mode_auto_to;
-return isTimeBetween(hour, minute, ((a / 3600) | 0) % 24, ((a % 3600) / 60) | 0, ((b / 3600) | 0) % 24, ((b % 3600) / 60) | 0);
-}
-const DOT_FADE_PRD = 100, DOT_ACTIVE_PRD = 400;
-function dots(m, x1, x2, ms) {
-const color = m.getColor24();
-let color1 = m.getXY(x1, 2), color2 = m.getXY(x2, 4);
-if (ms < DOT_FADE_PRD) {
-color1 = blend(color1, color, ((ms * 255) / DOT_FADE_PRD) | 0);
-color2 = blend(color2, color, ((ms * 255) / DOT_FADE_PRD) | 0);
-} else if (ms < DOT_FADE_PRD + DOT_ACTIVE_PRD) {
-color2 = color1 = color;
-} else if (ms <= DOT_ACTIVE_PRD + DOT_FADE_PRD * 2) {
-color1 = blend(color1, color, (((DOT_ACTIVE_PRD + DOT_FADE_PRD * 2 - ms) * 255) / DOT_FADE_PRD) | 0);
-color2 = blend(color2, color, (((DOT_ACTIVE_PRD + DOT_FADE_PRD * 2 - ms) * 255) / DOT_FADE_PRD) | 0);
-}
-m.setXY(x1, 2, color1);
-m.setXY(x2, 4, color2);
-}
-function drawTime(m, S, t, cursorX, cursorY, dotX, dotY) {
-m.setCursor(cursorX, cursorY);
-if (t.hour < 10) {
-if (S.clock_style_zero) m.print((t.hour / 10) | 0);
-else m.print(" ");
-} else {
-m.print((t.hour / 10) | 0);
-}
-m.setCursor(cursorX + 4, cursorY);
-m.print(t.hour % 10);
-m.setCursor(cursorX + 10, cursorY);
-m.print((t.minute / 10) | 0);
-m.setCursor(cursorX + 14, cursorY);
-m.print(t.minute % 10);
-dots(m, dotX, dotY, t.ms);
-}
-function drawClock(m, S, t) {
-const font = S.clock_style;
-if (!font) return;
-m.setModeDiag();
-if (!t.synced) {
-m.setFont(gfx_font_3x5);
-m.setCursor(1, 1);
-m.print("--");
-m.setCursor(12, 1);
-m.print("--");
-return;
-}
-switch (font) {
-case 1:
-m.setFont(gfx_font_3x5);
-drawTime(m, S, t, 1, 1, 9, 9);
-break;
-case 2:
-m.setFont(font_3x5_diag);
-drawTime(m, S, t, 1, 1, 9, 9);
-break;
-case 3:
-m.setFont(font_4x5);
-drawTime(m, S, t, 1, 1, 9, 10);
-break;
+at(millis) {
+if (!this.last) return { hour: 0, minute: 0, second: 0, ms: 0 };
+const p = this.phase();
+const d = Math.floor((millis - p) / 1000) - Math.floor((this.last.ms - p) / 1000);
+const s = ((this.last.sec + d) % 86400 + 86400) % 86400;
+return { hour: (s / 3600) | 0, minute: ((s % 3600) / 60) | 0, second: s % 60, ms: (((millis - p) % 1000) + 1000) % 1000 };
 }
 }
-function drawBack(m, S, millis, backScale) {
-const count = (Math.floor(millis / 64) * S.back_speed) >>> 0;
-const pal = S.back_pal & 255, scale = S.back_scale & 255;
-const bright = ((S.back_bright * backScale) / 255) & 255;
-m.setModeXY();
-switch (S.back_mode) {
-case 0:
-m.clear();
-break;
-case 1: {
-const data = gradData(0, 0, m.w, m.h, S.back_angle);
-data.pal = pal;
-data.bright = bright;
-data.count = count;
-data.scale = scale;
-brezLine(data.cx - data.sx, data.cy + data.sy, data.cx + data.sx, data.cy - data.sy, false, data, (x, y, d) => {
-const idx = (Math.floor((d.i * 1023 * d.scale) / d.len) + d.count * 2) & 0xffff;
-const color = getPaletteColor(d.pal, idx, d.bright);
-d.i = (d.i + 1) & 0xffff;
-brezLine(x - d.sy, y - d.sx, x + d.sy, y + d.sx, true, color, (x2, y2, c) => m.setXY(x2, y2, c));
-});
-break;
-}
-case 2:
-for (let y = 0; y < m.h; y++) {
-for (let x = 0; x < m.w; x++) {
-if (ledXY(x, y) < 0) continue;
-const col = getPaletteColor(pal, inoise16(x * scale * 64, y * scale * 64, Math.imul(count, 32) >>> 0), bright);
-m.setXY(x, y, col);
-}
-}
-break;
-}
-}
-const WAKE_NAMES = ["Как у стиля", "Рябь", "Орбита", "Искры", "Рассвет", "Радар", "Спираль", "Сердцебиение", "Глаз", "Звёзды", "Салют", "Дождь"];
-const wake_ms = [0, 1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000];
-const WAKE_COUNT = 12;
+const WAKE_NAMES = ["Как у стиля", "Рябь", "Орбита", "Искры", "Рассвет", "Радар", "Спираль", "Сердцебиение", "Глаз", "Звёзды", "Салют", "Дождь",
+"Включение", "Зайчик", "«КАЯ»"];
+const wake_ms = [0, 1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000, 1800, 2000, 2200];
+const WAKE_COUNT = 15;
 const wake_from = [0, 1100, 1500, 1600];
 const b_col = new Uint8Array(MX_LED_AMOUNT);  // x in the diagonal grid, 0..19
 const b_row = new Uint8Array(MX_LED_AMOUNT);  // y, 0 (top) .. 6
@@ -1519,16 +1337,633 @@ c = mix(col, C_WHITE, dfB < 20 ? (20 - dfB) * 6 + 110 : 110);
 put(i, c, a * fo / 255 | 0);
 }
 }
+function powerOnWake(n, t, du, col) {
+const fo = smooth(du, du - 400, t);
+const hw = smooth(200, 550, t) * 20 / 255 | 0;  // the line's half-length, half-balls
+const hv = smooth(600, 950, t) * 56 / 255 | 0;  // the picture's half-height, 1/16 row
+const glow = 255 - (190 * smooth(950, 1400, t) / 255 | 0);
+const wc = mix(col, C_WHITE, 200), lc = mix(col, C_WHITE, 40);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const dv = abs(b_row[i] - 3) * 16, dh = abs(b_x[i] - 19);
+let a = 0, c = wc;
+if (b_dist[i] < 3 && t < 950) a = smooth(0, 150, t);
+if (t >= 200 && !dv && dh <= hw + 1) a = 255;
+if (t >= 600 && dv <= hv) {
+a = imax(a, glow);
+c = hv - dv < 16 ? wc : lc;
+}
+put(i, c, a * fo / 255 | 0);
+}
+}
+function bunnyWake(n, t, du, col) {
+const g = (smooth(0, 150, t) * (255 - smooth(1300, 1700, t)) / 255 | 0) * smooth(du, du - 400, t) / 255 | 0;
+const wc = mix(col, C_WHITE, 170), bp = [0, 0, 0, 0], bq = [0, 0, 0, 0];
+for (let j = 0; j < 4; j++) {  // the spot and its trail, 45 ms apart
+const u = imax(0, t - j * 45);
+const a1 = posMod((u * 150 / 1000 | 0) + 60, 240), a2 = posMod((u * 56 / 1000 | 0) + 14, 56);
+bp[j] = a1 < 120 ? a1 - 60 : 180 - a1;  // a triangle wave: it bounces off ±60 and ±14
+bq[j] = a2 < 28 ? a2 - 14 : 42 - a2;
+}
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = 0, c = col;
+for (let j = 0; j < 4; j++) {
+const r = j ? 10 : 14, d = oct(p - bp[j], q - bq[j]);
+if (d >= r) continue;
+const v = (r - d) * (j ? 210 - j * 40 : 255) / r | 0;
+if (v > a) {
+a = v;
+c = j ? col : wc;
+}
+}
+put(i, c, a * g / 255 | 0);
+}
+}
+const pict_kaya = [0x523, 0x655, 0x473, 0x655, 0x555];  // 11 wide: К А Я
+function nameWake(n, t, du, col) {
+dimAll(255 - ((200 * smooth(0, 200, t) / 255 | 0) * smooth(1900, 1500, t) / 255 | 0));
+fr.dg = 255;
+const x0 = (194 - 10 * 11) / 20 | 0;
+for (let gy = 0; gy < 5; gy++) {
+for (let gx = 0; gx < 11; gx++) {
+if (!((pict_kaya[gy] >> (10 - gx)) & 1)) continue;
+const u = t - 100 - gx * 70 - gy * 10;  // since the pen reached it
+if (u < 0) continue;
+const out = 1450 + ((gx * 7 + gy * 3) % 11) * 40;  // when it scatters
+putb(ledDiag(x0 + gx + (gy >> 1), 1 + gy), mix(col, C_WHITE, 220 * tent(u, 200) / 255 | 0), 255 - smooth(out, out + 150, t));
+}
+}
+}
 function wakeLength(id, speed) {
 return wake_ms[id] * 100 / speed | 0;
 }
-function wakeDraw(style, wake, speed, t, col) {
+buildWakeTables();
+const LOOK_NAMES = [
+WAKE_NAMES,
+["Как у стиля", "Рябь", "Орбита", "Искры", "Эхо", "Прилив", "Сияние", "Взгляд", "Пузырьки"],
+["Как у стиля", "Рябь", "Орбита", "Искры", "Змейка", "Нейроны", "Песочные часы", "Три точки", "Атом"],
+["Как у стиля", "Рябь", "Орбита", "Искры", "Эквалайзер", "Осциллограф", "Лучи", "Динамики", "Губы"],
+["Как у стиля", "Рябь", "Орбита", "Искры", "Галочка", "Шкала", "Конфетти", "Кольцо", "«ОК»"],
+["Как у стиля", "Рябь", "Орбита", "Искры", "Нет-нет", "Крест", "Сбой", "Сирена", "Отключение"],
+["Как у стиля", "Рябь", "Орбита", "Искры", "«!»", "Тук-тук", "Маяк", "Конверт", "Значок"],
+];
+const LOOK_COUNT = 9;
+const look_ms = [
+[1600, 1500, 1800, 1700, 1600],
+[1400, 1600, 1300, 1600, 1500],
+[1500, 1500, 1600, 1700, 1600],
+];
+function shotLength(n, look, style) {
+if (look >= 4) return look_ms[n - A_DONE][look - 4];
+return shot_ms[(look ? look : style) - 1][n - A_DONE + 1];
+}
+function echoListen(n, t, col, k) {
+if (k <= 0) return;
+const ph = t * 76 / 1600 | 0;  // the fronts, 1/8 ball from a point 100 to the side: 24 (the edge) .. 100 (the middle)
+const f1 = 24 + posMod(ph, 76), f2 = 24 + posMod(ph + 38, 76);
+const e1 = (f1 - 24) * (100 - f1) * 210 / 1444 | 0, e2 = (f2 - 24) * (100 - f2) * 210 / 1444 | 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const q = 7 * (b_row[i] - 3), dx = 100 - abs(4 * (b_x[i] - 19));
+const dd = dx + (q * q / (2 * dx) | 0);
+let a = imax(tent(dd - f1, 12) * e1 / 255 | 0, tent(dd - f2, 12) * e2 / 255 | 0);
+if (dx <= 40) a += 28;
+put(i, col, a * k / 255 | 0);
+}
+}
+function tideListen(n, t, col, k) {
+if (k <= 0) return;
+const L = 38 + (wave(t, 64) * 14 / 128 | 0);  // the level, 1/16 row up from the bottom row's foot
+const sp = t * 60 / 1000 | 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const s = L + ((sin8((b_x[i] * 14 + sp) & 255) - 128) * 9 / 128 | 0);
+const dp = s - ((6 - b_row[i]) * 16 + 8);  // how deep the ball's centre is under the surface
+if (dp < -10) continue;
+let a = 0, c = col;
+if (dp < 0) {
+a = 40 * (10 + dp) / 10 | 0;
+} else {
+a = 70 + (150 * tent(dp, 28) / 255 | 0);
+c = mix(col, C_WHITE, 100 * tent(dp, 12) / 255 | 0);
+}
+put(i, c, a * k / 255 | 0);
+}
+}
+const aur_fall = [255, 215, 150, 70];  // rows 0..3
+function auroraListen(n, t, col, k) {
+if (k <= 0) return;
+const s1 = t * 40 / 1000 | 0, s2 = t * 27 / 1000 | 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const r = b_row[i];
+if (r > 3) continue;
+const u = sin8((b_x[i] * 9 + r * 6 + s1) & 255), v = sin8((b_x[i] * 5 - s2 + 64) & 255);
+const a = 40 + (215 * (u * v / 255 | 0) / 255 | 0);
+put(i, mix(col, C_WHITE, 90 * v / 255 | 0), (a * aur_fall[r] / 255 | 0) * k / 255 | 0);
+}
+}
+function gazeListen(n, t, col, k) {
+if (k <= 0) return;
+const pc = wave(t, 37) * 46 / 128 | 0, qc = wave(t + 900, 61) * 9 / 128 | 0;  // the spot's centre
+const wc = mix(col, C_WHITE, 120);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const d = oct(4 * (b_x[i] - 19) - pc, 7 * (b_row[i] - 3) - qc);
+if (d >= 26) continue;
+const u = (26 - d) * 255 / 26 | 0;
+put(i, d < 8 ? wc : col, (255 * (u * u / 255 | 0) / 255 | 0) * k / 255 | 0);
+}
+}
+const bub_x = [7, 31, 15, 25, 11, 21, 35, 3, 29, 17];  // half-balls across
+function bubblesListen(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(col, C_WHITE, 70);
+for (let j = 0; j < 10; j++) {
+const per = 2200 + (j * 3 % 5) * 260;
+const y = 112 - (posMod(t + j * 470, per) * 128 / per | 0);  // 1/16 row from row 0: 112 (under the plate) .. -16
+const x = bub_x[j] + (wave(t + j * 300, 170) * 2 / 128 | 0);
+const env = ((112 - y) * (y + 16) * 255 / 4096 | 0) * k / 255 | 0;  // 0 at both ends
+const r0 = y >> 4, fy = y & 15, a0 = env * (16 - fy) >> 4;
+putb(ballRX(x, r0), c, a0);
+putb(ballRX(x, r0 + 1), c, env * fy >> 4);
+putb(ballRX(x - 2, r0), col, a0 >> 2);  // a faint rim either side
+putb(ballRX(x + 2, r0), col, a0 >> 2);
+}
+}
+function snakeThink(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(col, C_VIOLET, 128), hc = mix(c, C_WHITE, 150);
+const h = posMod(t * 8 / 100 | 0, 280);  // the head on the path, half-balls: 40 a row
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const r = b_row[i], s = r * 40 + ((r & 1) ? 38 - b_x[i] : b_x[i]);
+const d = posMod(h - s, 280);
+let a = 18;
+if (d < 30) {
+const u = (30 - d) * 255 / 30 | 0;
+a = imax(a, u * u / 255 | 0);
+}
+put(i, d < 3 ? hc : c, a * k / 255 | 0);
+}
+}
+function neuronThink(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(col, C_VIOLET, 128), wc = mix(c, C_WHITE, 170);
+const j0 = t / 250 | 0, cp = [0, 0, 0], cq = [0, 0, 0], age = [-1, -1, -1];
+for (let m = 0; m < 3; m++) {
+const j = j0 - m;
+if (j < 0) continue;
+const b = hash8(j) >> 1;
+cp[m] = 4 * (b_x[b] - 19);
+cq[m] = 7 * (b_row[b] - 3);
+age[m] = t - j * 250;
+}
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = 14, cc = c;
+for (let m = 0; m < 3; m++) {
+if (age[m] < 0) continue;
+const d = oct(p - cp[m], q - cq[m]);
+if (age[m] < 120 && d < 5) {
+a = 255;
+cc = wc;
+continue;
+}
+a = imax(a, tent(d - (age[m] * 26 / 750 | 0), 7) * (255 - (age[m] * 255 / 750 | 0)) / 255 | 0);
+}
+put(i, cc, a * k / 255 | 0);
+}
+}
+function hourglassThink(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(col, C_VIOLET, 128);
+const ph = posMod(t, 3000), P = smooth(0, 2700, ph), F = smooth(2700, 3000, ph);
+const lv = P * 48 / 255 | 0;  // 1/16 row: how far the top has sunk, how high the heap stands
+const flow = P > 0 && P < 255;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const r = b_row[i], ax = abs(b_x[i] - 19), w = abs(r - 3) * 6 + 1;  // the glass, half-balls each side
+if (ax > w) continue;
+let a = ax >= w - 1 ? 30 : 0;
+if (r < 3) {
+const s = r * 16 + 8 >= lv ? 255 : 0;
+a = imax(a, (s + ((255 - s) * F / 255 | 0)) * 200 / 255 | 0);
+} else if (r > 3) {
+const s = (6 - r) * 16 + 8 <= lv ? 255 : 0;
+a = imax(a, (s * (255 - F) / 255 | 0) * 200 / 255 | 0);
+}
+if (flow && ax <= 1 && r >= 3 && r <= 5 && ((h1[i] + (t / 60 | 0)) & 1)) a = imax(a, 170);
+put(i, c, a * k / 255 | 0);
+}
+}
+function dotsThink(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(mix(col, C_VIOLET, 128), C_WHITE, 60), wc = mix(c, C_WHITE, 140);
+const ph = posMod(t, 1200);
+for (let j = 0; j < 3; j++) {
+const x = 11 + 8 * j, b = tent(ph - 200 * j - 180, 180);  // the jump, 0..255
+const up = (150 + (105 * b / 255 | 0)) * k / 255 | 0, cc = b > 128 ? wc : c;
+putb(ballRX(x, 6), c, (150 * (255 - b) / 255 | 0) * k / 255 | 0);
+putb(ballRX(x - 1, 5), cc, up);
+putb(ballRX(x + 1, 5), cc, up);
+putb(ballRX(x, 4), wc, b * k / 255 | 0);
+}
+}
+const atom_sh = [-40, 0, 40];  // the tilt: q += sh·p/256
+function atomThink(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(col, C_VIOLET, 128), wc = mix(c, C_WHITE, 150);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+if (b_dist[i] < 5) put(i, wc, (110 + (wave(t, 300) * 50 / 128 | 0)) * k / 255 | 0);
+}
+for (let j = 0; j < 3; j++) {
+const th0 = (t * 256 / (1300 + 200 * j) | 0) + j * 85;
+for (let q2 = 3; q2 >= 0; q2--) {  // the tail first, the head last
+const th = th0 - q2 * 9;
+const p = 56 * (sin8((th + 64) & 255) - 128) / 128 | 0;
+const q = (12 * (sin8(th & 255) - 128) / 128 | 0) + (atom_sh[j] * p / 256 | 0);
+putb(ballAt(p, q), q2 ? c : wc, (255 - q2 * 60) * k / 255 | 0);
+}
+}
+}
+function eqSpeak(n, t, col, k) {
+if (k <= 0) return;
+const wc = mix(col, C_WHITE, 150), lvb = [];
+for (let b = 0; b < 13; b++) lvb[b] = voice(t - ((b * 5 + 3) % 13) * 23) * (255 - abs(b - 6) * 20) / 255 | 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const dr = abs(b_row[i] - 3), e = lvb[b_x[i] / 3 | 0] - dr * 64;  // > 0: inside the bar
+if (e <= -16) continue;
+put(i, dr && e < 40 ? wc : col, imin(230, (e + 16) * 4) * k / 255 | 0);
+}
+}
+function scopeSpeak(n, t, col, k) {
+if (k <= 0) return;
+const ph = t * 300 / 1000 | 0, wc = mix(col, C_WHITE, 110);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const amp = voice(t - abs(b_x[i] - 19) * 14) * 19 / 255 | 0;  // 1/8 ball
+const y = amp * (sin8((b_x[i] * 18 - ph) & 255) - 128) / 128 | 0;
+const d = abs(7 * (b_row[i] - 3) - y);
+if (d >= 9) continue;
+put(i, d < 3 ? wc : col, (tent(d, 9) * 240 / 255 | 0) * k / 255 | 0);
+}
+}
+function raysSpeak(n, t, col, k) {
+if (k <= 0) return;
+const wc = mix(col, C_WHITE, 160);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+if (b_dist[i] < 4) put(i, wc, 150 * k / 255 | 0);
+}
+for (let s = 0; s < SPARKS; s++) {
+let len = 0;
+while (len < SPARK_LEN && spark[s][len] !== 255) len++;
+const L = voice(t - ((s * 7) % SPARKS) * 17) * len * 16 / 255 | 0;  // the ray, 1/16 ball from the centre
+for (let j = 0; j < len; j++) {  // the path read from its end: centre → rim
+const e = L - j * 16;
+if (e <= 0) break;
+put(spark[s][len - 1 - j], e < 16 ? wc : col, imin(220, e * 14) * k / 255 | 0);
+}
+}
+}
+function speakersSpeak(n, t, col, k) {
+if (k <= 0) return;
+const vl = voice(t), vr = voice(t - 60), wc = mix(col, C_WHITE, 140);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const v = b_x[i] < 19 ? vl : vr;
+const d = oct(abs(4 * (b_x[i] - 19)) - 52, 7 * (b_row[i] - 3));  // both speakers at ±52 (6½ balls)
+const r = 10 + (v * 12 / 255 | 0);  // the cone's edge
+let a = d < 22 ? 24 : d < 27 ? 40 : 0, c = col;
+a = imax(a, tent(d - r, 7) * (130 + (v * 125 / 255 | 0)) / 255 | 0);
+if (d < 5) {
+a = 120 + (v * 135 / 255 | 0);
+c = wc;
+}
+put(i, c, a * k / 255 | 0);
+}
+}
+function lipsSpeak(n, t, col, k) {
+if (k <= 0) return;
+const h = 2 + (voice(t) * 17 / 255 | 0);  // how far they part at the middle, 1/8 ball
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19);
+if (abs(p) > 60) continue;
+const dxn = abs(p) * 255 / 60 | 0, H = h * (255 - (dxn * dxn / 255 | 0)) / 255 | 0;
+const e = abs(7 * (b_row[i] - 3)) - H;  // 0 on a lip
+let a = tent(e, 7) * 235 / 255 | 0;
+if (e < 0) a = imax(a, 30);
+put(i, col, a * k / 255 | 0);
+}
+}
+const chk_s1 = [-44, -2, -14, 18], chk_s2 = [-14, 18, 46, -20];  // 1/8 ball: 36 and 71 long
+function checkDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const L = smooth(100, 700, t) * 107 / 255 | 0;  // the pen along both strokes
+const v1 = imin(256, L * 256 / 36 | 0), v2 = L > 36 ? (L - 36) * 256 / 71 | 0 : -1;
+const tx = v2 < 0 ? -44 + (30 * v1 / 256 | 0) : -14 + (60 * v2 / 256 | 0);  // the pen's tip
+const ty = v2 < 0 ? -2 + (20 * v1 / 256 | 0) : 18 - (38 * v2 / 256 | 0);
+const pen = t > 100 && t < 720, fl = tent(t - 780, 160);
+dimAll(255 - ((190 * smooth(0, 200, t) / 255 | 0) * fo / 255 | 0));
+fr.dg = 255;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let d = v1 > 0 ? segDist(p, q, chk_s1, v1) : 99;
+if (v2 >= 0) d = imin(d, segDist(p, q, chk_s2, v2));
+if (d >= 10) continue;
+const w = pen && oct(p - tx, q - ty) < 9 ? 230 : 200 * fl / 255 | 0;
+put(i, mix(col, C_WHITE, w), imin(255, tent(d, 10) * 3 / 2 | 0) * fo / 255 | 0);
+}
+}
+function barDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const F = (smooth(0, 800, t) * 44 / 255 | 0) - 2;  // the front, half-balls
+const fl = tent(t - 900, 180), sp = t * 500 / 1000 | 0;
+const fc = mix(col, C_WHITE, 120), flc = mix(col, C_WHITE, 160 * fl / 255 | 0);
+fr.dg = 153;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const e = F + ((sin8((b_row[i] * 40 + sp) & 255) - 128) * 2 / 128 | 0) - b_x[i];  // > 0: filled
+if (e < 0) continue;
+let a = 120, c = col;
+if (e < 4 && t < 820) {
+a = 255;
+c = fc;
+}
+if (fl) {
+a = imax(a, fl);
+c = flc;
+}
+put(i, c, a * fo / 255 | 0);
+}
+}
+const conf_v = [[-60, -40], [-45, -52], [-30, -30], [-18, -48], [-8, -36], [6, -54], [16, -42], [28, -50], [40, -34], [55, -46], [-50, -24], [48, -22], [-24, -58], [22, -60], [-36, -44], [34, -40]];  // 1/8 ball a second
+function confettiDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const pop = tent(t - 60, 160), pc = mix(col, C_WHITE, 200);
+fr.dg = 153;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+if (pop && b_dist[i] < 10) put(i, pc, pop * (10 - b_dist[i]) / 10 | 0);
+}
+for (let j = 0; j < 16; j++) {
+const c = j % 3 === 0 ? mix(col, C_WHITE, 190) : j % 3 === 1 ? mix(col, C_WHITE, 80) : col;
+for (let q2 = 1; q2 >= 0; q2--) {  // a trail 60 ms behind, then the bit
+const u = t - (j * 3 % 5) * 30 - q2 * 60;
+if (u <= 0) continue;
+const p = conf_v[j][0] * u / 1000 | 0, q = (conf_v[j][1] * u / 1000 | 0) + (32 * (u * u / 1000 | 0) / 1000 | 0);
+putb(ballAt(p, q), c, (q2 ? 70 : 255) * fo / 255 | 0);
+if (!q2 && ((h1[j] + (u / 90 | 0)) & 1)) putb(ballAt(p + 8, q), c, 200 * fo / 255 | 0);  // it turns: two balls, then one
+}
+}
+}
+function ringDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const nt = tracks.len, pr = smooth(0, 600, t) * nt * 128 / 255 | 0;  // how far each arc has run, 1/256 ball
+const fl = tent(t - 700, 220), age = t - 650;
+const r = 160 + (age * 640 / 1000 | 0), fw = age > 0 ? imax(0, 255 - (age * 255 / 700 | 0)) : 0;
+const wc = mix(col, C_WHITE, 160);
+fr.dg = 153;
+for (let m = 0; m < nt; m++) {
+const d = imin(m, nt - m) * 256;  // from 12 o'clock either way
+if (d <= pr) put(track[m], t < 650 && d > pr - 512 ? wc : col, 240 * fo / 255 | 0);
+}
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const l = lensOf(i);
+let a = l >= 2 ? 230 * fl / 255 | 0 : 0;
+if (fw) a = imax(a, (150 * tent(b_dist[i] * 16 - r, 90) / 255 | 0) * fw / 255 | 0);
+if (a) put(i, l >= 2 ? wc : col, a * fo / 255 | 0);
+}
+}
+const pict_ok = [0x0c9, 0x12a, 0x12c, 0x12a, 0x0c9];  // 9 wide
+function okDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+dimAll(255 - ((200 * smooth(0, 120, t) / 255 | 0) * fo / 255 | 0));
+fr.dg = 255;
+const r = (t - 80) * 700 / 1000 | 0, fw = t > 80 ? imax(0, 608 - r) * 255 / 608 | 0 : 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+if (fw) put(i, col, (140 * tent(b_dist[i] * 16 - r, 80) / 255 | 0) * fw / 255 | 0);
+}
+pict(pict_ok, 9, mix(col, C_WHITE, 255 - smooth(60, 500, t)), smooth(40, 90, t) * fo / 255 | 0, 0);
+}
+function shakeError(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const dx = wave(t, 700) * (26 * imax(0, 1100 - t) / 1100 | 0) / 128 | 0;  // the shift, 1/8 ball
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19) - dx, q = 7 * (b_row[i] - 3);
+const e = (p * p * 256 / 1600 | 0) + (q * q * 256 / 400 | 0);  // 256 on the ellipse 5 × 2½ balls
+const a = imax(tent(e - 256, 110), e < 256 ? 50 : 0);
+put(i, col, (a * 240 / 255 | 0) * fo / 255 | 0);
+}
+}
+const crs_s1 = [-30, -20, 30, 20], crs_s2 = [30, -20, -30, 20];  // 1/8 ball
+function crossError(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const v1 = smooth(100, 400, t) * 256 / 255 | 0, v2 = t > 450 ? smooth(450, 750, t) * 256 / 255 | 0 : -1;
+const on = t < 850 || (t >= 1000 && t < 1150) || t >= 1300;  // two blinks
+dimAll(255 - ((200 * smooth(0, 150, t) / 255 | 0) * fo / 255 | 0));
+fr.dg = 255;
+if (!on) return;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let d = v1 > 0 ? segDist(p, q, crs_s1, v1) : 99;
+if (v2 > 0) d = imin(d, segDist(p, q, crs_s2, v2));
+if (d >= 10) continue;
+put(i, col, imin(255, tent(d, 10) * 3 / 2 | 0) * fo / 255 | 0);
+}
+}
+function glitchError(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const busy = t < 1000, sl = t / 70 | 0, hs = hash8(sl * 7 + 3);
+if (busy && !(hs & 3)) dimAll(60);
+fr.dg = 200;
+const wc = mix(col, C_WHITE, 170), hr = [0, 0, 0, 0, 0, 0, 0];
+for (let r = 0; r < 7; r++) hr[r] = hash8(sl * 13 + r * 7 + 1);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const h = hr[b_row[i]], x0 = h * 5 % 38, x = b_x[i];
+let a = busy ? 0 : 90, c = col;
+if (busy && h < 120 && x >= x0 && x < x0 + 6 + (h & 15)) {
+a = 230;
+if (h & 1) c = wc;
+}
+if (busy && hs < 30) a = imax(a, 140);
+put(i, c, a * fo / 255 | 0);
+}
+}
+function sirenError(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const th = t * 400 / 1000 | 0;  // the beams' angle, 256 a turn
+const wc = mix(col, C_WHITE, 150);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const d = b_dist[i], da = abs(((b_ang[i] - th + 128) & 255) - 128);  // 0..128 from beam A
+const a1 = tent(da, 30), a2 = tent(128 - da, 30);
+let a = imax(a1, a2) * (150 + (105 * d / 38 | 0)) / 255 | 0, c = a2 > a1 ? wc : col;
+if (d < 5) {
+a = 200 + (wave(t, 800) * 55 / 128 | 0);
+c = col;
+}
+put(i, c, a * fo / 255 | 0);
+}
+}
+function powerOffError(n, t, du, col) {
+dimAll(255 - ((225 * smooth(0, 120, t) / 255 | 0) * smooth(du, du - 300, t) / 255 | 0));
+fr.dg = 255;
+const hv = 56 - (smooth(150, 550, t) * 56 / 255 | 0);  // half the picture's height, 1/16 row
+const hw = 20 - (smooth(550, 900, t) * 20 / 255 | 0);  // half the line's length, half-balls
+const wc = mix(col, C_WHITE, 180);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const dv = abs(b_row[i] - 3) * 16, dh = abs(b_x[i] - 19);
+let a = 0, c = col;
+if (t < 150) {
+a = 230 * smooth(0, 60, t) / 255 | 0;
+} else if (t < 550) {
+a = dv <= hv ? 230 : dv < hv + 16 ? 230 * (hv + 16 - dv) / 16 | 0 : 0;
+c = mix(col, C_WHITE, 150 * smooth(150, 550, t) / 255 | 0);
+} else if (t < 900) {
+if (!dv && dh <= hw + 1) a = 240;
+c = wc;
+} else if (b_dist[i] < 3) {
+a = 255 - smooth(950, 1300, t);
+c = mix(col, C_WHITE, 200 * a / 255 | 0);
+}
+put(i, c, a);
+}
+}
+function bangNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const ph = t % 350, on = t >= 1050 || ph < 240;  // three blinks, then it stays
+const wh = t < 1050 ? tent(ph - 40, 80) : 0;
+const c = mix(col, C_WHITE, 200 * wh / 255 | 0);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const r = b_row[i], ax = abs(b_x[i] - 19);
+let a = 0;
+if (on && (r < 3 ? ax <= 2 : r === 3 ? ax <= 1 : r === 5 ? ax === 1 : r === 6 && !ax)) a = 255;
+if (ax >= 16) a = imax(a, 200 * wh / 255 | 0);
+put(i, c, a * fo / 255 | 0);
+}
+}
+const knock_t = [0, 180, 620, 800];
+function knockNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const q = 7 * (b_row[i] - 3), d = oct(4 * (b_x[i] - 19), 28 - q);  // from a point under the bottom edge
+let a = 0;
+for (let j = 0; j < 4; j++) {
+const age = t - knock_t[j];
+if (age < 0 || age >= 600) continue;
+const pk = j & 1 ? 255 : 210;
+a = imax(a, (tent(d - (age * 80 / 600 | 0), 10) * (600 - age) / 600 | 0) * pk / 255 | 0);
+if (b_row[i] === 6) a = imax(a, tent(age - 30, 90));
+}
+put(i, col, a * fo / 255 | 0);
+}
+}
+function beaconNotify(n, t, du, col) {
+const g = smooth(0, 150, t) * smooth(du, du - 300, t) / 255 | 0;
+const phi = -43 + (smooth(100, 1400, t) * 86 / 255 | 0);  // from straight up, 256 a turn: −60° .. +60°
+const sx = sin8(phi & 255) - 128, cy = sin8((phi + 64) & 255) - 128;
+const fl = tent(phi, 8) * 150 / 255 | 0, wc = mix(col, C_WHITE, 120);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const dx = 4 * (b_x[i] - 19), dy = 40 - 7 * (b_row[i] - 3);  // from the lamp, 5 balls under the middle
+const al = dx * sx + dy * cy, cr = abs(dx * cy - dy * sx);
+const a = imax(al > 0 ? tent(cr * 256 / al | 0, 80) : 0, fl);
+put(i, a > 200 ? wc : col, a * g / 255 | 0);
+}
+}
+const pict_mail = [0x1ff, 0x183, 0x145, 0x129, 0x1ff], pict_flap = [0, 0x082, 0x044, 0x028, 0];  // 9 wide
+function mailNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+dimAll(255 - ((190 * smooth(0, 200, t) / 255 | 0) * fo / 255 | 0));
+fr.dg = 255;
+const dx = -15 + (smooth(0, 500, t) * 16 / 255 | 0) - (smooth(520, 680, t) > 127 ? 1 : 0);
+if (t < 500) pict(pict_mail, 9, col, 90 * fo / 255 | 0, dx - 1);  // the blur behind it
+pict(pict_mail, 9, col, fo, dx);
+pict(pict_flap, 9, C_WHITE, tent(t - 850, 150) * fo / 255 | 0, dx);
+}
+function badgeNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+let y = -18;  // the badge's centre, 1/8 ball
+if (t < 300) y = -50 + (32 * (t * t / 300 | 0) / 300 | 0);
+else if (t < 500) y = -18 - (8 * (10000 - (t - 400) * (t - 400)) / 10000 | 0);
+const wc = mix(col, C_WHITE, 140);
+fr.dg = 153;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const d = oct(4 * (b_x[i] - 19) - 56, 7 * (b_row[i] - 3) - y);
+let a = d < 11 ? 255 : d < 15 ? 255 * (15 - d) / 4 | 0 : 0;
+for (let j = 0; j < 2; j++) {  // the pings at 550 and 950 ms
+const age = t - 550 - 400 * j;
+if (age > 0 && age < 600) a = imax(a, (tent(d - 12 - (age * 40 / 600 | 0), 6) * (600 - age) / 600 | 0) * 200 / 255 | 0);
+}
+put(i, d < 6 ? wc : col, a * fo / 255 | 0);
+}
+}
+function stateLook(style, look, n, t, col, k) {
+if (look < 4) {
+stateDraw(look ? look : style, n, t, col, k);
+return;
+}
+if (n === A_LISTENING) {
+switch (look) {
+case 4: echoListen(n, t, col, k); break;
+case 5: tideListen(n, t, col, k); break;
+case 6: auroraListen(n, t, col, k); break;
+case 7: gazeListen(n, t, col, k); break;
+default: bubblesListen(n, t, col, k); break;
+}
+} else if (n === A_THINKING) {
+switch (look) {
+case 4: snakeThink(n, t, col, k); break;
+case 5: neuronThink(n, t, col, k); break;
+case 6: hourglassThink(n, t, col, k); break;
+case 7: dotsThink(n, t, col, k); break;
+default: atomThink(n, t, col, k); break;
+}
+} else {
+switch (look) {
+case 4: eqSpeak(n, t, col, k); break;
+case 5: scopeSpeak(n, t, col, k); break;
+case 6: raysSpeak(n, t, col, k); break;
+case 7: speakersSpeak(n, t, col, k); break;
+default: lipsSpeak(n, t, col, k); break;
+}
+}
+}
+function shotLook(style, look, n, t, col) {
+const du = shotLength(n, look, style);
+if (look < 4) {
+shotDraw(look ? look : style, n, t, du, col);
+return;
+}
+if (n === A_DONE) {
+switch (look) {
+case 4: checkDone(n, t, du, col); break;
+case 5: barDone(n, t, du, col); break;
+case 6: confettiDone(n, t, du, col); break;
+case 7: ringDone(n, t, du, col); break;
+default: okDone(n, t, du, col); break;
+}
+} else if (n === A_ERROR) {
+switch (look) {
+case 4: shakeError(n, t, du, col); break;
+case 5: crossError(n, t, du, col); break;
+case 6: glitchError(n, t, du, col); break;
+case 7: sirenError(n, t, du, col); break;
+default: powerOffError(n, t, du, col); break;
+}
+} else {
+switch (look) {
+case 4: bangNotify(n, t, du, col); break;
+case 5: knockNotify(n, t, du, col); break;
+case 6: beaconNotify(n, t, du, col); break;
+case 7: mailNotify(n, t, du, col); break;
+default: badgeNotify(n, t, du, col); break;
+}
+}
+}
+function wakeDraw(style, wake, lk, speed, t, col) {
 const id = wake ? wake : style;
 const du = wake_ms[id];
 let u = t * speed / 100 | 0;  // the wake's own time
 if (u > du) u = du;
 fr.lt = t - wakeLength(id, speed);  // the listening's time: it goes on at its own pace after the wake
-fr.ls = style;
+fr.ls = lk >= 4 ? 0 : lk ? lk : style;  // the listening's style (0: a new look)
 switch (id) {
 case 1: rippleShot(A_WAKE, u, du, col); break;
 case 2: orbitShot(A_WAKE, u, du, col); break;
@@ -1540,16 +1975,372 @@ case 7: heartShot(A_WAKE, u, du, col); break;
 case 8: eyeShot(A_WAKE, u, du, col); break;
 case 9: starsShot(A_WAKE, u, du, col); break;
 case 10: fireworkShot(A_WAKE, u, du, col); break;
-default: rainShot(A_WAKE, u, du, col); break;
+case 11: rainShot(A_WAKE, u, du, col); break;
+case 12: powerOnWake(A_WAKE, u, du, col); break;
+case 13: bunnyWake(A_WAKE, u, du, col); break;
+default: nameWake(A_WAKE, u, du, col); break;
 }
 if (id <= 3) {
-if (!(id === 3 && style === 3)) stateDraw(style, A_LISTENING, fr.lt, col, smooth(wake_from[id], du, u));
+if (!(id === 3 && fr.ls === 3)) stateLook(style, lk, A_LISTENING, fr.lt, col, smooth(wake_from[id], du, u));
 } else {
 fr.dg = 89;
-stateDraw(style, A_LISTENING, fr.lt, col, smooth(du - 800, du, u));
+stateLook(style, lk, A_LISTENING, fr.lt, col, smooth(du - 800, du, u));
 }
 }
-buildWakeTables();
+const NP = [
+151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225,
+140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, 190, 6, 148,
+247, 120, 234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32,
+57, 177, 33, 88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175,
+74, 165, 71, 134, 139, 48, 27, 166, 77, 146, 158, 231, 83, 111, 229, 122,
+60, 211, 133, 230, 220, 105, 92, 41, 55, 46, 245, 40, 244, 102, 143, 54,
+65, 25, 63, 161, 1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169,
+200, 196, 135, 130, 116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64,
+52, 217, 226, 250, 124, 123, 5, 202, 38, 147, 118, 126, 255, 82, 85, 212,
+207, 206, 59, 227, 47, 16, 58, 17, 182, 189, 28, 42, 223, 183, 170, 213,
+119, 248, 152, 2, 44, 154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9,
+129, 22, 39, 253, 19, 98, 108, 110, 79, 113, 224, 232, 178, 185, 112, 104,
+218, 246, 97, 228, 251, 34, 242, 193, 238, 210, 144, 12, 191, 179, 162, 241,
+81, 51, 145, 235, 249, 14, 239, 107, 49, 192, 214, 31, 181, 199, 106, 157,
+184, 84, 204, 176, 115, 121, 50, 45, 127, 4, 150, 254, 138, 236, 205, 93,
+222, 114, 67, 29, 24, 72, 243, 141, 128, 195, 78, 66, 215, 61, 156, 180,
+151];
+const s16 = (v) => (v << 16) >> 16;
+function grad16(hash, x, y, z) {
+hash &= 15;
+let u = hash < 8 ? x : y;
+let v = hash < 4 ? y : hash === 12 || hash === 14 ? x : z;
+if (hash & 1) u = s16(-u);
+if (hash & 2) v = s16(-v);
+return avg15(u, v);
+}
+function inoise16_raw(x, y, z) {
+const X = (x >>> 16) & 0xff, Y = (y >>> 16) & 0xff, Z = (z >>> 16) & 0xff;
+const A = (NP[X] + Y) & 255, AA = (NP[A] + Z) & 255, AB = (NP[A + 1] + Z) & 255;
+const B = (NP[X + 1] + Y) & 255, BA = (NP[B] + Z) & 255, BB = (NP[B + 1] + Z) & 255;
+let u = x & 0xffff, v = y & 0xffff, w = z & 0xffff;
+const xx = (u >> 1) & 0x7fff, yy = (v >> 1) & 0x7fff, zz = (w >> 1) & 0x7fff;
+const N = 0x8000;
+u = ease16InOutQuad(u);
+v = ease16InOutQuad(v);
+w = ease16InOutQuad(w);
+const X1 = lerp15by16(grad16(NP[AA], xx, yy, zz), grad16(NP[BA], s16(xx - N), yy, zz), u);
+const X2 = lerp15by16(grad16(NP[AB], xx, s16(yy - N), zz), grad16(NP[BB], s16(xx - N), s16(yy - N), zz), u);
+const X3 = lerp15by16(grad16(NP[AA + 1], xx, yy, s16(zz - N)), grad16(NP[BA + 1], s16(xx - N), yy, s16(zz - N)), u);
+const X4 = lerp15by16(grad16(NP[AB + 1], xx, s16(yy - N), s16(zz - N)), grad16(NP[BB + 1], s16(xx - N), s16(yy - N), s16(zz - N)), u);
+const Y1 = lerp15by16(X1, X2, v);
+const Y2 = lerp15by16(X3, X4, v);
+return lerp15by16(Y1, Y2, w);
+}
+function inoise16(x, y, z) {
+const ans = inoise16_raw(x >>> 0, y >>> 0, z >>> 0) + 19052;
+const pan = Math.imul(ans >>> 0, 440) >>> 0;
+return (pan >>> 8) & 0xffff;
+}
+const Black = 0x000000, Blue = 0x0000ff, DarkBlue = 0x00008b, SkyBlue = 0x87ceeb, LightBlue = 0xadd8e6, White = 0xffffff;
+const Maroon = 0x800000, DarkRed = 0x8b0000, Red = 0xff0000, Orange = 0xffa500;
+const SeaGreen = 0x2e8b57, MediumAquamarine = 0x66cdaa, Green = 0x008000, DarkGreen = 0x006400, ForestGreen = 0x228b22;
+const HeatColors_p = [0x000000, 0x330000, 0x660000, 0x990000, 0xcc0000, 0xff0000, 0xff3300, 0xff6600, 0xff9900, 0xffcc00, 0xffff00, 0xffff33, 0xffff66, 0xffff99, 0xffffcc, 0xffffff];
+const LavaColors_p = [Black, Maroon, Black, Maroon, DarkRed, DarkRed, Maroon, DarkRed, DarkRed, DarkRed, Red, Orange, White, Orange, Red, DarkRed];
+const PartyColors_p = [0x5500ab, 0x84007c, 0xb5004b, 0xe5001b, 0xe81700, 0xb84700, 0xab7700, 0xabab00, 0xab5500, 0xdd2200, 0xf2000e, 0xc2003e, 0x8f0071, 0x5f00a1, 0x2f00d0, 0x0007f9];
+const RainbowColors_p = [0xff0000, 0xd52a00, 0xab5500, 0xab7f00, 0xabab00, 0x56d500, 0x00ff00, 0x00d52a, 0x00ab55, 0x0056aa, 0x0000ff, 0x2a00d5, 0x5500ab, 0x7f0081, 0xab0055, 0xd5002b];
+const RainbowStripeColors_p = [0xff0000, 0, 0xab5500, 0, 0xabab00, 0, 0x00ff00, 0, 0x00ab55, 0, 0x0000ff, 0, 0x5500ab, 0, 0xab0055, 0];
+const CloudColors_p = [Blue, DarkBlue, DarkBlue, DarkBlue, DarkBlue, DarkBlue, DarkBlue, DarkBlue, Blue, DarkBlue, SkyBlue, SkyBlue, LightBlue, White, LightBlue, SkyBlue];
+const OceanColors_p = [0x191970, DarkBlue, 0x191970, 0x000080, DarkBlue, 0x0000cd, SeaGreen, 0x008080, 0x5f9ea0, Blue, 0x008b8b, 0x6495ed, 0x7fffd4, SeaGreen, 0x00ffff, 0x87cefa];
+const ForestColors_p = [DarkGreen, DarkGreen, 0x556b2f, DarkGreen, Green, ForestGreen, 0x6b8e23, Green, SeaGreen, MediumAquamarine, 0x32cd32, 0x9acd32, 0x90ee90, 0x7cfc00, MediumAquamarine, ForestGreen];
+const WoodFireColors_p = [Black, 0x330e00, 0x661c00, 0x992900, 0xcc3700, 0xff4500, 0xff5800, 0xff6b00, 0xff7f00, 0xff9200, Orange, 0xffaf00, 0xffb900, 0xffc300, 0xffcd00, 0xffd700];
+const NormalFire_p = [Black, 0x330000, 0x660000, 0x990000, 0xcc0000, Red, 0xff0c00, 0xff1800, 0xff2400, 0xff3000, 0xff3c00, 0xff4800, 0xff5400, 0xff6000, 0xff6c00, 0xff7800];
+const LithiumFireColors_p = [Black, 0x240707, 0x470e0e, 0x6b1414, 0x8e1b1b, 0xb22222, 0xc14244, 0xd16166, 0xe08187, 0xf0a0a9, 0xffc0cb, 0xff9ec0, 0xff7bb5, 0xff59a9, 0xff369e, 0xff1493];
+const SodiumFireColors_p = [Black, 0x332100, 0x664200, 0x996300, 0xcc8400, Orange, 0xffaf00, 0xffb900, 0xffc300, 0xffcd00, 0xffd700, 0xf8cd06, 0xf0c30d, 0xe9b913, 0xe1af1a, 0xdaa520];
+const CopperFireColors_p = [Black, 0x001a00, 0x003300, 0x004d00, 0x006600, Green, 0x239909, 0x45b313, 0x68cc1c, 0x8ae626, 0xadff2f, 0x94f530, 0x7ceb30, 0x63e131, 0x4bd731, 0x32cd32];
+const AlcoholFireColors_p = [Black, 0x000033, 0x000066, 0x000099, 0x0000cc, Blue, 0x0026ff, 0x004cff, 0x0073ff, 0x0099ff, 0x00bfff, 0x1bc2fe, 0x36c5fd, 0x51c8fc, 0x6ccbfb, 0x87cefa];
+const Fire_gp = [0, 0, 0, 0, 128, 255, 0, 0, 224, 255, 255, 0, 255, 255, 255, 255];
+const Sunset_Real_gp = [0, 120, 0, 0, 22, 179, 22, 0, 51, 255, 104, 0, 85, 167, 22, 18, 135, 100, 0, 103, 198, 16, 0, 130, 255, 0, 0, 160];
+const dkbluered_gp = [0, 1, 0, 4, 8, 1, 0, 13, 17, 1, 0, 29, 25, 1, 0, 52, 33, 1, 0, 83, 42, 1, 0, 123, 51, 1, 0, 174, 59, 1, 0, 235,
+68, 1, 2, 255, 76, 4, 17, 255, 84, 16, 45, 255, 93, 37, 82, 255, 102, 69, 127, 255, 110, 120, 168, 255, 119, 182, 217, 255,
+127, 255, 255, 255, 135, 255, 217, 184, 144, 255, 168, 123, 153, 255, 127, 73, 161, 255, 82, 40, 170, 255, 45, 18, 178, 255, 17, 5,
+186, 255, 2, 1, 195, 234, 0, 1, 204, 171, 0, 1, 212, 120, 0, 1, 221, 79, 0, 1, 229, 48, 0, 1, 237, 26, 0, 1, 246, 12, 0, 1, 255, 4, 0, 1];
+const Optimus_Prime_gp = [0, 5, 16, 18, 25, 5, 16, 18, 51, 7, 25, 39, 76, 8, 38, 71, 102, 64, 99, 106, 127, 194, 189, 151, 153, 182, 63, 42, 178, 167, 6, 2, 204, 100, 3, 1, 229, 53, 1, 1, 255, 53, 1, 1];
+const warmGrad_gp = [0, 252, 252, 172, 25, 239, 255, 61, 53, 247, 45, 17, 76, 197, 82, 19, 96, 239, 255, 61, 124, 83, 4, 1, 153, 247, 45, 17, 214, 23, 15, 17, 255, 1, 1, 1];
+const coldGrad_gp = [0, 66, 186, 192, 43, 1, 22, 71, 79, 2, 104, 142, 117, 66, 186, 192, 147, 2, 104, 142, 186, 1, 22, 71, 224, 2, 104, 142, 255, 4, 27, 28];
+const hotGrad_gp = [0, 157, 21, 2, 35, 229, 244, 16, 73, 255, 44, 7, 107, 142, 7, 1, 153, 229, 244, 16, 206, 142, 7, 1, 255, 135, 36, 0];
+const pinkGrad_gp = [0, 249, 32, 145, 28, 208, 1, 7, 43, 249, 1, 19, 56, 126, 152, 10, 73, 234, 23, 84, 89, 224, 45, 119, 107, 232, 127, 158, 127, 244, 13, 89, 150, 188, 6, 52, 175, 177, 70, 14, 221, 194, 1, 8, 255, 112, 0, 1];
+const comfy_gp = [0, 255, 255, 45, 43, 208, 93, 1, 137, 224, 1, 242, 181, 159, 1, 29, 255, 63, 4, 68];
+const cyperpunk_gp = [0, 3, 6, 72, 38, 12, 50, 188, 109, 217, 35, 1, 135, 242, 175, 12, 178, 161, 32, 87, 255, 24, 6, 108];
+const girl_gp = [0, 103, 1, 10, 33, 109, 1, 12, 76, 159, 5, 48, 119, 175, 55, 103, 127, 175, 55, 103, 178, 159, 5, 48, 221, 109, 1, 12, 255, 103, 1, 10];
+const xmas_gp = [0, 0, 12, 0, 40, 0, 55, 0, 66, 1, 117, 2, 77, 1, 84, 1, 81, 0, 55, 0, 119, 0, 12, 0, 153, 42, 0, 0, 181, 121, 0, 0, 204, 255, 12, 8, 224, 121, 0, 0, 244, 42, 0, 0, 255, 42, 0, 0];
+const acid_gp = [0, 0, 12, 0, 61, 153, 239, 112, 127, 0, 12, 0, 165, 106, 239, 2, 196, 167, 229, 71, 229, 106, 239, 2, 255, 0, 12, 0];
+const blueSmoke_gp = [0, 0, 0, 0, 12, 1, 1, 3, 53, 8, 1, 22, 80, 4, 6, 89, 119, 2, 25, 216, 145, 7, 10, 99, 186, 15, 2, 31, 233, 2, 1, 5, 255, 0, 0, 0];
+const gummy_gp = [0, 8, 47, 5, 31, 77, 122, 6, 63, 249, 237, 7, 95, 232, 51, 1, 127, 215, 0, 1, 159, 47, 1, 3, 191, 1, 7, 16, 223, 52, 22, 6, 255, 239, 45, 1];
+const leo_gp = [0, 0, 0, 0, 16, 0, 0, 0, 32, 0, 0, 0, 18, 0, 0, 0, 64, 16, 8, 0, 80, 80, 40, 0, 96, 16, 8, 0, 112, 0, 0, 0, 128, 0, 0, 0,
+144, 0, 0, 0, 160, 0, 0, 0, 176, 0, 0, 0, 192, 0, 0, 0, 208, 0, 0, 0, 224, 0, 0, 0, 240, 0, 0, 0, 255, 0, 0, 0];
+const aurora_gp = [0, 17, 177, 13, 64, 121, 242, 5, 128, 25, 173, 121, 192, 250, 77, 127, 255, 171, 101, 221];
+const Amber_gp = [0, 255, 140, 0, 64, 255, 190, 40, 128, 200, 80, 0, 192, 255, 170, 30, 255, 255, 140, 0];
+const Candle_gp = [0, 120, 40, 0, 70, 255, 150, 30, 130, 255, 210, 110, 190, 255, 150, 30, 255, 120, 40, 0];
+const Terracotta_gp = [0, 168, 72, 40, 85, 222, 128, 70, 170, 140, 50, 40, 255, 168, 72, 40];
+const PeachFizz_gp = [0, 255, 140, 110, 85, 255, 190, 140, 170, 240, 100, 100, 255, 255, 140, 110];
+const Coral_gp = [0, 255, 80, 70, 90, 255, 140, 90, 170, 230, 50, 100, 255, 255, 80, 70];
+const Honey_gp = [0, 255, 180, 20, 100, 255, 215, 90, 180, 200, 120, 10, 255, 255, 180, 20];
+const Embers_gp = [0, 40, 6, 0, 60, 180, 30, 0, 120, 255, 100, 10, 180, 180, 30, 0, 255, 40, 6, 0];
+const Pacifica_gp = [0, 0, 5, 7, 96, 0, 1, 20, 160, 0, 0, 38, 208, 0, 0, 70, 232, 20, 85, 75, 244, 40, 170, 80, 255, 0, 5, 7];
+const PacificaDeep_gp = [0, 0, 2, 8, 68, 0, 8, 32, 136, 0, 14, 57, 204, 0, 28, 112, 238, 16, 64, 191, 248, 32, 96, 255, 255, 0, 2, 8];
+const IceTwinkle_gp = [0, 12, 16, 64, 110, 24, 40, 110, 190, 24, 32, 128, 225, 80, 128, 192, 255, 12, 16, 64];
+const Glacier_gp = [0, 200, 240, 255, 85, 90, 180, 240, 170, 30, 90, 200, 255, 200, 240, 255];
+const Lagoon_gp = [0, 0, 180, 170, 85, 0, 120, 200, 170, 10, 60, 150, 255, 0, 180, 170];
+const Twilight_gp = [0, 40, 30, 110, 85, 90, 60, 170, 170, 30, 70, 160, 255, 40, 30, 110];
+const Moonlight_gp = [0, 200, 210, 235, 100, 110, 130, 200, 190, 40, 50, 120, 255, 200, 210, 235];
+const Meadow_gp = [0, 60, 160, 40, 85, 170, 210, 60, 170, 30, 130, 60, 255, 60, 160, 40];
+const Moss_gp = [0, 20, 70, 20, 100, 90, 140, 30, 180, 40, 110, 50, 255, 20, 70, 20];
+const Autumn_gp = [0, 200, 60, 10, 70, 240, 150, 20, 140, 150, 40, 20, 200, 100, 50, 10, 255, 200, 60, 10];
+const Sakura_gp = [0, 255, 190, 205, 100, 245, 130, 170, 180, 255, 225, 230, 255, 255, 190, 205];
+const Dunes_gp = [0, 230, 190, 120, 90, 200, 130, 70, 170, 150, 90, 60, 255, 230, 190, 120];
+const Tropics_gp = [0, 0, 120, 60, 80, 60, 200, 90, 160, 240, 200, 40, 210, 255, 90, 60, 255, 0, 120, 60];
+const Dawn_gp = [0, 80, 40, 140, 80, 230, 90, 120, 150, 255, 170, 60, 210, 255, 220, 140, 255, 80, 40, 140];
+const NeonNight_gp = [0, 255, 0, 140, 85, 120, 0, 255, 170, 0, 220, 255, 255, 255, 0, 140];
+const Synthwave_gp = [0, 255, 40, 160, 70, 160, 30, 255, 140, 30, 60, 255, 200, 0, 230, 230, 255, 255, 40, 160];
+const Toxic_gp = [0, 150, 255, 0, 90, 0, 200, 60, 170, 0, 60, 20, 220, 60, 230, 20, 255, 150, 255, 0];
+const Electric_gp = [0, 0, 60, 255, 80, 0, 220, 255, 140, 255, 255, 255, 200, 0, 150, 255, 255, 0, 60, 255];
+const Candy_gp = [0, 255, 60, 160, 64, 255, 200, 40, 128, 60, 230, 200, 192, 170, 90, 255, 255, 255, 60, 160];
+const Laser_gp = [0, 255, 20, 20, 64, 255, 20, 200, 128, 20, 60, 255, 192, 20, 255, 120, 255, 255, 20, 20];
+const Ultraviolet_gp = [0, 90, 0, 200, 100, 200, 30, 255, 170, 255, 120, 255, 255, 90, 0, 200];
+const Linen_gp = [0, 235, 215, 185, 100, 215, 175, 140, 190, 190, 200, 200, 255, 235, 215, 185];
+const DuskMist_gp = [0, 120, 110, 150, 100, 160, 140, 170, 190, 110, 130, 160, 255, 120, 110, 150];
+function fillGradientRGB(e, startpos, sc, endpos, ec) {
+if (endpos < startpos) {
+const t = endpos, tc = ec;
+ec = sc;
+endpos = startpos;
+startpos = t;
+sc = tc;
+}
+const s16 = (v) => (v << 16) >> 16;
+const ch = (c, s) => (c >> s) & 255;
+const divisor = endpos - startpos || 1;
+const d = [16, 8, 0].map((s) => s16(s16(s16((ch(ec, s) - ch(sc, s)) << 7) / divisor | 0) * 2));
+const acc = [16, 8, 0].map((s) => ch(sc, s) << 8);
+for (let i = startpos; i <= endpos; i++) {
+e[i] = ((acc[0] >> 8) << 16) | ((acc[1] >> 8) << 8) | (acc[2] >> 8);
+for (let c = 0; c < 3; c++) acc[c] = (acc[c] + d[c]) & 0xffff;
+}
+}
+function gradientTo16(gp) {
+const e = new Array(16).fill(0);
+let count = 0;
+do count++;
+while (gp[(count - 1) * 4] !== 255);
+const at = (k) => [gp[k * 4], (gp[k * 4 + 1] << 16) | (gp[k * 4 + 2] << 8) | gp[k * 4 + 3]];
+let lastSlotUsed = -1, k = 0;
+let rgbstart = at(0)[1], indexstart = 0;
+while (indexstart < 255) {
+k++;
+const [indexend, rgbend] = at(k);
+let istart8 = (indexstart / 16) | 0, iend8 = (indexend / 16) | 0;
+if (count < 16) {
+if (istart8 <= lastSlotUsed && lastSlotUsed < 15) {
+istart8 = lastSlotUsed + 1;
+if (iend8 < istart8) iend8 = istart8;
+}
+lastSlotUsed = iend8;
+}
+fillGradientRGB(e, istart8, rgbstart, iend8, rgbend);
+indexstart = indexend;
+rgbstart = rgbend;
+}
+return e;
+}
+const PAL_NAMES = ["HeatColors", "Fire", "WoodFireColors", "NormalFire", "LithiumFireColors", "SodiumFireColors", "CopperFireColors",
+"AlcoholFireColors", "LavaColors", "PartyColors", "RainbowColors", "RainbowStripeColors", "CloudColors", "OceanColors", "ForestColors",
+"Sunset_Real", "Dkbluered", "OptimusPrime", "WarmGrad", "ColdGrad", "HotGrad", "PinkGrad", "Comfy", "Cyperpunk", "Girl", "Xmas", "Acid",
+"BlueSmoke", "Gummy", "Leo", "Aurora",
+"Amber", "Candle", "Terracotta", "PeachFizz", "Coral", "Honey", "Embers", "Pacifica", "PacificaDeep", "IceTwinkle", "Glacier", "Lagoon",
+"Twilight", "Moonlight", "Meadow", "Moss", "Autumn", "Sakura", "Dunes", "Tropics", "Dawn", "NeonNight", "Synthwave", "Toxic", "Electric",
+"Candy", "Laser", "Ultraviolet", "Linen", "DuskMist"];
+const PALETTES = [HeatColors_p, Fire_gp, WoodFireColors_p, NormalFire_p, LithiumFireColors_p, SodiumFireColors_p, CopperFireColors_p,
+AlcoholFireColors_p, LavaColors_p, PartyColors_p, RainbowColors_p, RainbowStripeColors_p, CloudColors_p, OceanColors_p, ForestColors_p,
+Sunset_Real_gp, dkbluered_gp, Optimus_Prime_gp, warmGrad_gp, coldGrad_gp, hotGrad_gp, pinkGrad_gp, comfy_gp, cyperpunk_gp, girl_gp,
+xmas_gp, acid_gp, blueSmoke_gp, gummy_gp, leo_gp, aurora_gp,
+Amber_gp, Candle_gp, Terracotta_gp, PeachFizz_gp, Coral_gp, Honey_gp, Embers_gp, Pacifica_gp, PacificaDeep_gp, IceTwinkle_gp, Glacier_gp,
+Lagoon_gp, Twilight_gp, Moonlight_gp, Meadow_gp, Moss_gp, Autumn_gp, Sakura_gp, Dunes_gp, Tropics_gp, Dawn_gp, NeonNight_gp, Synthwave_gp,
+Toxic_gp, Electric_gp, Candy_gp, Laser_gp, Ultraviolet_gp, Linen_gp, DuskMist_gp].map((p, i) => (i === 1 || i >= 15 ? gradientTo16(p) : p));  // the _gp ones
+const PAL_RU = ["Жар", "Огонь", "Дрова", "Пламя", "Литий", "Натрий", "Медь", "Спирт", "Лава", "Вечеринка", "Радуга", "Радуга-полосы",
+"Облака", "Океан", "Лес", "Закат", "Сине-красная", "Оптимус", "Тёплая", "Холодная", "Горячая", "Розовая", "Уют", "Киберпанк", "Девчачья",
+"Новый год", "Кислота", "Синий дым", "Мармелад", "Лев", "Аврора",
+"Янтарь", "Свеча", "Терракота", "Персик", "Коралл", "Мёд", "Угли", "Пасифика", "Тихий океан", "Лёд", "Ледник", "Лагуна", "Сумерки",
+"Лунный свет", "Луг", "Мох", "Осень", "Сакура", "Дюны", "Тропики", "Заря", "Неон", "Синтвейв", "Токсик", "Электрик", "Леденец", "Лазер",
+"Ультрафиолет", "Лён", "Дымка"];
+const PAL_GROUPS = ["Огонь", "Тёплые", "Холодные", "Природа", "Неон", "Спокойные", "Разное"];
+const PAL_GROUP = [0, 0, 0, 0, 1, 0, 3, 2, 0, 4, 4, 4, 2, 2, 3, 1, 6, 6, 1, 2, 0, 1, 6, 4, 1, 6, 4, 5, 4, 6, 3,
+1, 1, 1, 1, 1, 1, 0, 2, 2, 2, 2, 2, 5, 5, 3, 3, 3, 3, 3, 3, 1, 4, 4, 4, 4, 4, 4, 4, 5, 5];
+const PAL_ORDER = PAL_GROUPS.flatMap((g, k) => PAL_GROUP.map((x, i) => (x === k ? i : -1)).filter((i) => i >= 0));
+function colorFromPalette16(pal, index, brightness) {
+index &= 0xffff;
+const index_4bit = index >> 12, offset = (index >> 4) & 255;
+const e1 = pal[index_4bit];
+let r = (e1 >> 16) & 255, g = (e1 >> 8) & 255, b = e1 & 255;
+if (offset) {
+const e2 = pal[index_4bit === 15 ? 0 : index_4bit + 1], f1 = 255 - offset;
+r = qadd8(scale8(r, f1), scale8((e2 >> 16) & 255, offset));
+g = qadd8(scale8(g, f1), scale8((e2 >> 8) & 255, offset));
+b = qadd8(scale8(b, f1), scale8(e2 & 255, offset));
+}
+if (brightness !== 255) {
+r = scale8Video(r, brightness);
+g = scale8Video(g, brightness);
+b = scale8Video(b, brightness);
+}
+return (r << 16) | (g << 8) | b;
+}
+function getPaletteColor(pal, idx, bright) {
+return colorFromPalette16(PALETTES[pal] || PALETTES[0], idx, bright & 255);
+}
+function brezLine(x0, y0, x1, y1, add, ctx, set) {
+let dx = x1 - x0, dy = y1 - y0, sx = 1, sy = 1;
+if (dx < 0) dx = -dx, sx = -1;
+if (dy < 0) dy = -dy, sy = -1;
+const dx2 = dx * 2, dy2 = dy * 2;
+set(x0, y0, ctx);
+if (dx > dy) {
+let err = dy2 - dx;
+while (x0 !== x1) {
+x0 += sx;
+if (err >= 0) {
+y0 += sy;
+err -= dx2;
+if (add) set(x0 - sx, y0, ctx);
+}
+err += dy2;
+set(x0, y0, ctx);
+}
+} else {
+let err = dx2 - dy;
+while (y0 !== y1) {
+y0 += sy;
+if (err >= 0) {
+x0 += sx;
+err -= dy2;
+if (add) set(x0, y0 - sy, ctx);
+}
+err += dx2;
+set(x0, y0, ctx);
+}
+}
+}
+const DEG_TO_RAD = 0.017453292519943295769236907684886;
+function gradData(x0, y0, w, h, angle) {
+const hypot = Math.trunc(Math.sqrt(w * w + h * h) / 2) & 0xffff;
+const sx = i16(Math.trunc(Math.cos(angle * DEG_TO_RAD) * hypot));
+const sy = i16(Math.trunc(Math.sin(angle * DEG_TO_RAD) * hypot));
+return { cx: i16(x0 + ((w / 2) | 0)), cy: i16(y0 + ((h / 2) | 0)), sx, sy, i: 0, len: Math.trunc(Math.sqrt(sx * sx + sy * sy) * 2) & 0xffff, pal: 0, bright: 0, scale: 0, count: 0 };
+}
+function brightNow(S, light) {
+if (!S.auto_bright) return S.bright & 255;
+if (S.adc_min === S.adc_max) return ((S.bright_min + S.bright_max) / 2) | 0;
+const b = (((light - S.adc_min) * (S.bright_max - S.bright_min)) / (S.adc_max - S.adc_min) | 0) + S.bright_min;
+return b < 0 ? 0 : b > 255 ? 255 : b;
+}
+function isTimeBetween(ch, cm, sh, sm, eh, em) {
+const c = ch * 60 + cm, s = sh * 60 + sm, e = eh * 60 + em;
+return s < e ? c >= s && c < e : c >= s || c < e;
+}
+function isNight(S, light, hour, minute) {
+if (!S.night_mode || light >= S.night_trsh) return false;
+if (!S.night_mode_auto) return true;
+const a = S.night_mode_auto_since, b = S.night_mode_auto_to;
+return isTimeBetween(hour, minute, ((a / 3600) | 0) % 24, ((a % 3600) / 60) | 0, ((b / 3600) | 0) % 24, ((b % 3600) / 60) | 0);
+}
+const DOT_FADE_PRD = 100, DOT_ACTIVE_PRD = 400;
+function dots(m, x1, x2, ms) {
+const color = m.getColor24();
+let color1 = m.getXY(x1, 2), color2 = m.getXY(x2, 4);
+if (ms < DOT_FADE_PRD) {
+color1 = blend(color1, color, ((ms * 255) / DOT_FADE_PRD) | 0);
+color2 = blend(color2, color, ((ms * 255) / DOT_FADE_PRD) | 0);
+} else if (ms < DOT_FADE_PRD + DOT_ACTIVE_PRD) {
+color2 = color1 = color;
+} else if (ms <= DOT_ACTIVE_PRD + DOT_FADE_PRD * 2) {
+color1 = blend(color1, color, (((DOT_ACTIVE_PRD + DOT_FADE_PRD * 2 - ms) * 255) / DOT_FADE_PRD) | 0);
+color2 = blend(color2, color, (((DOT_ACTIVE_PRD + DOT_FADE_PRD * 2 - ms) * 255) / DOT_FADE_PRD) | 0);
+}
+m.setXY(x1, 2, color1);
+m.setXY(x2, 4, color2);
+}
+function drawTime(m, S, t, cursorX, cursorY, dotX, dotY) {
+m.setCursor(cursorX, cursorY);
+if (t.hour < 10) {
+if (S.clock_style_zero) m.print((t.hour / 10) | 0);
+else m.print(" ");
+} else {
+m.print((t.hour / 10) | 0);
+}
+m.setCursor(cursorX + 4, cursorY);
+m.print(t.hour % 10);
+m.setCursor(cursorX + 10, cursorY);
+m.print((t.minute / 10) | 0);
+m.setCursor(cursorX + 14, cursorY);
+m.print(t.minute % 10);
+dots(m, dotX, dotY, t.ms);
+}
+function drawClock(m, S, t) {
+const font = S.clock_style;
+if (!font) return;
+m.setModeDiag();
+if (!t.synced) {
+m.setFont(gfx_font_3x5);
+m.setCursor(1, 1);
+m.print("--");
+m.setCursor(12, 1);
+m.print("--");
+return;
+}
+switch (font) {
+case 1:
+m.setFont(gfx_font_3x5);
+drawTime(m, S, t, 1, 1, 9, 9);
+break;
+case 2:
+m.setFont(font_3x5_diag);
+drawTime(m, S, t, 1, 1, 9, 9);
+break;
+case 3:
+m.setFont(font_4x5);
+drawTime(m, S, t, 1, 1, 9, 10);
+break;
+}
+}
+function drawBack(m, S, millis, backScale) {
+const count = (Math.floor(millis / 64) * S.back_speed) >>> 0;
+const pal = S.back_pal & 255, scale = S.back_scale & 255;
+const bright = ((S.back_bright * backScale) / 255) & 255;
+m.setModeXY();
+switch (S.back_mode) {
+case 0:
+m.clear();
+break;
+case 1: {
+const data = gradData(0, 0, m.w, m.h, S.back_angle);
+data.pal = pal;
+data.bright = bright;
+data.count = count;
+data.scale = scale;
+brezLine(data.cx - data.sx, data.cy + data.sy, data.cx + data.sx, data.cy - data.sy, false, data, (x, y, d) => {
+const idx = (Math.floor((d.i * 1023 * d.scale) / d.len) + d.count * 2) & 0xffff;
+const color = getPaletteColor(d.pal, idx, d.bright);
+d.i = (d.i + 1) & 0xffff;
+brezLine(x - d.sy, y - d.sx, x + d.sy, y + d.sx, true, color, (x2, y2, c) => m.setXY(x2, y2, c));
+});
+break;
+}
+case 2:
+for (let y = 0; y < m.h; y++) {
+for (let x = 0; x < m.w; x++) {
+if (ledXY(x, y) < 0) continue;
+const col = getPaletteColor(pal, inoise16(x * scale * 64, y * scale * 64, Math.imul(count, 32) >>> 0), bright);
+m.setXY(x, y, col);
+}
+}
+break;
+}
+}
 const KAIA_STATE_MS = 30000;
 const backScale = (duck) => 255 - (140 * duck / 255 | 0);
 function duckStep(duck, playing) {
@@ -1565,13 +2356,14 @@ return d;
 const isState = (anim) => anim === A_LISTENING || anim === A_THINKING || anim === A_SPEAKING;
 const animOf = (name) => ANIM_NAMES.indexOf(name);
 function resolvePlay(play) {
-if (!play || play.anim < 0 || play.anim === 7 || !(play.style >= 1 && play.style <= 3)) return null;
-let p = play;
+if (!play || play.anim < 0 || play.anim === A_OFF || !(play.style >= 1 && play.style <= 3)) return null;
+const look = play.look != null ? play.look : play.anim === A_WAKE ? play.wake || 0 : 0;
+let p = { ...play, look: imin(look, play.anim === A_WAKE ? WAKE_COUNT - 1 : LOOK_COUNT - 1), lk: imin(play.lk || 0, LOOK_COUNT - 1) };
 if (p.anim === A_WAKE) {
-const len = wakeLength(p.wake || p.style, p.speed || 100);
-if (p.t >= len) p = { ...p, anim: A_LISTENING, t: p.t - len };
+const len = wakeLength(p.look || p.style, p.speed || 100);
+if (p.t >= len) p = { ...p, anim: A_LISTENING, look: p.lk || 0, t: p.t - len };
 } else if (!isState(p.anim)) {
-if (p.t >= shot_ms[p.style - 1][p.anim - A_DONE + 1]) return null;
+if (p.t >= shotLength(p.anim, p.look, p.style)) return null;
 }
 if (isState(p.anim) && p.t >= (p.ms || KAIA_STATE_MS)) return null;
 return p.t < 0 ? null : p;
@@ -1590,9 +2382,9 @@ if (!p || (night && rule === 2)) return false;
 fr.sc = S.kaia_bright * (night && rule === 1 ? 77 : 255) / 255 | 0;
 fr.dg = 89;
 const col = playColor(S, p);
-if (isState(p.anim)) stateDraw(p.style, p.anim, p.t, col, 255);
-else if (p.anim === A_WAKE) wakeDraw(p.style, p.wake || 0, p.speed || 100, p.t, col);
-else shotDraw(p.style, p.anim, p.t, shot_ms[p.style - 1][p.anim - A_DONE + 1], col);
+if (isState(p.anim)) stateLook(p.style, p.look, p.anim, p.t, col, 255);
+else if (p.anim === A_WAKE) wakeDraw(p.style, p.look, p.lk || 0, p.speed || 100, p.t, col);
+else shotLook(p.style, p.look, p.anim, p.t, col);
 return true;
 }
 function renderFrame(m, S, c) {
@@ -1613,31 +2405,6 @@ return m.leds;
 function frameOf(S, c) {
 return Uint32Array.from(renderFrame(new BallMatrix(), S, c));
 }
-const TEXT_KEYS = ["ntp_host", "log_host", "wifi_ssid", "wifi_pass", "page_pass"];
-const SECRET_KEYS = ["wifi_pass", "page_pass"];
-const DEFAULTS = {
-wifi_ssid: "", wifi_pass: "", show_ip: 1,
-ntp_host: "pool.ntp.org", ntp_gmt: 3,
-bright: 100, auto_bright: 0, bright_min: 10, bright_max: 255, adc_min: 0, adc_max: 1023,
-night_mode: 0, night_mode_auto: 0, night_mode_auto_since: 0, night_mode_auto_to: 0, night_color: 0xff0000, night_trsh: 50,
-clock_style: 1, clock_style_zero: 0, clock_color: 0xffffff,
-back_mode: 1, back_pal: 0, back_bright: 200, back_speed: 50, back_scale: 50, back_angle: 0,
-kaia_anim: 1, kaia_wake: 0, kaia_wake_speed: 100, kaia_color: 0x00d1ff, kaia_bright: 255, kaia_night: 1,
-page_pass: "", log_host: "",
-};
-function normalize(raw) {
-const s = {};
-for (const k of Object.keys(DEFAULTS)) {
-const v = raw && raw[k];
-if (TEXT_KEYS.includes(k)) s[k] = v == null ? DEFAULTS[k] : String(v);
-else {
-const n = typeof v === "boolean" ? +v : Number(v);
-s[k] = v == null || v === "" || !Number.isFinite(n) ? DEFAULTS[k] : Math.trunc(n);
-}
-}
-return s;
-}
-const rawOf = (k, v) => (TEXT_KEYS.includes(k) ? String(v) : String(Math.trunc(Number(v))));
 const MOCK_PASS = "kaia";
 function createMock() {
 const t0 = performance.now(), boot = 4123456;
@@ -1648,7 +2415,7 @@ night_mode: 1, night_mode_auto: 1, night_mode_auto_since: 82800, night_mode_auto
 kaia_anim: 1, kaia_wake: 0, kaia_wake_speed: 100, log_host: "192.168.1.20:9000", wifi_ssid: "HomeNet-2G",
 });
 const M = {
-mode: "ok", update: false, text: false, version: "1.5.0", wifi: { ssid: "HomeNet-2G", ip: "192.168.1.47", rssi: -58 },
+mode: "ok", update: false, text: false, version: "1.6.0", wifi: { ssid: "HomeNet-2G", ip: "192.168.1.47", rssi: -58 },
 pass: "", play: null, down: 0, settings: S,
 };
 const millis = () => boot + Math.floor(performance.now() - t0);
@@ -1698,7 +2465,10 @@ name: "BallClock", version: M.version, time: synced() ? timeText(ms) : "00:00:00
 light: light(ms), bright: brightNow(S, light(ms)), night: night(ms), overlay: M.text ? "text" : p ? "anim" : "none",
 anim: p ? ANIM_NAMES[p.anim] : null, uptime: (ms / 1000) | 0, reset: "Power On", heap: 23816, block: 17432, crash: null,
 ms, update: M.update,
-play: p && !M.text ? { name: ANIM_NAMES[p.anim], style: p.style, wake: p.wake, speed: p.speed, t: p.t, color: playColor(S, p).toString(16).padStart(6, "0") } : null,
+play: p && !M.text ? {
+name: ANIM_NAMES[p.anim], style: p.style, look: p.look, wake: M.play.anim === A_WAKE ? M.play.look : S.kaia_wake, speed: p.speed, t: p.t,
+color: playColor(S, p).toString(16).padStart(6, "0"),
+} : null,
 settings: Object.fromEntries(Object.keys(DEFAULTS).filter((k) => !["wifi_ssid", "wifi_pass", "page_pass"].includes(k)).map((k) => [k, S[k]])),
 };
 }
@@ -1719,12 +2489,14 @@ if (n === 7) {
 M.play = null;
 return { status: 200, json: { ok: true } };
 }
+const lq = q.has("look") ? q.get("look") : n === A_WAKE && q.has("wake") ? q.get("wake") : null;
+if (lq != null && !(/^\d+$/.test(lq) && +lq < (n === A_WAKE ? WAKE_COUNT : LOOK_COUNT))) return { status: 400, json: { error: "look" } };
 const style = q.has("style") ? +q.get("style") : S.kaia_anim;
 if (!(style >= 1 && style <= 3)) return { status: 200, json: { ok: true } };
 M.text = false;
 M.play = {
 anim: n, style, start: ms, ms: q.has("ms") ? +q.get("ms") : 30000,
-wake: n === A_WAKE && q.has("wake") ? +q.get("wake") : S.kaia_wake,
+look: lq != null ? +lq : S[LOOK_KEYS[n]], lk: S.kaia_listen,
 speed: n === A_WAKE && q.has("speed") ? +q.get("speed") : S.kaia_wake_speed,
 color: q.has("color") ? parseInt(q.get("color"), 16) : null,
 };
@@ -1736,7 +2508,7 @@ if (q.get("action") === "set") {
 if (id === ID_OTA_UPDATE) {
 M.down = ms + 4000;
 M.update = false;
-M.version = "1.5.1";
+M.version = "1.6.1";
 return { status: 200, json: null };
 }
 const k = keyOf(id);
@@ -1751,7 +2523,7 @@ else if (id === keyId("adc_max")) S.adc_max = light(ms);
 else if (id === ID_WIFI_SAVE) {
 M.wifi.ssid = S.wifi_ssid;
 if (M.mode === "ap") M.mode = "ok";
-} else if (id === ID_CHECK_UPDATES) M.update = M.update || M.version === "1.5.0";
+} else if (id === ID_CHECK_UPDATES) M.update = M.update || M.version === "1.6.0";
 }
 return { status: 200, json: null };
 }
@@ -1775,7 +2547,30 @@ ballX[i] = ((2 * x + 3 - y) * D) / 2;
 ballY[i] = y * S3 * D;
 }
 }
-const IVORY = [200, 195, 180];
+const IVORY = 0xc8c3b4;
+const UNLIT_KEY = "ballclock.unlit";
+const unlit = { c: IVORY, tr: 0, v: 0 };
+function readUnlit(store) {
+try {
+const j = JSON.parse(store.getItem(UNLIT_KEY) || "null");
+if (j && /^#[0-9a-f]{6}$/i.test(j.c) && j.tr >= 0 && j.tr <= 100) return { c: parseInt(j.c.slice(1), 16), tr: Math.round(j.tr) };
+} catch {
+}
+return { c: IVORY, tr: 0 };
+}
+function setUnlit(u, store) {
+unlit.c = u.c;
+unlit.tr = u.tr;
+unlit.v++;
+if (!store) return;
+try {
+if (u.c === IVORY && !u.tr) store.removeItem(UNLIT_KEY);
+else store.setItem(UNLIT_KEY, JSON.stringify({ c: "#" + u.c.toString(16).padStart(6, "0"), tr: u.tr }));
+} catch {
+}
+}
+const rgbOf = (c) => [(c >> 16) & 255, (c >> 8) & 255, c & 255];
+const css = (a) => "rgb(" + a.map((x) => Math.round(x)).join(",") + ")";
 const CX = (19 * D) / 2, CY = 3 * S3 * D;
 const R_ = D / 2 + 0.12 * D, TIP = -1.1547 * R_, HX = 0.5774 * (CY + R_);
 const X0 = TIP - 0.45 * D, X1 = 2 * CX - TIP + 0.45 * D, Y0 = -R_ - 0.45 * D, Y1 = 2 * CY + R_ + 0.45 * D;
@@ -1817,16 +2612,20 @@ c.stroke();
 }
 function caches(v) {
 const L = v.L, r = (D / 2) * L.s * 0.93;
-if (!v.base) {
+if (!v.base || v.uv !== unlit.v) {
+v.uv = unlit.v;
+const u = rgbOf(unlit.c), al = 1 - unlit.tr / 100;
+const st = unlit.c === IVORY ? ["#ebe6d6", "#c8c3b1", "#6f6b5d"] : [css(u.map((x) => x + (255 - x) * 0.6)), css(u), css(u.map((x) => x * 0.55))];
 v.base = layer(L, (c) => {
 plate(c, L);
 if (v.simple) return;
+c.globalAlpha = al;
 for (let i = 0; i < MX_LED_AMOUNT; i++) {
 const x = L.X(ballX[i]), y = L.Y(ballY[i]);
 const g = c.createRadialGradient(x - 0.28 * r, y - 0.32 * r, r * 0.1, x, y, r);
-g.addColorStop(0, "#ebe6d6");
-g.addColorStop(0.55, "#c8c3b1");
-g.addColorStop(1, "#6f6b5d");
+g.addColorStop(0, st[0]);
+g.addColorStop(0.55, st[1]);
+g.addColorStop(1, st[2]);
 c.fillStyle = g;
 c.beginPath();
 c.arc(x, y, r, 0, 6.2832);
@@ -1834,7 +2633,7 @@ c.fill();
 }
 });
 v.gloss = v.simple ? null : layer(L, (c) => {
-c.fillStyle = "rgba(255,255,255,.38)";
+c.fillStyle = "rgba(255,255,255," + (0.38 * (0.3 + 0.7 * al)).toFixed(3) + ")";
 for (let i = 0; i < MX_LED_AMOUNT; i++) {
 const x = L.X(ballX[i]), y = L.Y(ballY[i]);
 c.beginPath();
@@ -1846,7 +2645,7 @@ c.fill();
 return r;
 }
 function paint(v, leds, gain, clip) {
-const c = v.ctx, L = v.L, r = caches(v);
+const c = v.ctx, L = v.L, r = caches(v), u = rgbOf(unlit.c), al = 1 - unlit.tr / 100;
 c.save();
 if (clip) {
 c.beginPath();
@@ -1861,7 +2660,8 @@ const R = Math.min(255, ((col >> 16) & 255) * gain) | 0, G = Math.min(255, ((col
 const m = Math.max(R, G, B), l = m / 255;
 if (v.simple) {
 const a = l <= 0.012 ? 0 : 0.3 + 0.7 * Math.sqrt(l), k = m ? 255 / m : 0;
-c.fillStyle = "rgb(" + (IVORY[0] + (R * k - IVORY[0]) * a | 0) + "," + (IVORY[1] + (G * k - IVORY[1]) * a | 0) + "," + (IVORY[2] + (B * k - IVORY[2]) * a | 0) + ")";
+const rgb = (u[0] + (R * k - u[0]) * a | 0) + "," + (u[1] + (G * k - u[1]) * a | 0) + "," + (u[2] + (B * k - u[2]) * a | 0);
+c.fillStyle = al === 1 ? "rgb(" + rgb + ")" : "rgba(" + rgb + "," + ((al + (1 - al) * a) * 1000 | 0) / 1000 + ")";
 c.beginPath();
 c.arc(x, y, r, 0, 6.2832);
 c.fill();
@@ -1895,6 +2695,11 @@ const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const mock = MOCK ? createMock() : null;
 const api = new ClockApi(mock ? mock.send : fetchSend);
 const PASS_KEY = "ballclock.pass";
+let store = null;
+try {
+store = localStorage;
+} catch {
+}
 const lsGet = (k) => {
 try {
 return localStorage.getItem(k) || "";
@@ -1910,12 +2715,13 @@ else localStorage.removeItem(k);
 }
 };
 api.pass = lsGet(PASS_KEY);
+if (store) setUnlit(readUnlit(store));
 let SAVED = normalize(null);
 const DRAFT = {};
 const W = { ssid: "", pass: "" };  // the Wi-Fi fields: applied with «Подключить», not with Save
 let LIVE = null, recvAt = 0, WIFI = null, FRAME = null, everOk = false;
 const sync = new ClockSync();
-const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, cmp: 0.5, tab: "kaia", saving: false, upd: "" };
+const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, cmp: 0.5, tab: "kaia", saving: false, upd: "", ev: A_WAKE, CL: null, open: false };
 const S = () => Object.assign({}, SAVED, DRAFT);
 const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => [...(r || document).querySelectorAll(s)];
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -1929,40 +2735,29 @@ return +a[0] * 3600 + (+a[1] || 0) * 60;
 };
 const rgb = (c) => ((c >> 16) & 255) + "," + ((c >> 8) & 255) + "," + (c & 255);
 const palCss = (p) => "linear-gradient(90deg," + PALETTES[p].map((c) => "rgb(" + rgb(c) + ")").join(",") + ")";
-const STYLES = ["Выкл", "Рябь из центра", "Орбита по краю", "Искры в знак"];
-const wakeId = (s, w) => (w ? w : s.kaia_anim || 1);
-const WDOC = {
-1: ["Как сейчас (rippleShot). Три кольца расходятся от центра, белёсая вспышка в начале; со 1,1 с проявляется слушание стиля.",
-"r_k = (t-220k)*0.544            // k = 0..2, 1/16 четверти шара\nf_k = (832-r_k)/832\na   = max( fl*tent(16d,176), max_k tent(16d-r_k,88)*f_k ) * 242/255\nfl  = 255*(1-t/350); цвет к белому на 70% при fl", "0–1,9 с; слушание с 1,1 с", "b_dist (уже есть)"],
-2: ["Как сейчас (orbitShot). Комета разгоняется по ободу, потом кольца схлопываются, как диафрагма.",
-"h = 6tc + 50.69tc³ (шаров), tail = 6 + 36.4tc, tc = min(t,1100)/1000\nободок: a = 26 + 230*comet(pos,h,n0,tail)/255\nt>1100: кольца r=1..3 вспыхивают в 1100+150r мс: 217*tent(t-…,220)", "0–2,0 с; слушание с 1,5 с", "b_pos, b_ring, ring_len (уже есть)"],
-3: ["Как сейчас (sparksShot). 18 искр летят с обода к центру, знак вспыхивает и оседает.",
-"j = (u/750)^1.6 * len;  хвост 4 шара 255/153/77/31  (u = t-45*((7k)%18))\nt>1500: кольцо 102*tent(16d-r,80), r = (t-1500)*0.64\nmark(g): g = 217*прилетело/18 → вспышка 1550 → «дыхание»", "0–2,0 с; слушание с 1,6 с", "spark[18][12], b_lens (уже есть)"],
-4: ["Заря поднимается от нижнего ряда до верхнего: кромка белее, у середины ярче. Время видно.",
-"F  = smooth(0,1500,u)*140/255            // кромка, 1/16 ряда от низа\ndp = F - 16*(6-row)\ndp<-24: 0;  -24..0: ореол 90*(24+dp)/24\ndp>=0: a = (70 + 185*max(0,96-dp)/96) * (190 + 65*(255-4*|x-19|)/255)/255\nцвет = mix(Кая, белый, 140*max(0,48-dp)/48)\nfo = smooth(du,du-400,u)   // гаснет", "0–1,5 с подъём, до 1,6 держит, до 2,0 гаснет; слушание с 1,2 с", "row, x"],
-5: ["Луч обходит центр один раз по часовой от 12 часов, за ним шлейф; часть шаров «засвечивается» метками. Время видно.",
-"th = u*256/1400                           // угол луча 0..256\ndl = th - ang[i];  dl<0: ничего\nшлейф: ((96-dl)/96)² при dl<96;  голова dl<12 → белее\nметка: h1[i]<34 && dl<150 → max(a, 215*(150-dl)/150), белая\nвес по радиусу: (150 + 105*d/38)/255;  ступица tent(u-100,300) при d<10", "0–1,4 с оборот, до 1,8 с гаснет", "b_ang, b_dist + h1"],
-6: ["Два рукава-спирали раскручиваются из центра к краю и вращаются. Время видно.",
-"R   = smooth(0,1250,u)*46/255              // фронт, четверти шара\nrho = u*256/1700\nv   = (2*ang + 7*d - rho) & 255;  dd = min(v, 256-v)\na   = tent(dd,56) * (255-3d)/255   при d<=R\nфронт (R-d<7) белее;  центр: вспышка tent(u-150,350)*(9-d)/9 при u<500", "0–1,25 с рукава растут, вращаются до 2,0 с", "b_ang, b_dist"],
-7: ["Время нарочно уходит: сердце пульсирует дважды («тум-тум») и растворяется в слушании.",
-"beat(q,pk) = q<90 ? pk*q/90 : max(0, pk - pk*(q-90)/380)\nenv  = max( beat(u-150,255), beat(u-540,190) )\nhide = smooth(0,140,u) * fo/255;  dimAll(255 - 200*hide)\nсердце 0x36 0x7f 0x7f 0x3e 0x08: a = 60 + 195*env/255, к белому 110*env/255\nореол: шары линзы 1 — 70*env/255", "удары в 0,15 и 0,54 с, держит до 1,5 с, гаснет до 1,9 с", "b_lens + pict()"],
-8: ["Щель по средней строке раскрывается в глаз; зрачок смотрит влево, вправо и возвращается; глаз моргает. Фон и время приглушены.",
-"w = smooth(0,250,u)*17/255                    // длина щели, полушаров\no = smooth(250,950,u)*(255 - 215*smooth(1750,1980,u)/255)/255\nax = |x-19|, dr = row-3\nH = o*(255 - (255*ax/17)²/255)/255;  m = H - 85*|dr|\nm>=0: 45 (белок); a = max(a, 230*tent(m,64)/255)   // веко\nзрачок: px = 4(x-19) - off; d2 = px² + (7dr)²; d2<=169 → 255, до 340 спад", "0–0,25 щель, до 0,95 раскрытие, взгляд 1,0–1,7, моргание 1,75–1,98, до 2,2 с", "row, x"],
-9: ["Звёзды мерцают всё гуще, затем общая вспышка от центра.",
-"dth = 10 + smooth(0,1250,u)*240/255\nh1[i] < dth → звезда: ph = h2[i] + u*(220+(h3[i]&63))/1000\ns = 255 - 2*|ph-128|;  a = s²/255\nвспышка: f = tent(u-1500,200) * (255-3d)/255, белая", "0–1,25 с гуще, вспышка 1,3–1,7 с, до 2,0 с", "h1, h2, h3"],
-10: ["Ракета взлетает по средней колонке к центру и разрывается: 18 лучей по путям искр, затем россыпь.",
-"ракета (u<780): hr = 96 - smooth(0,720,u)*48/255;  колонка |x-19|<=1\nвзрыв q = u-780: вспышка tent(q-70,160)*tent(d,16)\nлучи: head = (len-1)*e, e = x(2-x), x = min(q,650)/650\nроссыпь q>400: t2 = q-400-h2*5/3; 0..500 → 220*(500-t2)/500 при h3<120, d>10", "ракета 0–0,78 с, взрыв 0,78–1,43, россыпь до 2,1, до 2,2 с", "spark, row, x, h2, h3"],
-11: ["Капли бегут по диагоналям решётки: влево-вниз и вправо-вниз; за ними остаётся лёгкий след. Время видно.",
-"поток A: key = col;  поток B: key = col - row + 6\nhead = (u - delay(key))*128/1000 - 16        // 8 рядов/с\ndelay_A = ((37key+11)&31)*26;  delay_B = ((29key+5)&31)*26 + 110\ndf = head - 16*row;  0<=df<96: ((96-df)/96)²;  df>=96: 26 (след)", "капли 0–1,7 с, след до 2,0 с", "col, row"],
-};
+const STY = ["Выкл", "Рябь", "Орбита", "Искры"];
+const EV = [
+["Пробуждение", "когда Кая услышала своё имя", "пробуждение"],
+["Слушает", "пока Кая ждёт вашу команду", "внимание, слух"],
+["Думает", "пока Кая готовит ответ", "размышление, работа"],
+["Говорит", "пока Кая отвечает голосом", "звук, голос"],
+["Готово", "задача выполнена", "готовность, успех"],
+["Ошибка", "что-то пошло не так", "тревога, сбой"],
+["Уведомление", "сообщение, на которое не нужно отвечать", "сигнал, внимание"],
+];
+const looksOf = (n) => (n === A_WAKE ? WAKE_COUNT : LOOK_COUNT);
+const lookName = (n, c) => LOOK_NAMES[n][c] || LOOK_NAMES[n][0];
+const styOf = (s, c) => (c >= 1 && c <= 3 ? c : s.kaia_anim || 1);
+const wakeIdOf = (s, c) => (c ? c : s.kaia_anim || 1);
+const lenOf = (n, c, s) => (n === A_WAKE ? wakeLength(wakeIdOf(s, c), s.kaia_wake_speed) : isState(n) ? 0 : shotLength(n, c, s.kaia_anim || 1));
 const GROUPS = [
-{ id: "clock", tab: "look", title: "Часы", f: [
+{ id: "clock", tab: "look", wide: 1, cls: "three", title: "Часы", f: [
 { k: "clock_style", t: "sel", l: "Шрифт", o: ["Нет", "Тип 1", "Тип 2", "Тип 3"] },
 { k: "clock_style_zero", t: "sw", l: "Ведущий ноль", h: "09:05 вместо 9:05" },
 { k: "clock_color", t: "col", l: "Цвет" }] },
-{ id: "back", tab: "look", title: "Фон", f: [
+{ id: "back", tab: "look", wide: 1, cls: "two", title: "Фон", f: [
 { k: "back_mode", t: "sel", l: "Режим", o: ["Нет", "Градиент", "Перлин"] },
-{ k: "back_pal", t: "pal", l: "Палитра", w: 1, if: (s) => s.back_mode > 0 },
+{ k: "back_pal", t: "pal", l: "Палитра", if: (s) => s.back_mode > 0 },
 { k: "back_bright", t: "rng", l: "Яркость", min: 0, max: 255, w: 1, if: (s) => s.back_mode > 0 },
 { k: "back_speed", t: "rng", l: "Скорость", min: 0, max: 100, w: 1, if: (s) => s.back_mode > 0 },
 { k: "back_scale", t: "rng", l: "Масштаб", min: 0, max: 100, w: 1, if: (s) => s.back_mode > 0 },
@@ -1982,13 +2777,13 @@ const GROUPS = [
 { k: "night_mode_auto_since", t: "time", l: "С", if: (s) => s.night_mode && s.night_mode_auto },
 { k: "night_mode_auto_to", t: "time", l: "До", if: (s) => s.night_mode && s.night_mode_auto },
 { k: "_thr", t: "live", l: "Порог датчика", live: "thr", h: "Ночью, пока сигнал ниже порога. На странице порог не меняется.", if: (s) => s.night_mode }] },
-{ id: "kaia", tab: "kaia", wide: 1, title: "Кая", f: [
-{ k: "kaia_anim", t: "sel", l: "Анимации", o: STYLES },
-{ k: "kaia_wake", t: "wake", l: "Пробуждение", w: 1, if: (s) => s.kaia_anim > 0 },
-{ k: "kaia_wake_speed", t: "spd", l: "Скорость пробуждения", w: 1, if: (s) => s.kaia_anim > 0 },
-{ k: "kaia_color", t: "col", l: "Цвет Каи", if: (s) => s.kaia_anim > 0 },
-{ k: "kaia_bright", t: "rng", l: "Яркость", min: 0, max: 255, w: 1, if: (s) => s.kaia_anim > 0 },
-{ k: "kaia_night", t: "sel", l: "Ночью", o: ["Как обычно", "Тусклее", "Не показывать"], if: (s) => s.kaia_anim > 0 }] },
+{ id: "kaia", tab: "kaia", wide: 1, title: "Кая", custom: (s) => kayaHTML(s), f: [
+{ k: "kaia_anim", t: "sel", l: "Стиль", o: STY },
+...LOOK_KEYS.map((k, n) => ({ k, t: "look", l: EV[n][0], n })),
+{ k: "kaia_wake_speed", t: "spd", l: "Скорость пробуждения" },
+{ k: "kaia_color", t: "col", l: "Цвет Каи" },
+{ k: "kaia_bright", t: "rng", l: "Яркость Каи", min: 0, max: 255 },
+{ k: "kaia_night", t: "sel", l: "Ночью", o: ["Как обычно", "Тусклее", "Не показывать"] }] },
 { id: "time", tab: "net", title: "Время", f: [
 { k: "ntp_gmt", t: "num", l: "Часовой пояс", min: -12, max: 14 },
 { k: "ntp_host", t: "txt", l: "NTP-сервер", w: 1 },
@@ -2025,8 +2820,8 @@ case "sel": return f.o[v];
 case "sw": return v ? "вкл" : "выкл";
 case "col": return hexs(v);
 case "time": return hm(v);
-case "pal": return PAL_NAMES[v];
-case "wake": return WAKE_NAMES[v];
+case "pal": return PAL_RU[v];
+case "look": return v + " · " + lookName(f.n, v);
 case "pwd": return v ? "••••" : "пусто";
 case "num": return (v > 0 ? "+" : "") + v;
 case "spd": case "rng": return fmtVal(k, v);
@@ -2035,15 +2830,17 @@ return String(v) || "пусто";
 }
 const RVB = (k) => '<button class="rv" data-rv="' + k + '" title="Вернуть сохранённое" aria-label="Вернуть сохранённое">↺</button>';
 const opts = (list, v) => list.map((o, i) => '<option value="' + i + '"' + (i === v ? " selected" : "") + ">" + esc(o) + "</option>").join("");
+const fld = (k, lab, hint, ctl, stack) => '<div class="fld' + (stack ? " stack" : "") + '" data-f="' + k + '"><div class="fl"><span>' + lab + (hint ? "<small>" + hint + "</small>" : "") + "</span>" + RVB(k) + "</div>" + ctl + "</div>";
+const rngCtl = (k, v, min, max, step, lab) => '<div class="rng"><input type="range" data-k="' + k + '" min="' + min + '" max="' + max + '"' + (step ? ' step="' + step + '"' : "") + ' value="' + v + '" aria-label="' + lab + '"><output>' + fmtVal(k, v) + "</output></div>";
 function fieldHTML(f, s) {
-const v = s[f.k], stack = f.w ? " stack" : "", lab = esc(f.l);
-const wrap = (c, rv = true) => '<div class="fld' + stack + '" data-f="' + f.k + '"><div class="fl"><span>' + lab + (f.h ? "<small>" + esc(f.h) + "</small>" : "") + "</span>" + (rv ? RVB(f.k) : "") + "</div>" + c + "</div>";
+const v = s[f.k], lab = esc(f.l);
+const wrap = (c, rv = true) => '<div class="fld' + (f.w ? " stack" : "") + '" data-f="' + f.k + '"><div class="fl"><span>' + lab + (f.h ? "<small>" + esc(f.h) + "</small>" : "") + "</span>" + (rv ? RVB(f.k) : "") + "</div>" + c + "</div>";
 switch (f.t) {
 case "sw": return wrap('<label class="sw"><input type="checkbox" data-k="' + f.k + '"' + (v ? " checked" : "") + ' aria-label="' + lab + '"><i></i></label>');
 case "sel": return wrap('<select data-k="' + f.k + '" aria-label="' + lab + '">' + opts(f.o, v) + "</select>");
-case "pal": return wrap('<div class="pal"><select data-k="' + f.k + '" aria-label="' + lab + '">' + opts(PAL_NAMES, v) + '</select><i class="palbar" style="background:' + palCss(v) + '"></i></div>');
+case "pal": return pickerHTML(f);
 case "col": return wrap('<input type="color" data-k="' + f.k + '" value="' + hexs(v) + '" aria-label="' + lab + '">');
-case "rng": return wrap('<div class="rng"><input type="range" data-k="' + f.k + '" min="' + f.min + '" max="' + f.max + '" value="' + v + '" aria-label="' + lab + '"><output>' + fmtVal(f.k, v) + "</output></div>");
+case "rng": return wrap(rngCtl(f.k, v, f.min, f.max, 0, lab));
 case "txt": return wrap('<input type="text" data-k="' + f.k + '" value="' + esc(v) + '" autocomplete="off" aria-label="' + lab + '">');
 case "pwd": return wrap('<input type="password" data-k="' + f.k + '" value="' + esc(DRAFT.page_pass || "") + '" autocomplete="new-password" placeholder="' + (api.pass ? "задан; новый — сюда" : "без пароля") + '" aria-label="' + lab + '">');
 case "wtxt": return wrap('<input type="text" data-w="ssid" value="' + esc(W.ssid) + '" autocomplete="off" aria-label="' + lab + '">', false);
@@ -2055,59 +2852,166 @@ case "led": return wrap('<span class="led" data-live="led"><i></i><span></span><
 case "btns": return wrap('<div class="btns"><button class="btn sm" data-act="admin">Запомнить мин.</button><button class="btn sm" data-act="admax">Запомнить макс.</button></div>', false);
 case "btnw": return '<div class="fld stack"><div class="btns"><button class="btn pri" data-act="wifi">Подключить</button></div><div class="fl"><span><small>' + esc(f.h) + "</small></span></div></div>";
 case "btnc": return '<div class="fld stack"><div class="btns"><button class="btn" data-act="check">Проверить обновления</button>' + (LIVE && LIVE.update ? '<button class="btn pri" data-act="upd">Доступно обновление → Обновить</button>' : "") + '</div><div class="fl"><span><small id="chkst">' + esc(P.upd || (LIVE && LIVE.update ? "Доступна новая прошивка (сейчас " + LIVE.version + ")" : "Новых версий не видно")) + "</small></span></div></div>";
-case "wake": {
-const sty = s.kaia_anim || 1;
-const tiles = [];
-for (let id = 0; id < WAKE_COUNT; id++) {
-const eff = wakeId(s, id);
-tiles.push('<button class="tile' + (v === id ? " sel" : "") + '" data-tw="' + id + '"><canvas></canvas><span class="tn"><b>' + id + " · " + WAKE_NAMES[id] + "</b><i>" + (id ? fmtS(wakeLength(eff, s.kaia_wake_speed)) : "сейчас: " + WAKE_NAMES[sty]) + "</i></span></button>");
-}
-return '<div class="fld stack" data-f="' + f.k + '"><div class="fl"><span>' + lab + "<small>Отдельно от стиля. Нажмите плитку: она сыграет на большом превью выше.</small></span>" + RVB(f.k) + '</div><div class="wg">' + tiles.join("") + '</div><div id="wdoc">' + docHTML(v, s) + "</div>" + allDocs() + "</div>";
-}
-case "spd":
-return '<div class="fld stack spd" data-f="' + f.k + '"><div class="fl"><span>' + lab + "<small>Меняет только пробуждение; слушание после него идёт в своём темпе.</small></span><output>" + fmtVal(f.k, v) + "</output>" + RVB(f.k) + "</div>" +
-'<input type="range" data-k="' + f.k + '" min="50" max="200" step="5" value="' + v + '" aria-label="' + lab + '">' +
-'<div class="row">' + [[50, "½×"], [100, "1×"], [150, "1,5×"], [200, "2×"]].map((a) => '<button class="chip' + (v === a[0] ? " on" : "") + '" data-sp="' + a[0] + '">' + a[1] + "</button>").join("") + "</div>" +
-'<div class="btns"><button class="btn pri" data-act="onclock">Показать на часах</button></div><small class="hint">Играет на часах без сохранения: <code>/kaia/anim?name=wake&amp;style=…&amp;wake=…&amp;speed=…</code></small></div>';
 }
 return "";
 }
-function docHTML(id, s) {
-const eff = wakeId(s, id), d = WDOC[eff];
-return '<div class="doc"><h4>' + (id ? "№ " + id : "№ 0 → № " + eff) + " · " + WAKE_NAMES[eff] + "<span>" + fmtS(wake_ms[eff]) + " при 1× · " + fmtS(wakeLength(eff, s.kaia_wake_speed)) + " при " + s.kaia_wake_speed + " %</span></h4><p>" + d[0] + "</p><pre>" + esc(d[1]) + "</pre><p>Тайминг: " + d[2] + ". Таблицы: " + d[3] + ".</p></div>";
+function pickerHTML(f) {
+const strips = PAL_GROUPS.map((g, k) => {
+const items = PAL_ORDER.filter((i) => PAL_GROUP[i] === k);
+return '<div class="brow"><h4>' + g + "<small>" + items.length + '</small></h4><div class="bscr">' +
+items.map((i) => '<button class="pc" data-pick="' + i + '" title="' + PAL_NAMES[i] + '"><i class="pb" style="background:' + palCss(i) + '"></i><span>' + esc(PAL_RU[i]) + "</span></button>").join("") + "</div></div>";
+});
+return '<div class="fld stack" data-f="' + f.k + '"><div class="fl"><span>' + esc(f.l) + "<small>Нажмите образец или листайте ‹ ›: превью меняется сразу. Кружок ● — палитра, которая сейчас на часах.</small></span>" + RVB(f.k) + "</div>" +
+'<div class="bk"><button class="ico" data-pstep="-1" aria-label="Предыдущая палитра">‹</button><div class="bkc"><div class="bkt"><b id="pcn"></b><small id="pcm"></small></div><i class="pb" id="pcb"></i><div class="pcs" id="pcs"></div></div><button class="ico" data-pstep="1" aria-label="Следующая палитра">›</button></div>' +
+'<div class="brows">' + strips.join("") + "</div></div>";
 }
-function allDocs() {
-let h = '<details class="all"><summary>Формулы и тайминги всех пробуждений (для прошивки)</summary>';
-for (let i = 1; i < WAKE_COUNT; i++) h += '<div class="doc"><h4>№ ' + i + " · " + WAKE_NAMES[i] + "<span>" + fmtS(wake_ms[i]) + "</span></h4><p>" + WDOC[i][0] + "</p><pre>" + esc(WDOC[i][1]) + "</pre><p>Тайминг: " + WDOC[i][2] + ". Таблицы: " + WDOC[i][3] + ".</p></div>";
-return h + "</details>";
+function updPal() {
+const cur = S().back_pal, sav = SAVED.back_pal;
+if (!$("#pcn")) return;
+$("#pcn").textContent = PAL_RU[cur];
+$("#pcm").textContent = PAL_GROUPS[PAL_GROUP[cur]] + " · №" + cur;
+$("#pcb").style.background = palCss(cur);
+$("#pcs").innerHTML = cur === sav ? "<span>Эта палитра сейчас на часах</span>" : "<span>На часах: " + esc(PAL_RU[sav]) + '</span><i class="pb" style="background:' + palCss(sav) + '"></i>';
+$$(".pc").forEach((b) => {
+const i = +b.dataset.pick;
+b.classList.toggle("sel", i === cur);
+b.classList.toggle("sv", i === sav);
+});
+}
+function stepPal(d) {
+const j = PAL_ORDER.indexOf(S().back_pal);
+setVal("back_pal", PAL_ORDER[(j + d + PAL_ORDER.length) % PAL_ORDER.length]);
+const b = $(".pc.sel");
+if (b) {
+const sc = b.parentNode;
+if (sc.scrollWidth > sc.clientWidth + 2) sc.scrollLeft = b.offsetLeft - sc.offsetLeft - sc.clientWidth / 2 + b.offsetWidth / 2;
+}
+}
+const TRY = '<span class="long">▶ Показать на часах</span><span class="short">▶ На часах</span>';
+const shortOf = (n, c) => (c ? lookName(n, c) : "Как у стиля");
+function rowText(n, s) {
+const c = s[LOOK_KEYS[n]], sv = SAVED[LOOK_KEYS[n]];
+if (!s.kaia_anim) return "выкл";
+return (c ? c + " · " : "") + shortOf(n, c) + (c !== sv ? " · было: " + shortOf(n, sv) : "");
+}
+function choiceLabel(n, s) {
+const c = s[LOOK_KEYS[n]];
+return c ? c + " · " + lookName(n, c) : "0 → " + LOOK_NAMES[n][s.kaia_anim || 1];
+}
+function tileSub(n, id, s) {
+const st = s.kaia_anim || 1, now = id ? "" : "сейчас: " + LOOK_NAMES[n][styOf(s, 0)] + " · ";
+if (isState(n)) return id ? "непрерывно" : "сейчас: " + STY[st];
+return now + fmtS(lenOf(n, id, s));
+}
+function tileHTML(n, id, s) {
+const k = LOOK_KEYS[n], cur = s[k], sav = SAVED[k];
+return '<button class="tile' + (cur === id ? " sel" : "") + '" data-tc="' + n + ":" + id + '"><canvas></canvas><span class="tn"><b>' + id + " · " + esc(lookName(n, id)) + "</b><i>" + tileSub(n, id, s) + "</i></span>" + (sav === id && cur !== id ? '<em class="pl">на часах</em>' : "") + "</button>";
+}
+const gh = (t, sub) => '<div class="gh"><h4>' + t + "</h4>" + (sub ? "<small>" + sub + "</small>" : "") + "</div>";
+const tilesFor = (n, a, b, s) => {
+let h = "";
+for (let id = a; id <= b; id++) h += tileHTML(n, id, s);
+return '<div class="wg">' + h + "</div>";
+};
+function galleryHTML(n, s) {
+let h = '<div class="gal' + (s.kaia_anim ? "" : " dis") + '">';
+if (!s.kaia_anim) h += '<p class="note">Анимации Каи выключены в стиле. Выберите Рябь, Орбиту или Искры, и здесь можно выбирать анимацию для события.</p>';
+h += gh("Как у стиля и версии стиля", "0 — следует за стилем · 1 Рябь · 2 Орбита · 3 Искры") + tilesFor(n, 0, 3, s);
+if (n === A_WAKE) h += gh("Тематические пробуждения", "4–11") + tilesFor(n, 4, 11, s) + gh("Новые пробуждения", "12–" + (WAKE_COUNT - 1)) + tilesFor(n, 12, WAKE_COUNT - 1, s);
+else h += gh("Новые по теме", "4–" + (LOOK_COUNT - 1) + " · " + EV[n][2]) + tilesFor(n, 4, LOOK_COUNT - 1, s);
+return h + "</div>";
+}
+function speedHTML(s) {
+const sp = s.kaia_wake_speed;
+return fld("kaia_wake_speed", "Скорость пробуждения", "Только пробуждение; слушание после него идёт в своём темпе.", rngCtl("kaia_wake_speed", sp, 50, 200, 5, "Скорость пробуждения") +
+'<div class="row">' + [[50, "½×"], [100, "1×"], [150, "1,5×"], [200, "2×"]].map((a) => '<button class="chip' + (sp === a[0] ? " on" : "") + '" data-sp="' + a[0] + '">' + a[1] + "</button>").join("") + "</div>", 1).replace('class="fld stack"', 'class="fld stack spd"');
+}
+function kayaHTML(s) {
+const on = s.kaia_anim;
+let h = '<div class="kopts one">' + fld("kaia_anim", "Стиль", "«Выкл» отключает все анимации Каи; «Как у стиля» следует за выбранным стилем.", '<div class="seg stseg">' + STY.map((t, i) => '<button data-sty="' + i + '"' + (on === i ? ' class="on"' : "") + ">" + t + "</button>").join("") + "</div>", 1) + "</div>";
+h += '<div class="evh"><h3 class="sub">Анимация для каждого события</h3><small>В списке виден выбор для всех семи событий; нажмите событие, чтобы выбрать другую анимацию.</small></div>';
+h += '<div class="kb' + (P.open ? " open" : "") + '" id="kb"><div class="evl">' + EV.map((e, n) => '<button class="er" data-ev="' + n + '"><canvas data-th="' + n + '"></canvas><span class="et"><b>' + e[0] + "</b><small></small></span><span class=\"chev\">›</span></button>").join("") + "</div>" +
+'<div class="evd" id="evd"><div class="evdh"><button class="chip back" data-close aria-label="К списку событий">‹ События</button><div class="evt"><h3 id="evt"></h3><small id="evs"></small></div></div><div id="evg"></div>' +
+'<div class="gfoot"><button class="btn pri" data-act="onclock">' + TRY + '</button><small class="cl-st"></small></div></div></div>';
+if (on) {
+h += '<div class="evh"><h3 class="sub">Цвет и яркость Каи</h3></div><div class="kopts">' + fld("kaia_color", "Цвет Каи", "", '<input type="color" data-k="kaia_color" value="' + hexs(s.kaia_color) + '" aria-label="Цвет Каи">') +
+fld("kaia_bright", "Яркость", "", rngCtl("kaia_bright", s.kaia_bright, 0, 255, 0, "Яркость Каи"), 1) +
+fld("kaia_night", "Ночью", "", '<select data-k="kaia_night" aria-label="Ночью">' + opts(FLD.kaia_night.o, s.kaia_night) + "</select>") + "</div>";
+}
+return h;
+}
+function fillEv() {
+const s = S(), n = P.ev;
+if (!$("#evg")) return;
+$("#evt").textContent = EV[n][0];
+$("#evs").textContent = EV[n][1];
+$("#evg").innerHTML = galleryHTML(n, s) + (n === A_WAKE && s.kaia_anim ? speedHTML(s) : "");
+}
+function updKaya() {
+const s = S();
+$$(".er").forEach((b) => {
+const n = +b.dataset.ev;
+b.classList.toggle("on", n === P.ev);
+b.classList.toggle("chg", LOOK_KEYS[n] in DRAFT);
+b.querySelector("small").textContent = rowText(n, s);
+});
+$$(".tile[data-tc]").forEach((t) => {
+const [n, id] = t.dataset.tc.split(":").map(Number), k = LOOK_KEYS[n], cur = s[k], sav = SAVED[k];
+t.classList.toggle("sel", cur === id);
+t.querySelector("i").textContent = tileSub(n, id, s);
+const pl = t.querySelector(".pl"), want = sav === id && cur !== id;
+if (want && !pl) t.insertAdjacentHTML("beforeend", '<em class="pl">на часах</em>');
+else if (!want && pl) pl.remove();
+});
+$$("[data-sp]").forEach((b) => b.classList.toggle("on", +b.dataset.sp === s.kaia_wake_speed));
+$$('[data-f="kaia_wake_speed"] output').forEach((o) => (o.textContent = fmtVal("kaia_wake_speed", s.kaia_wake_speed)));
+}
+function setSheet(o) {
+P.open = o;
+const kb = $("#kb");
+if (kb) kb.classList.toggle("open", o);
+document.body.classList.toggle("sheet", o);
+if (o) document.documentElement.style.setProperty("--hh", Math.round($("#hero").getBoundingClientRect().bottom) + "px");
+}
+function setEvent(n, open) {
+P.ev = n;
+if (open) setSheet(true);
+fillEv();
+bindTiles();
+updKaya();
+markKs();
+hsum();
+clUI();
+play(ANIM_NAMES[n]);
 }
 let tiles = [];
-let filmT = 0;
 function renderGroup(g) {
 const el = document.getElementById("g-" + g.id), s = S();
 if (!el) return;
-el.querySelector(".gbody").innerHTML = g.f.filter((f) => !f.if || f.if(s)).map((f) => fieldHTML(f, s)).join("");
-if (g.id === "kaia") bindTiles();
+el.querySelector(".gbody").innerHTML = g.custom ? g.custom(s) : g.f.filter((f) => !f.if || f.if(s)).map((f) => fieldHTML(f, s)).join("");
+if (g.id === "kaia") {
+fillEv();
+bindTiles();
+updKaya();
+clUI();
+}
+if (g.id === "back") updPal();
 markDirty();
 refreshLive();
-filmSoon();
 }
 function renderAll() {
 GROUPS.forEach(renderGroup);
 }
 function buildGroups() {
-$("#groups").innerHTML = GROUPS.map((g) => '<section class="card grp' + (g.wide ? " wide" : "") + '" id="g-' + g.id + '" data-tab="' + g.tab + '"><h2>' + g.title + '</h2><div class="gbody"></div></section>').join("") +
-'<section class="card film grp wide" id="film" data-tab="kaia"><h2>Пробуждения по кадрам</h2><p class="hint">Те же формулы, шесть моментов каждого пробуждения при 100 %, с вашими фоном, шрифтом и цветом Каи.</p><div id="filmbody"></div></section>';
+$("#groups").innerHTML = GROUPS.map((g) => '<section class="card grp' + (g.wide ? " wide" : "") + '" id="g-' + g.id + '" data-tab="' + g.tab + '"><h2>' + g.title + '</h2><div class="gbody' + (g.cls ? " " + g.cls : "") + '"></div></section>').join("");
 $("#tabs").innerHTML = TABS.map((t) => '<button class="tab" data-tab="' + t.id + '"><svg viewBox="0 0 24 24">' + t.i + "</svg><span>" + t.t + "</span></button>").join("");
 }
 function showTab(id) {
 P.tab = id;
+if (id !== "kaia") setSheet(false);
 $$(".tab").forEach((b) => b.classList.toggle("on", b.dataset.tab === id));
 $$("#groups>.grp").forEach((g) => (g.hidden = g.dataset.tab !== id));
-requestAnimationFrame(() => {
-sizeTiles();
-if (id === "kaia") buildFilm();
-});
+requestAnimationFrame(sizeTiles);
 }
 const groupOf = (k) => GROUPS.find((g) => g.f.some((f) => f.k === k));
 function markDirty() {
@@ -2121,8 +3025,14 @@ $("#sbsave").disabled = P.conn !== "ok" || P.saving;
 hsum();
 }
 function hsum() {
-const s = S(), id = wakeId(s, s.kaia_wake);
-$("#hsum").innerHTML = s.kaia_anim ? "Пробуждение: <b>" + (s.kaia_wake ? s.kaia_wake + " · " : "0 → ") + WAKE_NAMES[id] + "</b><br>" + s.kaia_wake_speed + " % · " + fmtS(wakeLength(id, s.kaia_wake_speed)) + " · затем слушание «" + STYLES[s.kaia_anim] + "»" : "Анимации Каи выключены.";
+const s = S(), n = P.ev;
+let d = "Анимации Каи выключены.";
+if (s.kaia_anim) {
+d = "Событие: <b>" + EV[n][0] + "</b><br>Анимация: <b>" + esc(choiceLabel(n, s)) + "</b><br>";
+if (n === A_WAKE) d += fmtS(lenOf(n, s.kaia_wake, s)) + " при " + s.kaia_wake_speed + " % · затем слушание «" + esc(shortOf(1, s.kaia_listen)) + "»";
+else d += isState(n) ? "идёт, пока Кая в этом состоянии" : "один раз · " + fmtS(lenOf(n, s[LOOK_KEYS[n]], s));
+}
+$("#hsum").innerHTML = d;
 }
 function setVal(k, v) {
 if (v === SAVED[k] && k !== "page_pass") delete DRAFT[k];
@@ -2130,19 +3040,11 @@ else DRAFT[k] = v;
 if (k === "page_pass" && v === "") delete DRAFT[k];
 if (P.src === "now") setSrc("draft");
 markDirty();
-if (k === "kaia_wake_speed" || k === "kaia_wake") updWakeUI();
-filmSoon();
+if (k.startsWith("kaia_")) {
+updKaya();
+clUI();
 }
-function updWakeUI() {
-const s = S(), d = $("#wdoc");
-if (d) d.innerHTML = docHTML(s.kaia_wake, s);
-$$(".tile").forEach((t) => {
-const id = +t.dataset.tw, eff = wakeId(s, id);
-t.classList.toggle("sel", id === s.kaia_wake);
-t.querySelector("i").textContent = id ? fmtS(wakeLength(eff, s.kaia_wake_speed)) : "сейчас: " + WAKE_NAMES[eff];
-});
-$$("[data-sp]").forEach((b) => b.classList.toggle("on", +b.dataset.sp === s.kaia_wake_speed));
-$$('[data-f="kaia_wake_speed"] output').forEach((o) => (o.textContent = fmtVal("kaia_wake_speed", s.kaia_wake_speed)));
+if (k === "back_pal") updPal();
 }
 function refreshLive() {
 const s = S(), L = LIVE, light = L ? L.light : 0;
@@ -2170,6 +3072,7 @@ $("#sdot").className = "dot " + st[0];
 $("#stxt").textContent = st[1];
 $("#ver").textContent = L ? "v" + L.version : "…";
 $("#logout").hidden = !api.pass;
+$$("#day button").forEach((b) => b.classList.toggle("on", +b.dataset.d === (P.forceNight != null ? P.forceNight : +!!P.night)));
 }
 function banners() {
 let h = "";
@@ -2253,7 +3156,6 @@ await new Promise((r) => setTimeout(r, Math.max(0, 250 - (performance.now() - t)
 }
 mirrorOn = false;
 }
-const KS = [["wake", "Пробуждение"], ["listening", "Слушает"], ["thinking", "Думает"], ["speaking", "Говорит"], ["done", "Готово"], ["error", "Ошибка"], ["notify", "Уведомление"], ["off", "Стоп"]];
 const gainOf = (b) => 0.3 + (0.7 * b) / 255;
 let view = null, view2 = null;
 function timeNow() {
@@ -2267,14 +3169,14 @@ return { millis: ms, synced: true, hour: d.getHours(), minute: d.getMinutes(), m
 function playNow() {
 const p = LIVE && LIVE.play;
 if (!p) return null;
-const el = performance.now() - recvAt;
-return { anim: animOf(p.name), style: p.style, wake: p.wake || 0, speed: p.speed || 100, t: p.t + el, color: p.color ? parseInt(p.color, 16) : null };
+const el = performance.now() - recvAt, anim = animOf(p.name);
+return { anim, style: p.style, look: p.look != null ? p.look : anim === A_WAKE ? p.wake || 0 : 0, lk: SAVED.kaia_listen, speed: p.speed || 100, t: p.t + el, color: p.color ? parseInt(p.color, 16) : null };
 }
 function playDraft(s) {
 const M = P.M;
 if (!M) return null;
-const t = RM && M.still ? M.still : performance.now() - M.t0;
-return { anim: M.anim, style: s.kaia_anim || 1, wake: M.wake != null ? M.wake : s.kaia_wake, speed: M.speed || s.kaia_wake_speed, t, color: null, ms: 7000 };
+const t = RM && M.still != null ? M.still : performance.now() - M.t0;
+return { anim: M.anim, style: s.kaia_anim || 1, look: s[LOOK_KEYS[M.anim]], lk: s.kaia_listen, speed: s.kaia_wake_speed, t, color: null, ms: 7000 };
 }
 const lightNow = () => (LIVE ? LIVE.light : 500);
 const nightFor = (s, tm) => (P.forceNight != null ? !!P.forceNight : isNight(s, lightNow(), tm.hour, tm.minute));
@@ -2302,23 +3204,23 @@ markKs();
 const leds = renderFrame(work, s, { ...tm, night, play, duck: P.duck });
 return { leds: Uint32Array.from(leds), gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1), night, play };
 }
+function playLabel(p) {
+let t = EV[p.anim][0] + " · " + (p.look ? p.look + " · " + lookName(p.anim, p.look) : "0 → " + lookName(p.anim, p.style));
+if (p.anim === A_WAKE) t += " · " + p.speed + " % · " + fmtS(wakeLength(p.look || p.style, p.speed));
+return t;
+}
 function status(fr, src) {
 const pre = src === "now" ? "Сейчас · " : "Черновик · ";
 if (src === "now") {
 if (P.conn === "offline") return "нет связи · последний кадр";
 if (fr.mirror) return pre + (textNow() ? "бегущая строка · кадры с часов" : "зеркало · кадры с часов");
-const p = playNow(), r = resolvePlay(p);
-if (!r) return pre + (fr.night ? "ночь" : "день") + ", без анимации";
-return pre + KS.find((k) => k[0] === ANIM_NAMES[r.anim])[1] + (r.anim === A_WAKE ? " · " + WAKE_NAMES[wakeId({ kaia_anim: r.style }, r.wake)] : "");
+const r = resolvePlay(playNow());
+return pre + (r ? playLabel(r) : (fr.night ? "ночь" : "день") + ", без анимации");
 }
-const s = S(), p = fr.play && resolvePlay(fr.play);
+if (P.CL) return clText(P.CL);
+const p = fr.play && resolvePlay(fr.play);
 if (!p) return pre + (fr.night ? "ночь" : "день") + ", без анимации";
-let t = pre + KS.find((k) => k[0] === ANIM_NAMES[p.anim])[1];
-if (p.anim === A_WAKE) {
-const id = wakeId(s, p.wake);
-t += " · " + WAKE_NAMES[id] + " · " + p.speed + " % · " + fmtS(wakeLength(id, p.speed));
-} else if (isState(p.anim)) t += " · пока не нажмёте «Стоп»";
-return t;
+return pre + playLabel(p) + (isState(p.anim) ? " · пока не нажмёте «Стоп»" : "");
 }
 function wipe(c, L) {
 const x = Math.round(L.W * P.cmp), y = L.H / 2;
@@ -2346,9 +3248,11 @@ if (!view) return;
 P.frames = (P.frames || 0) + 1;
 const wall = $("#wall");
 wall.classList.toggle("cmp", P.src === "cmp");
-const d = frameDraft();
+const d = frameDraft(), mini = document.body.classList.contains("minion");
 let shown = d;
-if (P.src === "cmp") {
+if (mini) {
+if (P.src === "now") shown = frameNow();
+} else if (P.src === "cmp") {
 const n = frameNow(), x = Math.round(view.L.W * P.cmp);
 paint(view, n.leds, n.gain, [0, x]);
 paint(view, d.leds, d.gain, [x, view.L.W]);
@@ -2360,7 +3264,8 @@ paint(view, shown.leds, shown.gain);
 $("#badge").textContent = status(shown, P.src);
 }
 $("#pst").textContent = P.src === "cmp" ? "Слева «Сейчас», справа «Черновик»: тяните границу." : P.src === "now" ? (shown.mirror ? "«Сейчас»: кадры часов, 4 раза в секунду." : "«Сейчас»: расчёт на странице по состоянию часов.") : "«Черновик»: расчёт на странице по тем же данным.";
-if (view2 && document.body.classList.contains("minion")) paint(view2, shown.leds, shown.gain);
+if (view2 && mini) paint(view2, shown.leds, shown.gain);
+P.night = !!d.night;
 P.duck = duckStep(P.duck, !!(d.play && !(d.night && S().kaia_night === 2) && S().kaia_anim));
 }
 function fit() {
@@ -2369,6 +3274,7 @@ const w = Math.floor(wall.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(
 if (w > 0 && (!view || view.L.W !== w)) view = fitCanvas($("#cv"), w);
 if (!view2) view2 = fitCanvas($("#cv2"), 240);
 sizeTiles();
+if (P.open) setSheet(true);
 }
 function setSrc(v) {
 P.src = v;
@@ -2382,7 +3288,7 @@ P.live = v;
 $$("[data-l]").forEach((b) => b.classList.toggle("on", b.dataset.l === v));
 if (mirrorWanted()) mirrorLoop();
 }
-function play(name, over) {
+function play(name) {
 if (name === "off") {
 P.M = null;
 markKs();
@@ -2390,29 +3296,39 @@ return;
 }
 const s = S();
 if (!s.kaia_anim) {
-toast("Анимации выключены: выберите стиль в группе «Кая»");
+toast("Анимации выключены: выберите стиль во вкладке «Кая»");
 return;
 }
 if (P.src === "now") setSrc("draft");
-const anim = ANIM_NAMES.indexOf(name);
-P.M = Object.assign({ anim, t0: performance.now() }, over || {});
-if (RM) P.M.still = anim === A_WAKE ? (wakeLength(wakeId(s, P.M.wake != null ? P.M.wake : s.kaia_wake), P.M.speed || s.kaia_wake_speed) / 2) | 0 : isState(anim) ? 1200 : (shot_ms[(s.kaia_anim || 1) - 1][anim - 3] / 2) | 0;
+const anim = ANIM_NAMES.indexOf(name), len = lenOf(anim, s[LOOK_KEYS[anim]], s);
+P.M = { anim, t0: performance.now() };
+if (RM) P.M.still = isState(anim) ? 1200 : (len / 2) | 0;
 markKs();
 }
 function markKs() {
-$$("[data-ks]").forEach((c) => c.classList.toggle("on", !!P.M && c.dataset.ks === ANIM_NAMES[P.M.anim]));
+$$("[data-ks]").forEach((c) => {
+const k = c.dataset.ks;
+c.classList.toggle("on", k === "off" ? !P.M : k !== "cur" && +k === P.ev);
+});
+const c = $('#ks [data-ks="' + P.ev + '"]'), sc = c.parentNode;
+if (sc.scrollWidth > sc.clientWidth + 2 && (c.offsetLeft < sc.scrollLeft || c.offsetLeft + c.offsetWidth > sc.scrollLeft + sc.clientWidth)) sc.scrollLeft = c.offsetLeft - sc.offsetLeft - 8;
 }
 let tileIO = null;
 const seen = new Set();
 function bindTiles() {
-tiles = $$(".tile canvas").map((c) => ({ c, id: +c.closest(".tile").dataset.tw, t0: performance.now() - +c.closest(".tile").dataset.tw * 130, v: null, w: 0, play: false }));
+const now = performance.now();
+tiles = $$(".tile canvas,.er canvas").map((c) => {
+if (c.dataset.th != null) return { c, n: +c.dataset.th, id: -1, t0: now - +c.dataset.th * 230, v: null, w: 0, play: false };
+const [n, id] = c.closest(".tile").dataset.tc.split(":").map(Number);
+return { c, n, id, t0: now - id * 370, v: null, w: 0, play: false };  // spread over the cycle: some play while others pause
+});
 if ("IntersectionObserver" in window) {
 if (tileIO) tileIO.disconnect();
 seen.clear();
 tileIO = new IntersectionObserver((es) => es.forEach((e) => (e.isIntersecting ? seen.add(e.target) : seen.delete(e.target))));
 tiles.forEach((t) => tileIO.observe(t.c));
 }
-sizeTiles();
+requestAnimationFrame(sizeTiles);
 }
 function sizeTiles() {
 tiles.forEach((t) => {
@@ -2429,7 +3345,7 @@ const s0 = S(), s = Object.assign({}, s0, { kaia_anim: s0.kaia_anim || 1, kaia_n
 const tm = timeNow(), night = nightFor(s, tm);
 const base = new BallMatrix();
 renderFrame(base, s, { ...tm, night, play: null, duck: 255 });
-return { s, night, base, gain: gainOf(brightNow(s, lightNow())) };
+return { s, night, base, gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1) };
 }
 function overlayOn(b, play) {
 work.leds.set(b.base.leds);
@@ -2438,45 +3354,17 @@ useMatrix(work);
 kaiaDraw(b.s, b.night, play);
 return work.leds;
 }
-function tilesTick(force) {
-const live = tiles.filter((t) => t.v && t.c.isConnected && t.c.offsetParent && (!tileIO || seen.has(t.c) || force));
+function tilesTick(force, half) {
+const live = tiles.filter((t, k) => t.v && t.c.isConnected && t.c.offsetParent && (!tileIO || seen.has(t.c) || force) && (half == null || (k & 1) === half));
 if (!live.length) return;
-const b = tileBase(), now = performance.now();
+const b = tileBase(), s = b.s, now = performance.now();
 for (const tl of live) {
-const id = wakeId(b.s, tl.id), len = wakeLength(id, b.s.kaia_wake_speed), cyc = len + 1500;
 if (RM && !tl.play && !force) continue;
-let el = RM && !tl.play ? (len / 2) | 0 : (now - tl.t0) % cyc;
-if (RM && tl.play && now - tl.t0 > cyc) {
-tl.play = false;
-el = (len / 2) | 0;
-}
-paint(tl.v, overlayOn(b, { anim: A_WAKE, style: b.s.kaia_anim, wake: tl.id, speed: b.s.kaia_wake_speed, t: el, color: null }), b.gain);
-}
-}
-function filmSoon() {
-clearTimeout(filmT);
-filmT = setTimeout(buildFilm, 350);
-}
-function buildFilm() {
-const root = $("#filmbody");
-if (!root || !root.offsetParent) return;
-const b = tileBase(), cols = innerWidth <= 520 ? 3 : 6, Wd = Math.max(60, Math.floor((root.clientWidth - (cols - 1) * 6) / cols) - 8);
-root.innerHTML = "";
-for (let id = 1; id < WAKE_COUNT; id++) {
-const box = document.createElement("div");
-box.className = "shot";
-box.innerHTML = '<div class="nm">№ ' + id + " · " + WAKE_NAMES[id] + "<span>" + fmtS(wake_ms[id]) + ' при 1×</span></div><div class="frames"></div>';
-const fr = box.lastChild;
-for (let k = 0; k < 6; k++) {
-const u = Math.round((wake_ms[id] * (k + 0.5)) / 6), cell = document.createElement("div"), c = document.createElement("canvas");
-cell.appendChild(c);
-cell.insertAdjacentHTML("beforeend", "<small>" + (u / 1000).toFixed(2).replace(".", ",") + " с</small>");
-fr.appendChild(cell);
-const v = fitCanvas(c, Wd);
-v.simple = true;
-paint(v, overlayOn(b, { anim: A_WAKE, style: b.s.kaia_anim, wake: id, speed: 100, t: u, color: null }), b.gain);
-}
-root.appendChild(box);
+const n = tl.n, look = tl.id < 0 ? s[LOOK_KEYS[n]] : tl.id, len = lenOf(n, look, s), cyc = isState(n) ? 0 : len + (n === A_WAKE ? 1500 : 1100);
+let el = RM && !tl.play ? (isState(n) ? 1200 : (len / 2) | 0) : now - tl.t0;
+if (cyc) el %= cyc;
+if (RM && tl.play && now - tl.t0 > (cyc || 3000)) tl.play = false;
+paint(tl.v, overlayOn(b, { anim: n, style: s.kaia_anim, look, lk: s.kaia_listen, speed: s.kaia_wake_speed, t: el, color: null, ms: 1e9 }), b.gain);
 }
 }
 let lastT = 0, lastTiles = 0, lastLive = 0;
@@ -2486,9 +3374,10 @@ requestAnimationFrame(loop);
 if (now - lastT < 48) return;
 lastT = now;
 draw();
-if (now - lastTiles >= 98) {
+if (now - lastTiles >= 48) {
 lastTiles = now;
-tilesTick(false);
+tilesTick(false, (P.frames || 0) & 1);
+if (P.CL) clUI();
 }
 if (now - lastLive >= 500) {
 lastLive = now;
@@ -2619,25 +3508,50 @@ $("#toast").hidden = true;
 function showChanges() {
 modal('<h3>Не сохранено</h3><ul class="chl">' + Object.keys(DRAFT).map((k) => "<li><b>" + esc(FLD[k].g + " · " + FLD[k].l) + "</b><span>" + esc(fmtAny(k, SAVED[k])) + " → " + esc(fmtAny(k, DRAFT[k])) + "</span></li>").join("") + '</ul><div class="acts"><button class="btn" id="mc">Закрыть</button></div>', () => ($("#mc").onclick = closeModal));
 }
+const clText = (cl) => (cl.done ? "Сыграно на часах: " + cl.label + ". Ничего не сохранено." : "Идёт на часах: " + cl.label + " · ещё " + fmtS(Math.max(0, cl.t0 + cl.dur - performance.now())));
 async function onclock() {
-const s = S();
+const s = S(), n = P.ev, name = ANIM_NAMES[n];
 if (!s.kaia_anim) {
-toast("Анимации выключены: выберите стиль в группе «Кая»");
+toast("Анимации выключены: выберите стиль во вкладке «Кая»");
 return;
 }
 if (P.conn !== "ok") {
 toast("Нет связи с часами");
 return;
 }
-const q = { style: s.kaia_anim, wake: s.kaia_wake, speed: s.kaia_wake_speed };
-play("wake");
+const q = tryOut(name, s), c = q.look;
+const dur = isState(n) ? TRY_STATE_MS : lenOf(n, c, s);
+P.CL = { n, label: EV[n][0] + " · " + (c ? c + " " + lookName(n, c) : "Как у стиля"), t0: performance.now(), dur, done: false };
+play(name);
+clUI();
 try {
-await api.anim("wake", q);
-toast("Играет на часах, ничего не сохраняется<br><code>GET kaia/anim?name=wake&amp;style=" + q.style + "&amp;wake=" + q.wake + "&amp;speed=" + q.speed + "</code>");
+await api.anim(name, q);
+toast("Играет на часах" + (isState(n) ? " " + TRY_STATE_MS / 1000 + " с" : "") + ", ничего не сохраняется<br><code>GET kaia/anim?" + esc(new URLSearchParams({ name, ...q }).toString()) + "</code>");
 setTimeout(() => poll(false), 400);
 } catch (e) {
+P.CL = null;
+clUI();
 failed(e);
 }
+}
+function clUI() {
+const cl = P.CL, now = performance.now();
+if (cl && !cl.done && now >= cl.t0 + cl.dur) {
+cl.done = true;
+cl.te = now;
+} else if (cl && cl.done && now - cl.te > 6000) P.CL = null;
+const run = !!P.CL && !P.CL.done, txt = P.CL ? clText(P.CL) : "Играет на часах без сохранения.";
+$$(".cl-st").forEach((e) => {
+if (e.textContent !== txt) e.textContent = txt;
+});
+const h = run ? '<span class="long">Играет на часах…</span><span class="short">Играет…</span>' : TRY;
+$$("[data-act=onclock]").forEach((b) => {
+b.disabled = run;
+if (b.dataset.h !== h) {
+b.dataset.h = h;
+b.innerHTML = h;
+}
+});
 }
 async function clickBtn(id, msg) {
 try {
@@ -2648,8 +3562,32 @@ setTimeout(() => poll(false), 300);
 failed(e);
 }
 }
+const UP = { ivory: { c: IVORY, tr: 0 }, white: { c: 0xf2f2f2, tr: 0 }, graphite: { c: 0x4a4d55, tr: 0 }, glass: { c: 0xdfe6ee, tr: 70 } };
+function syncU() {
+$("#ucol").value = hexs(unlit.c);
+$("#utr").value = unlit.tr;
+$("#utro").textContent = unlit.tr + " %";
+$("#gear").classList.toggle("chg", unlit.c !== IVORY || unlit.tr !== 0);
+$$("#upre [data-up]").forEach((b) => {
+const p = UP[b.dataset.up];
+b.classList.toggle("on", p.c === unlit.c && p.tr === unlit.tr);
+});
+}
+function setU(c, tr) {
+setUnlit({ c, tr }, store);
+syncU();
+tilesTick(true);
+}
+function popOpen(o) {
+$("#pop").hidden = !o;
+$("#gear").setAttribute("aria-expanded", String(o));
+$("#gear").classList.toggle("on", o);
+if (o) syncU();
+}
 document.addEventListener("input", (e) => {
 const t = e.target, k = t.dataset && t.dataset.k;
+if (t.id === "ucol") return setU(unhex(t.value), unlit.tr);
+if (t.id === "utr") return setU(unlit.c, +t.value);
 if (t.dataset && t.dataset.w) {
 W[t.dataset.w] = t.value;
 return;
@@ -2665,20 +3603,25 @@ setVal(k, v);
 if (t.type === "range") {
 const o = t.closest(".fld").querySelector("output");
 if (o) o.textContent = fmtVal(k, v);
-if (k === "kaia_wake_speed") $$("[data-sp]").forEach((b) => b.classList.toggle("on", +b.dataset.sp === v));
 }
-if (t.type === "checkbox" || t.tagName === "SELECT") renderGroup(groupOf(k));
-if ((k === "kaia_color" || k === "kaia_anim") && !P.M && S().kaia_anim) play("listening");
+if (t.type === "checkbox" || (t.tagName === "SELECT" && !k.startsWith("kaia_"))) renderGroup(groupOf(k));
+if (k === "kaia_color" && !P.M && S().kaia_anim) play(ANIM_NAMES[P.ev]);
 });
 document.addEventListener("click", (e) => {
+if (!$("#pop").hidden && !e.target.closest("#pop,#gear")) popOpen(false);
 const t = e.target.closest("button,a,.sb-t");
 if (!t) return;
 const d = t.dataset;
+if (t.id === "gear") return popOpen($("#pop").hidden);
+if (t.id === "ubreset") return setU(IVORY, 0);
+if (d.up) return setU(UP[d.up].c, UP[d.up].tr);
 if (d.rv) {
 delete DRAFT[d.rv];
 renderGroup(groupOf(d.rv));
 return;
 }
+if (d.pick != null) return setVal("back_pal", +d.pick);
+if (d.pstep) return stepPal(+d.pstep);
 if (d.step) {
 const k = d.k2, f = FLD[k], v = Math.max(f.min, Math.min(f.max, S()[k] + +d.step));
 setVal(k, v);
@@ -2687,34 +3630,51 @@ return;
 }
 if (d.tab) {
 showTab(d.tab);
-if (d.tab === "kaia" && !P.M && P.conn !== "offline" && S().kaia_anim) setTimeout(() => play("wake"), 250);
+if (d.tab === "kaia" && !P.M && P.conn !== "offline" && S().kaia_anim) setTimeout(() => play(ANIM_NAMES[P.ev]), 250);
 return;
 }
-if (d.tw != null) {
-const id = +d.tw;
-setVal("kaia_wake", id);
-const tl = tiles.find((x) => x.id === id);
+if (d.sty != null) {
+setVal("kaia_anim", +d.sty);
+renderGroup(groupOf("kaia_anim"));
+if (+d.sty) play(ANIM_NAMES[P.ev]);
+else play("off");
+return;
+}
+if (d.tc) {
+const [n, id] = d.tc.split(":").map(Number);
+P.ev = n;
+setVal(LOOK_KEYS[n], id);
+const tl = tiles.find((x) => x.n === n && x.id === id);
 if (tl && RM) {
 tl.play = true;
 tl.t0 = performance.now();
 }
-play("wake");
+markKs();
+hsum();
+play(ANIM_NAMES[n]);
 return;
 }
+if (d.ev != null) return setEvent(+d.ev, true);
+if (d.close != null) return setSheet(false);
 if (d.sp) {
 setVal("kaia_wake_speed", +d.sp);
-renderGroup(groupOf("kaia_wake_speed"));
+$$('[data-k="kaia_wake_speed"]').forEach((r) => (r.value = +d.sp));
 play("wake");
 return;
 }
-if (d.ks) return play(d.ks);
+if (d.ks) {
+if (d.ks === "off") play("off");
+else if (d.ks === "cur") play(ANIM_NAMES[P.ev]);
+else setEvent(+d.ks, false);
+return;
+}
 if (d.s) return setSrc(d.s);
 if (d.l) return setLive(d.l);
 if (d.d != null) {
-P.forceNight = +d.d;
-$$("#day button").forEach((b) => b.classList.toggle("on", b === t));
+const narrow = matchMedia("(max-width:900px)").matches;
+P.forceNight = narrow && t.classList.contains("on") ? 1 - +d.d : +d.d;
+refreshLive();
 tilesTick(true);
-filmSoon();
 return;
 }
 if (d.m) return mockMode(d.m);
@@ -2800,16 +3760,22 @@ $("#cv").addEventListener("pointermove", (e) => drag && moveCmp(e));
 $("#cv").addEventListener("pointerup", () => (drag = false));
 if (MOCK) $("#mockbar").hidden = false;
 buildGroups();
-$("#ks").innerHTML = KS.map((k) => '<button class="chip" data-ks="' + k[0] + '">' + k[1] + "</button>").join("");
+$("#ks").innerHTML = EV.map((e, n) => '<button class="chip" data-ks="' + n + '">' + e[0] + "</button>").join("") + '<button class="chip" data-ks="off">Стоп</button>';
 renderAll();
 showTab("kaia");
 setSrc("draft");
+syncU();
+clUI();
 new ResizeObserver(() => requestAnimationFrame(fit)).observe($("#wall"));
+window.addEventListener("resize", () => requestAnimationFrame(sizeTiles));
 if ("IntersectionObserver" in window) new IntersectionObserver((es) => document.body.classList.toggle("minion", !es[0].isIntersecting && innerWidth > 900)).observe($("#hero"));
 fit();
 banners();
 poll(true);
 requestAnimationFrame(loop);
-setTimeout(() => S().kaia_anim && !P.M && play("wake"), 600);
-window.ballclock = { P, api, S, play, setSrc, setLive, showTab, mock, sync, tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; } };
+setTimeout(() => S().kaia_anim && !P.M && play(ANIM_NAMES[P.ev]), 600);
+window.ballclock = {
+P, api, S, play, setSrc, setLive, showTab, setEvent, setSheet, mock, sync, unlit, setU,
+tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; }, get tiles() { return tiles; },
+};
 })();</script></body></html>

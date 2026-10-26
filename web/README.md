@@ -1,8 +1,10 @@
-# BallClock web: the clock's site (firmware v1.5)
+# BallClock web: the clock's site (firmware v1.6)
 
-The site the clock serves from its flash at `/`: a big live preview of the 128 balls, Kaya's states and wakes,
-every setting of the classic page, and saving. It is the KAIA-161 variant B «Сцена» (big preview, tabs under it,
-a bottom tab bar on the phone). The classic Settings page stays at `/old`.
+The site the clock serves from its flash at `/`: a big live preview of the 128 balls, Kaya's events with a look per
+event, every setting of the classic page, and saving. It is the KAIA-161 variant B «Сцена» (big preview, tabs under it,
+a bottom tab bar on the phone), with KAIA-172 variant b on top of it in v1.6: palettes picked by sight, a list of
+Kaya's 7 events with live thumbnails and a gallery per event, a try-out on the clock for every event, and the unlit
+balls' look. The classic Settings page stays at `/old`.
 
 One self-contained page: inline CSS and JS, no external requests, only relative URLs (it runs from the clock's
 own access point and behind the Kernel's gateway alike), Russian UI. No npm dependencies: Node built-ins only.
@@ -12,9 +14,9 @@ own access point and behind the Kernel's gateway alike), Russian UI. No npm depe
 | | |
 |---|---|
 | `dist/site.html?mock` | open from disk in a browser: a mock clock inside the page answers the whole API from sample data with a running clock. The dashed «Макет» bar switches what it does: password (401, the mock's password is `kaia`), no answer, access point, update available, running text. |
-| `npm run build` | `src/` → `dist/site.html` (committed) → `../firmware/src/site_page.h` (`site_page_gz[] PROGMEM`, `site_page_gz_len`, `SITE_PAGE_ETAG`); prints the raw and gzip sizes and fails over 48 KB gzipped. The gzip is deterministic: the same input gives the same bytes. |
-| `npm test` | `node --test`: the renderer against hand-computed values and the firmware's own tables, the wakes, the API client and the mock. |
-| `npm run test:render` | headless Edge over CDP: `dist/site.html?mock` at 390×844 and 1280×800 in 19 states; shots in `shots/` (git-ignored). In-page check: nothing wider than the viewport, no overlapping controls, no cut text, touch targets ≥ 44 px on the phone, no request off the page; the save, login and try-out flows; ≥ 18 frames a second with the CPU 4× slower. `node test/render.mjs <state>…` runs some states only. Run `npm run build` first. |
+| `npm run build` | `src/` → `dist/site.html` (committed) → `../firmware/src/site_page.h` (`site_page_gz[] PROGMEM`, `site_page_gz_len`, `SITE_PAGE_ETAG`); prints the raw and gzip sizes and fails over 64 KB gzipped. The gzip is deterministic: the same input gives the same bytes. |
+| `npm test` | `node --test`: the renderer against hand-computed values and the firmware's own tables (the 61 palettes read back from `palettes.cpp`), the wakes, the looks per event (lengths, seamless loops, determinism, ids, C++ portability), the API client, the try-out queries, the unlit-ball storage and the mock. |
+| `npm run test:render` | headless Edge over CDP: `dist/site.html?mock` at 390×844 and 1280×800 in 35 states (the tabs, the palette picker, each event's gallery, the try-outs of a wake, a state and a one-shot, the unlit balls at 0, 50 and 100 % transparency, the phone with the preview in view, …); shots in `shots/` (git-ignored). In-page check: nothing wider than the viewport, no overlapping controls, no cut text, touch targets ≥ 44 px on the phone, no request off the page; the save, login and try-out flows; ≥ 18 frames a second with the CPU 4× slower. `node test/render.mjs <state>…` runs some states only. Run `npm run build` first. |
 
 The build joins the ES modules of `src/` in import order into one strict scope: top-level names must be unique
 across modules (the build checks), and strings never span lines (it drops whole-line comments and indentation).
@@ -25,17 +27,18 @@ across modules (the build checks), and strings never span lines (it drops whole-
 |---|---|
 | `src/lib8.js` | FastLED 3.7.7 lib8tion as the ESP8266 compiles it (the C versions, SCALE8_FIXED and BLEND_FIXED): sin8, scale8, qadd8, nscale8_video, blend8 / nblend, scale16, ease16InOutQuad, lerp15by16, avg15 |
 | `src/noise.js` | `inoise16(x, y, z)` (noise.cpp) |
-| `src/palettes.js` | the 31 palettes as CRGBPalette16 and `getPaletteColor` |
+| `src/palettes.js` | the 61 palettes as CRGBPalette16 and `getPaletteColor`; the picker's Russian names, groups and order |
 | `src/matrix.js` | `BallMatrix`: the layout, the strip, the marks, GyverGFX colour and `print` |
 | `src/redraw.js` | the clock under the overlay: background, digits, dots, night, brightness |
-| `src/kaia.js` | Kaya: the ball tables, the helpers, the 3 styles |
-| `src/wakes.js` | the wakes of v1.5 (ids, names, base lengths, the new ones, the speed) |
+| `src/kaia.js` | Kaya: the ball tables, the helpers (with v1.6's `ballRX`, `ballAt`, `oct`, `segDist`, `hash8`, `putb`), the 3 styles |
+| `src/wakes.js` | the wakes (ids, names, base lengths, the 11 themed ones of v1.5 and v1.6, the speed) |
+| `src/looks.js` | v1.6: the looks per event (ids, names, one-shot lengths, the 30 new ones), `stateLook`, `shotLook`, `wakeDraw` |
 | `src/frame.js` | one 50 ms frame: `renderFrame(matrix, settings, clock)`; what plays at t (`resolvePlay`); the duck |
-| `src/paint.js` | the canvas layer (the only DOM part of the drawing) |
-| `src/api.js` | the API client: one request at a time, 5 s, auth; `hash32`, `keyId` |
+| `src/paint.js` | the canvas layer (the only DOM part of the drawing) and the unlit balls' setting |
+| `src/api.js` | the API client: one request at a time, 5 s, auth; `hash32`, `keyId`; `tryOut` (the try-out query) |
 | `src/clock.js` | the clock's time between two states (the NTP second's phase) |
 | `src/mock.js` | the mock clock of `?mock` |
-| `src/settings.js` | the keys, their defaults (db.init) and raw values |
+| `src/settings.js` | the keys, their defaults (db.init) and raw values; `LOOK_KEYS` |
 | `src/app.js`, `page.html`, `style.css` | the page |
 
 ## The renderer: the firmware's drawing in JS
@@ -60,7 +63,8 @@ where the C++ types do, and the float steps of the boot tables and the old wakes
 | `kaia.js` `tent`, `smooth`, `wave`, `voice`, `comet`, `mix`, `dim`, `put`, `dimAll`; lib8 `sin8` | `src/kaia.cpp`; FastLED `lib8tion/trig8.h` `sin8_C` | `fr.sc` (kaia_bright, ×77/255 at night with rule 1) and `fr.dg` (what the digit balls keep) |
 | `kaia.js` `rippleState`/`Shot`, `orbitState`/`Shot`, `sparksState`/`Shot`, `mark`, `pict`, `shot_ms` | `src/kaia.cpp` | the error thump (`expf`) and the orbit/sparks wakes (`powf`, floats) use `Math.fround` steps |
 | `frame.js` `kaiaDraw`, `resolvePlay`, `duckStep`, `backScale` | `src/kaia.cpp` `kaiaDraw`, `kaiaBackScale` | the night rule 2 hides the overlay; done / error / notify default to green / red / amber |
-| `wakes.js` | `src/kaia.cpp` (v1.5) `wakeDraw`, `wakeLength`, `dawnShot` … `rainShot` | see below; the C++ keeps `b_col`, `b_row`, `b_x` in one byte a ball (`b_cr`, column and row) and computes `h1`–`h3` inline: the same values, 640 B less RAM |
+| `wakes.js` | `src/kaia.cpp` (v1.5) `wakeLength`, `dawnShot` … `rainShot` | see below; the C++ keeps `b_col`, `b_row`, `b_x` in one byte a ball (`b_cr`, column and row) and computes `h1`–`h3` inline: the same values, 640 B less RAM |
+| `looks.js`, the v1.6 helpers of `kaia.js`, wakes 12–14 | for `src/kaia.cpp` v1.6 (the firmware task) | see «Changes the firmware task copies into kaia.cpp (v1.6)» |
 
 Not modelled: NeoPixel's `setBrightness` pre-multiplies the strip and `getPixelColor` scales back, so on the clock a
 read-modify-write (the dots, `put`, `dimAll`) at brightness < 255 loses low bits. The brightness belongs to the
@@ -79,6 +83,98 @@ output: the frames are the colours as drawn, and the preview shows the brightnes
   are `int` (`uint32_t` for colours), the small arrays are `static const` tables.
 - A wake turns into listening after `wakeLength(wake ? wake : style, speed)` = base × 100 / speed: `ov.start += that`.
 
+## Changes the firmware task copies into kaia.cpp (v1.6)
+
+The looks are KAIA-173's catalog as it is (the owner dropped none), in the same integer-only style:
+
+- **Settings** (0 by default): `kaia_listen`, `kaia_think`, `kaia_speak`, `kaia_done`, `kaia_error`, `kaia_notify`,
+  each 0 = «Как у стиля» (the version of `kaia_anim`), 1–3 = the Рябь / Орбита / Искры version with any style, 4–8 =
+  the new ones. `kaia_wake` gains 12–14 (`WAKE_COUNT` 15). «Выкл» (`kaia_anim` 0) still turns Kaya off.
+- **Helpers** (`kaia.js`): `ballRX(x, row)` and `ballAt(p, q)` (the nearest ball or −1), `oct(dx, dy)` (max + 3/8 min,
+  no square root), `segDist(p, q, seg, v)` (the distance to a stroke drawn up to v/256), `hash8(n)` =
+  `(uint32_t)(n + 1) * 2654435761u >> 24` (h1 for any number), `putb(i, c, a)` (`put` that skips −1).
+  p = 4·(x − 19), q = 7·(row − 3) come from `b_cr`: no new per-ball tables.
+- **Small const tables** (`looks.js`, `wakes.js`): `aur_fall[4]`, `bub_x[10]`, `atom_sh[3]`, `chk_s1/2`, `conf_v[16][2]`,
+  `pict_ok`, `crs_s1/2`, `knock_t[4]`, `pict_mail`, `pict_flap`, `pict_kaya` (К А Я, 11×5); `look_ms[3][5]`.
+  Small per-frame stack arrays: `int[3]` ×3 (neurons), `int[13]` (equalizer), `int[7]` (glitch), `int[4]` ×2 (bunny).
+- **Dispatch**: `stateLook(style, look, n, t, col, k)` and `shotLook(style, look, n, t, col)` (look < 4 → the style
+  functions with `look ? look : style`; a look past the last is the last), `shotLength(n, look, style)` (one-shot
+  lengths per look, not per style any more).
+- **`wakeDraw(style, wake, lk, speed, t, col)`** moves to `looks.js` and gains `lk`, the listening's look: the
+  listening that fades in under the wake and goes on after it is `stateLook(style, lk, A_LISTENING, …)`;
+  `fr.ls` = `lk >= 4 ? 0 : lk ? lk : style` (the sparks wake's mark settles into the sparks breath only when the
+  listening is Искры).
+- **Play**: `{anim, style, look, lk, speed, t, color, ms}`; a wake past its length becomes the listening in look `lk`.
+- **Cost**: at most 13 `voice()` calls, 8 hashes or 48 points a frame; no `inoise16`.
+- **Long states**: the new looks multiply t by at most 469 (`voice`): in a 32-bit `int` they stay exact for 76 minutes
+  of one state (v1.5's ripple, t·2464, for 14 minutes).
+
+## Kaya's looks per event (v1.6)
+
+Every event lists 0 «Как у стиля» and 1–3 Рябь, Орбита, Искры first (the style versions of v1.5; one-shot lengths
+`shot_ms` 1200–1600). The new ones, by id. A one-shot fades out over its last 300 ms (a wake over its last 400 ms of
+its own time); states run until the call's ms ends.
+
+### Слушает (`kaia_listen`, Kaya's colour; a loop)
+
+| id | name | loop | what |
+|---|---|---|---|
+| 4 | Эхо | 1.6 s | arcs come in from both sides to the middle; the outer columns keep a faint glow |
+| 5 | Прилив | 4 s (exact 64 s) | water in the bottom rows rises and falls, its surface rolls; the crest is whiter |
+| 6 | Сияние | 6.4 s and 9.5 s | slow curtains of light hang from the top rows and drift |
+| 7 | Взгляд | 6.9 s × 4.2 s | a soft spot drifts round the display, as if Kaya's attention follows the owner |
+| 8 | Пузырьки | 2.2–3.2 s a bubble | ten bubbles rise from the bottom and wobble; each is dark where it wraps |
+
+### Думает (`kaia_think`, Kaya's colour half violet)
+
+| id | name | loop | what |
+|---|---|---|---|
+| 4 | Змейка | 3.5 s | a snake runs the rows back and forth, like a loading bar |
+| 5 | Нейроны | a flash every 0.25 s | a ball fires and a ring spreads three balls out; its place is hash8 of its number, so it never wraps |
+| 6 | Песочные часы | 3 s | sand runs from the top bulb to the bottom one in 2.7 s, then the glass turns over |
+| 7 | Три точки | 1.2 s | the «typing» dots in the bottom rows jump one after another |
+| 8 | Атом | 1.3, 1.5, 1.7 s a turn | three electrons on tilted ellipses with short tails; the nucleus throbs |
+
+### Говорит (`kaia_speak`, Kaya's colour, all driven by `voice(t)`)
+
+| id | name | loop | what |
+|---|---|---|---|
+| 4 | Эквалайзер | voice | 13 bars grow up and down from the middle row; the top of a bar is whiter |
+| 5 | Осциллограф | voice | a wave line along the middle; its height follows the voice, spreading from the centre |
+| 6 | Лучи | voice | 18 rays from the centre along the spark paths, each one's length a little later |
+| 7 | Динамики | voice | two speakers left and right; their cones push out (the right one 60 ms later) |
+| 8 | Губы | voice | lips across the middle: a line in a pause, open with the voice |
+
+### Готово (`kaia_done`, green unless the call gives a colour)
+
+| id | name | length | what |
+|---|---|---|---|
+| 4 | Галочка | 1600 ms | a big check drawn stroke by stroke with a white pen (0.1–0.7 s), a flash, it holds; the time steps back |
+| 5 | Шкала | 1500 ms | a bar fills the display left to right with a rolling front (0–0.8 s), flashes at 100 % |
+| 6 | Конфетти | 1800 ms | 16 bits burst from the middle, fly up and out, turn and fall |
+| 7 | Кольцо | 1700 ms | a ring round the middle closes from 12 o'clock both ways, its inside flashes, a wave goes out |
+| 8 | «ОК» | 1600 ms | «OK» stamped in white with a shock ring, then green; the time steps back |
+
+### Ошибка (`kaia_error`, red unless the call gives a colour)
+
+| id | name | length | what |
+|---|---|---|---|
+| 4 | Нет-нет | 1400 ms | a ring round the middle shakes its head three times, smaller each time |
+| 5 | Крест | 1600 ms | a big cross drawn stroke by stroke (0.1–0.75 s), blinks twice; the time steps back |
+| 6 | Сбой | 1300 ms | the display glitches for 1 s: rows tear in 70 ms bursts, frames flash, the time flickers out |
+| 7 | Сирена | 1600 ms | two beams 180° apart turn round a lamp in the middle, 2½ turns |
+| 8 | Отключение | 1500 ms | like an old TV switched off: a flash, the picture squeezes into a line, the line into a dot |
+
+### Уведомление (`kaia_notify`, amber unless the call gives a colour)
+
+| id | name | length | what |
+|---|---|---|---|
+| 4 | «!» | 1500 ms | a big «!» in the middle columns blinks three times, each blink starting white |
+| 5 | Тук-тук | 1500 ms | two knocks, a pause, two knocks: the bottom row flashes and an arc rises from under it |
+| 6 | Маяк | 1600 ms | a lighthouse beam from under the bottom edge sweeps left to right; a flash as it faces you |
+| 7 | Конверт | 1700 ms | an envelope slides in from the left, settles, its flap flashes white; the time steps back |
+| 8 | Значок | 1600 ms | a badge drops into the top right corner, bounces, pings twice and stays lit |
+
 ## The wakes (kaia_wake)
 
 | id | name | base length (100 %) | what |
@@ -95,10 +191,147 @@ output: the frames are the colours as drawn, and the preview shows the brightnes
 | 9 | Звёзды | 2000 | stars twinkle denser, then a flash |
 | 10 | Салют | 2200 | a rocket up the middle, a burst along the spark paths, glitter |
 | 11 | Дождь | 2000 | drops run down both diagonals |
+| 12 | Включение | 1800 | like an old TV switched on: a dot, a line along the middle row, the picture opens (v1.6) |
+| 13 | Зайчик | 2000 | a spot of light bounces off the edges like a sunbeam from a mirror, with a short trail (v1.6) |
+| 14 | «КАЯ» | 2200 | Kaya writes her name column by column with a white pen, holds it, and it scatters (v1.6) |
 
 `kaia_wake_speed` 50–200 %: the wake runs on u = t·speed/100 and lasts base·100/speed (e.g. Глаз at 150 %:
-1466 ms); the listening under it and after it keeps real time. The new wakes fade out over their last 400 ms of u
-and the style's listening fades in over the last 800.
+1466 ms); the listening under it and after it keeps real time and is the listening's look (`kaia_listen`). The
+themed wakes fade out over their last 400 ms of u and the listening fades in over the last 800.
+
+### Formulas and timings of the wakes
+
+These were on the page in v1.5 («Пробуждения по кадрам», the formula box, «Формулы и тайминги…»); v1.6 keeps them
+here. t and u in ms, d = `b_dist` (quarter-balls), x = `b_x` (half-balls, 19 = the middle), row 0..6, ang = `b_ang`.
+
+- **1 Рябь** (rippleShot): three rings out of the centre, a whitish flash at the start.
+  r_k = (t − 220k)·0.544 (k = 0..2, 1/16 quarter-ball); f_k = (832 − r_k)/832;
+  a = max(fl·tent(16d, 176), max_k tent(16d − r_k, 88)·f_k)·242/255; fl = 255·(1 − t/350), the colour 70 % towards
+  white with fl. 0–1.9 s; the listening from 1.1 s. Tables: b_dist.
+- **2 Орбита** (orbitShot): a comet speeds up round the rim, then the rings close like an iris.
+  h = 6tc + 50.69tc³ balls, tail = 6 + 36.4tc, tc = min(t, 1100)/1000; rim: a = 26 + 230·comet(pos, h, n0, tail)/255;
+  t > 1100: rings 1..3 flash at 1100 + 150r ms: 217·tent(t − …, 220). 0–2.0 s; the listening from 1.5 s.
+  Tables: b_pos, the rings, ring_len.
+- **3 Искры** (sparksShot): 18 sparks fly from the rim to the centre, the mark flashes and settles.
+  j = (u/750)^1.6·len, a tail of 4 balls 255/153/77/31 (u = t − 45·((7k) mod 18)); t > 1500: a ring
+  102·tent(16d − r, 80), r = (t − 1500)·0.64; mark(g): g = 217·arrived/18 → a flash at 1550 → the breath.
+  0–2.0 s; the listening from 1.6 s. Tables: spark[18][12], the lens.
+- **4 Рассвет**: the dawn rises from the bottom row to the top, whiter at its edge, brighter in the middle.
+  F = smooth(0, 1500, u)·140/255 (the edge, 1/16 row from the bottom); dp = F − 16·(6 − row);
+  dp < −24: 0; −24..0: the glow 90·(24 + dp)/24; dp ≥ 0: a = (70 + 185·max(0, 96 − dp)/96)·(190 + 65·(255 − 4|x − 19|)/255)/255,
+  the colour mix(Kaya, white, 140·max(0, 48 − dp)/48); fo = smooth(du, du − 400, u).
+  0–1.5 s rising, holds to 1.6, out by 2.0; the listening from 1.2 s. Tables: row, x.
+- **5 Радар**: one beam turn clockwise from 12 o'clock with a trail; some balls light up as blips.
+  th = u·256/1400; dl = th − ang (dl < 0: nothing); the trail ((96 − dl)/96)² for dl < 96, the head (dl < 12) whiter;
+  a blip: h1 < 34 and dl < 150 → max(a, 215·(150 − dl)/150), white; weight by radius (150 + 105·d/38)/255;
+  the hub tent(u − 100, 300) for d < 10. 0–1.4 s the turn, out by 1.8 s. Tables: b_ang, b_dist, h1.
+- **6 Спираль**: two arms unwind from the centre to the rim and turn.
+  R = smooth(0, 1250, u)·46/255 (the front, quarter-balls); rho = u·256/1700; v = (2·ang + 7d − rho) & 255,
+  dd = min(v, 256 − v); a = tent(dd, 56)·(255 − 3d)/255 for d ≤ R; the front (R − d < 7) whiter; the centre
+  flashes tent(u − 150, 350)·(9 − d)/9 for u < 500. 0–1.25 s the arms grow, they turn until 2.0 s. Tables: b_ang, b_dist.
+- **7 Сердцебиение**: the time steps away on purpose; a heart beats twice (lub-dub) and melts into the listening.
+  beat(q, pk) = q < 90 ? pk·q/90 : max(0, pk − pk·(q − 90)/380); env = max(beat(u − 150, 255), beat(u − 540, 190));
+  hide = smooth(0, 140, u)·fo/255, dimAll(255 − 200·hide); the heart 0x36 0x7f 0x7f 0x3e 0x08: a = 60 + 195·env/255,
+  towards white 110·env/255; a halo on the lens-1 balls 70·env/255. Beats at 0.15 and 0.54 s, holds to 1.5, out by 1.9 s.
+  Tables: the lens, pict().
+- **8 Глаз**: a slit along the middle row opens into an eye; the pupil looks left, right and back; a blink.
+  w = smooth(0, 250, u)·17/255 (the slit's half-length); o = smooth(250, 950, u)·(255 − 215·smooth(1750, 1980, u)/255)/255;
+  ax = |x − 19|, dr = row − 3; H = o·(255 − (255·ax/17)²/255)/255, m = H − 85|dr|; m ≥ 0: 45 (the white);
+  a = max(a, 230·tent(m, 64)/255) (the lid); the pupil: px = 4(x − 19) − off, d2 = px² + (7dr)², d2 ≤ 169 → 255,
+  fading to 340. 0–0.25 the slit, to 0.95 it opens, looks 1.0–1.7, blinks 1.75–1.98, until 2.2 s. Tables: row, x.
+- **9 Звёзды**: stars twinkle denser and denser, then one flash from the centre.
+  dth = 10 + smooth(0, 1250, u)·240/255; h1 < dth → a star: ph = h2 + u·(220 + (h3 & 63))/1000,
+  s = 255 − 2|ph − 128|, a = s²/255; the flash tent(u − 1500, 200)·(255 − 3d)/255, white.
+  0–1.25 s denser, the flash 1.3–1.7 s, until 2.0 s. Tables: h1, h2, h3.
+- **10 Салют**: a rocket up the middle column bursts: 18 rays along the spark paths, then glitter.
+  The rocket (u < 780): hr = 96 − smooth(0, 720, u)·48/255, columns |x − 19| ≤ 1; the burst q = u − 780: a flash
+  tent(q − 70, 160)·tent(d, 16); the rays: head = (len − 1)·e, e = x(2 − x), x = min(q, 650)/650; glitter q > 400:
+  t2 = q − 400 − h2·5/3, 0..500 → 220·(500 − t2)/500 where h3 < 120 and d > 10.
+  The rocket 0–0.78 s, the burst 0.78–1.43, glitter to 2.1, until 2.2 s. Tables: spark, row, x, h2, h3.
+- **11 Дождь**: drops run down both diagonals of the grid with a faint trail.
+  Stream A: key = col; stream B: key = col − row + 6; head = (u − delay(key))·128/1000 − 16 (8 rows a second);
+  delay_A = ((37key + 11) & 31)·26, delay_B = ((29key + 5) & 31)·26 + 110; df = head − 16·row;
+  0 ≤ df < 96: ((96 − df)/96)², df ≥ 96: 26 (the trail). Drops 0–1.7 s, the trail until 2.0 s. Tables: col, row.
+- **12 Включение**: 0–200 ms a white dot in the middle (d < 3); 200–600 the middle row, |x − 19| ≤ hw + 1,
+  hw = 20·smooth(200, 550, u)/255; 600–950 the picture opens, hv = 56·smooth(600, 950, u)/255 (1/16 row), its edges
+  whiter; it settles to 65 (950–1400). 1.8 s; the listening from 1.0 s.
+- **13 Зайчик**: P = a triangle wave of u·150/1000 over ±60, Q = of u·56/1000 over ±14 (it bounces off the edges);
+  the spot r = 14 (255, towards white 170), 3 trail points 45 ms apart (r = 10: 170, 130, 90); brightness
+  smooth(0, 150, u)·(255 − smooth(1300, 1700, u))/255. 2.0 s: it bounces 0–1.3 s, out by 1.7 s; the listening from 1.2 s.
+- **14 «КАЯ»**: `pict_kaya` (11×5: 0x523 0x655 0x473 0x655 0x555) drawn like a clock glyph; pixel (gx, gy) shows at
+  100 + 70gx + 10gy ms, white for its first 0.2 s; it scatters at 1450 + 40·((7gx + 3gy) mod 11) ms in 0.15 s;
+  the time hides (dimAll 55, 0.2–1.5 s) and comes back by 1.9 s; fr.dg = 255. 2.2 s; the name is whole at 0.9 s.
+
+## The palettes (back_pal)
+
+`back_pal` 0–60: 0–30 never move (the saved setting and Home's palette list use the index); 31–60 are KAIA-172's,
+appended to `paletteArr` and `paletteList` in `firmware/src/palettes.cpp` (38–40 resampled from FastLED's
+Pacifica.ino and TwinkleFox.ino). Each new one loops (its last stop is its first). The picker shows the Russian names
+and groups below; the clock's list keeps the Latin names.
+
+| index | name | picker | group |
+|---|---|---|---|
+| 0 | HeatColors | Жар | Огонь |
+| 1 | Fire | Огонь | Огонь |
+| 2 | WoodFireColors | Дрова | Огонь |
+| 3 | NormalFire | Пламя | Огонь |
+| 4 | LithiumFireColors | Литий | Тёплые |
+| 5 | SodiumFireColors | Натрий | Огонь |
+| 6 | CopperFireColors | Медь | Природа |
+| 7 | AlcoholFireColors | Спирт | Холодные |
+| 8 | LavaColors | Лава | Огонь |
+| 9 | PartyColors | Вечеринка | Неон |
+| 10 | RainbowColors | Радуга | Неон |
+| 11 | RainbowStripeColors | Радуга-полосы | Неон |
+| 12 | CloudColors | Облака | Холодные |
+| 13 | OceanColors | Океан | Холодные |
+| 14 | ForestColors | Лес | Природа |
+| 15 | Sunset_Real | Закат | Тёплые |
+| 16 | Dkbluered | Сине-красная | Разное |
+| 17 | OptimusPrime | Оптимус | Разное |
+| 18 | WarmGrad | Тёплая | Тёплые |
+| 19 | ColdGrad | Холодная | Холодные |
+| 20 | HotGrad | Горячая | Огонь |
+| 21 | PinkGrad | Розовая | Тёплые |
+| 22 | Comfy | Уют | Разное |
+| 23 | Cyperpunk | Киберпанк | Неон |
+| 24 | Girl | Девчачья | Тёплые |
+| 25 | Xmas | Новый год | Разное |
+| 26 | Acid | Кислота | Неон |
+| 27 | BlueSmoke | Синий дым | Спокойные |
+| 28 | Gummy | Мармелад | Неон |
+| 29 | Leo | Лев | Разное |
+| 30 | Aurora | Аврора | Природа |
+| 31 | Amber | Янтарь | Тёплые |
+| 32 | Candle | Свеча | Тёплые |
+| 33 | Terracotta | Терракота | Тёплые |
+| 34 | PeachFizz | Персик | Тёплые |
+| 35 | Coral | Коралл | Тёплые |
+| 36 | Honey | Мёд | Тёплые |
+| 37 | Embers | Угли | Огонь |
+| 38 | Pacifica | Пасифика | Холодные |
+| 39 | PacificaDeep | Тихий океан | Холодные |
+| 40 | IceTwinkle | Лёд | Холодные |
+| 41 | Glacier | Ледник | Холодные |
+| 42 | Lagoon | Лагуна | Холодные |
+| 43 | Twilight | Сумерки | Спокойные |
+| 44 | Moonlight | Лунный свет | Спокойные |
+| 45 | Meadow | Луг | Природа |
+| 46 | Moss | Мох | Природа |
+| 47 | Autumn | Осень | Природа |
+| 48 | Sakura | Сакура | Природа |
+| 49 | Dunes | Дюны | Природа |
+| 50 | Tropics | Тропики | Природа |
+| 51 | Dawn | Заря | Тёплые |
+| 52 | NeonNight | Неон | Неон |
+| 53 | Synthwave | Синтвейв | Неон |
+| 54 | Toxic | Токсик | Неон |
+| 55 | Electric | Электрик | Неон |
+| 56 | Candy | Леденец | Неон |
+| 57 | Laser | Лазер | Неон |
+| 58 | Ultraviolet | Ультрафиолет | Неон |
+| 59 | Linen | Лён | Спокойные |
+| 60 | DuskMist | Дымка | Спокойные |
 
 ## The site's API (BallClock v1.5)
 
@@ -149,9 +382,36 @@ New in v1.5.3:
 - `update_last` of a successful update carries the update boot's heap: `"result=ok from=1.5.3 kb=… heap0=… block0=…
   heap_min=… block_min=…"` (also on `same`). An update run by a v1.5.2 update boot still ends at `kb=`.
 
-How the page uses it: the state every 5 s while the tab is visible; «Сейчас» runs the renderer on the saved settings
-with the clock's millis, night, brightness and play, and the dots in step with NTP: each state rules out the
-phases of NTP's second that would have put its time in another second (`clock.js`), so after a few answers the
-dots blink with the clock's. «Зеркало» shows `/kaia/frame`; during a running text «Сейчас» always uses it.
+## The site's API (BallClock v1.6): the contract with the firmware task
+
+v1.5's stays as above. Added:
+- `/kaia/anim` takes `look=0–N` for every name but off: that event's animation for this call, a try-out, nothing
+  saved. N = 14 for the wake (`WAKE_COUNT` − 1), 8 for the others (`LOOK_COUNT` − 1). Absent = the saved key of that
+  event (`kaia_wake`, `kaia_listen`, `kaia_think`, `kaia_speak`, `kaia_done`, `kaia_error`, `kaia_notify`).
+  `wake=` stays as the old name of look for name=wake. A bad look (not a number, or past N) → 400 `{error}`.
+  An explicit style still plays when the saved one is «Выкл»; look 0 follows that style.
+- `/kaia/state` `play` adds `look`: the animation playing within its event. A wake that turned into listening shows
+  as listening with the listening's look (`kaia_listen`).
+- `/kaia/state` `settings` gain `kaia_listen`, `kaia_think`, `kaia_speak`, `kaia_done`, `kaia_error`, `kaia_notify`
+  (0–8, 0 by default); `kaia_wake` runs 0–14.
+- `back_pal` runs 0–60: the new palettes from 31.
+- Nothing else changes.
+
+## How the page uses it
+
+The state every 5 s while the tab is visible; «Сейчас» runs the renderer on the saved settings with the clock's
+millis, night, brightness and play (its `look`; v1.5's `wake` for a wake), and the dots in step with NTP: each state
+rules out the phases of NTP's second that would have put its time in another second (`clock.js`), so after a few
+answers the dots blink with the clock's. «Зеркало» shows `/kaia/frame`; during a running text «Сейчас» always uses it.
 Save writes the changed keys one at a time (page_pass last, then the page uses the new password), then reads the
-state again. «Показать на часах» sends `kaia/anim?name=wake&style=…&wake=…&speed=…` from the draft.
+state again.
+
+«Показать на часах» (in the preview panel and under the event's gallery) plays the event in view with the draft's
+choice and saves nothing: `kaia/anim?name=<event>&style=<kaia_anim>&look=<the event's key>`, plus
+`&speed=<kaia_wake_speed>` for the wake and `&ms=6000` for a state (`tryOut` in `api.js`). While it plays the page says
+«Идёт на часах: … · ещё 1,1 с», then «Сыграно на часах: … Ничего не сохранено.»
+
+The unlit balls (⚙ on the preview): a colour and a transparency 0–100 % for the balls without light, on the big
+preview, the mini bar and the tiles. Only this page's look: kept in this browser's `localStorage` under
+`ballclock.unlit` (`{"c":"#rrggbb","tr":0–100}`), never sent to the clock; «Как в v1.5.2» puts back the ivory, opaque
+(and stores nothing). `paint.js` redraws its cached unlit layer when the setting changes.

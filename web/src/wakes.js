@@ -1,6 +1,6 @@
-// Kaya's wakes for firmware v1.5 (the KAIA-161 design): kaia_wake picks one apart from the style.
+// Kaya's wakes (the KAIA-161 design, v1.5; 12–14 from KAIA-173's catalog, v1.6): kaia_wake picks one apart from the style.
 //   0 «Как у стиля»: the style's own wake (1 ripple, 2 orbit, 3 sparks); 1–3 those three with any style;
-//   4 and up: the new ones below.
+//   4 and up: the new ones below. wakeDraw (looks.js) plays them with the listening's look after them.
 // kaia_wake_speed (50–200 %): the wake runs on u = t·speed/100 and lasts du·100/speed; the listening of the
 // style that fades in under it, and that takes over after it, keeps real time.
 //
@@ -8,17 +8,18 @@
 // Integers only inside a frame; "x / y | 0" is C's x / y (and valid C++ as it is), "& 255" is (uint8_t),
 // let / const are int (uint32_t for colours), arrays are static const tables. No floats, no closures.
 import {
-    A_LISTENING, A_WAKE, b_ang, b_dist, C_WHITE, dimAll, fr, imax, imin, lensOf, mix, orbitShot, pict, put,
-    rippleShot, smooth, SPARK_LEN, SPARKS, spark, sparksShot, stateDraw, tent, abs,
+    b_ang, b_dist, C_WHITE, dimAll, fr, imax, imin, lensOf, mix, oct, pict, posMod, put, putb, smooth, SPARK_LEN, SPARKS, spark,
+    tent, abs,
 } from "./kaia.js";
 import { ledDiag, MX_DIAG_H, MX_DIAG_W, MX_LED_AMOUNT } from "./matrix.js";
 
 // ids and Russian names in the site's order; base lengths at 100 %, ms (1–3 = shot_ms[style - 1][0])
-export const WAKE_NAMES = ["Как у стиля", "Рябь", "Орбита", "Искры", "Рассвет", "Радар", "Спираль", "Сердцебиение", "Глаз", "Звёзды", "Салют", "Дождь"];
-export const wake_ms = [0, 1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000];
-export const WAKE_COUNT = 12;
+export const WAKE_NAMES = ["Как у стиля", "Рябь", "Орбита", "Искры", "Рассвет", "Радар", "Спираль", "Сердцебиение", "Глаз", "Звёзды", "Салют", "Дождь",
+    "Включение", "Зайчик", "«КАЯ»"];
+export const wake_ms = [0, 1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000, 1800, 2000, 2200];
+export const WAKE_COUNT = 15;
 // when the listening starts to fade in under wakes 1–3 (the new ones: du - 800)
-const wake_from = [0, 1100, 1500, 1600];
+export const wake_from = [0, 1100, 1500, 1600];
 
 // ================= boot tables for the new wakes (one byte a ball) =================
 
@@ -260,43 +261,78 @@ export function rainShot(n, t, du, col) {
     }
 }
 
+// ================= the wakes of v1.6 (KAIA-173): (n, t, du, col), as the ones above =================
+
+// 12 · Включение: like an old TV switched on: a dot in the middle, a line along the middle row, the picture opens
+export function powerOnWake(n, t, du, col) {
+    const fo = smooth(du, du - 400, t);
+    const hw = smooth(200, 550, t) * 20 / 255 | 0;  // the line's half-length, half-balls
+    const hv = smooth(600, 950, t) * 56 / 255 | 0;  // the picture's half-height, 1/16 row
+    const glow = 255 - (190 * smooth(950, 1400, t) / 255 | 0);
+    const wc = mix(col, C_WHITE, 200), lc = mix(col, C_WHITE, 40);
+    fr.dg = 128;
+    for (let i = 0; i < MX_LED_AMOUNT; i++) {
+        const dv = abs(b_row[i] - 3) * 16, dh = abs(b_x[i] - 19);
+        let a = 0, c = wc;
+        if (b_dist[i] < 3 && t < 950) a = smooth(0, 150, t);
+        if (t >= 200 && !dv && dh <= hw + 1) a = 255;
+        if (t >= 600 && dv <= hv) {
+            a = imax(a, glow);
+            c = hv - dv < 16 ? wc : lc;
+        }
+        put(i, c, a * fo / 255 | 0);
+    }
+}
+
+// 13 · Зайчик: a spot of light bounces off the edges like a sunbeam from a mirror, with a short trail
+export function bunnyWake(n, t, du, col) {
+    const g = (smooth(0, 150, t) * (255 - smooth(1300, 1700, t)) / 255 | 0) * smooth(du, du - 400, t) / 255 | 0;
+    const wc = mix(col, C_WHITE, 170), bp = [0, 0, 0, 0], bq = [0, 0, 0, 0];
+    for (let j = 0; j < 4; j++) {  // the spot and its trail, 45 ms apart
+        const u = imax(0, t - j * 45);
+        const a1 = posMod((u * 150 / 1000 | 0) + 60, 240), a2 = posMod((u * 56 / 1000 | 0) + 14, 56);
+        bp[j] = a1 < 120 ? a1 - 60 : 180 - a1;  // a triangle wave: it bounces off ±60 and ±14
+        bq[j] = a2 < 28 ? a2 - 14 : 42 - a2;
+    }
+    fr.dg = 128;
+    for (let i = 0; i < MX_LED_AMOUNT; i++) {
+        const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+        let a = 0, c = col;
+        for (let j = 0; j < 4; j++) {
+            const r = j ? 10 : 14, d = oct(p - bp[j], q - bq[j]);
+            if (d >= r) continue;
+            const v = (r - d) * (j ? 210 - j * 40 : 255) / r | 0;
+            if (v > a) {
+                a = v;
+                c = j ? col : wc;
+            }
+        }
+        put(i, c, a * g / 255 | 0);
+    }
+}
+
+// 14 · «КАЯ»: Kaya writes her name column by column with a white pen (0.1–0.9 s), holds it, and it scatters
+export const pict_kaya = [0x523, 0x655, 0x473, 0x655, 0x555];  // 11 wide: К А Я
+export function nameWake(n, t, du, col) {
+    dimAll(255 - ((200 * smooth(0, 200, t) / 255 | 0) * smooth(1900, 1500, t) / 255 | 0));
+    fr.dg = 255;
+    const x0 = (194 - 10 * 11) / 20 | 0;
+    for (let gy = 0; gy < 5; gy++) {
+        for (let gx = 0; gx < 11; gx++) {
+            if (!((pict_kaya[gy] >> (10 - gx)) & 1)) continue;
+            const u = t - 100 - gx * 70 - gy * 10;  // since the pen reached it
+            if (u < 0) continue;
+            const out = 1450 + ((gx * 7 + gy * 3) % 11) * 40;  // when it scatters
+            putb(ledDiag(x0 + gx + (gy >> 1), 1 + gy), mix(col, C_WHITE, 220 * tent(u, 200) / 255 | 0), 255 - smooth(out, out + 150, t));
+        }
+    }
+}
+
 // ================= the wake with its speed =================
 
 // the wake's real length at the speed, ms
 export function wakeLength(id, speed) {
     return wake_ms[id] * 100 / speed | 0;
-}
-
-// t: ms since the wake started (real time); style: the listening's style (1–3); wake: kaia_wake (0 = the style's)
-export function wakeDraw(style, wake, speed, t, col) {
-    const id = wake ? wake : style;
-    const du = wake_ms[id];
-    let u = t * speed / 100 | 0;  // the wake's own time
-    if (u > du) u = du;
-    fr.lt = t - wakeLength(id, speed);  // the listening's time: it goes on at its own pace after the wake
-    fr.ls = style;
-
-    switch (id) {
-        case 1: rippleShot(A_WAKE, u, du, col); break;
-        case 2: orbitShot(A_WAKE, u, du, col); break;
-        case 3: sparksShot(A_WAKE, u, du, col); break;
-        case 4: dawnShot(A_WAKE, u, du, col); break;
-        case 5: radarShot(A_WAKE, u, du, col); break;
-        case 6: spiralShot(A_WAKE, u, du, col); break;
-        case 7: heartShot(A_WAKE, u, du, col); break;
-        case 8: eyeShot(A_WAKE, u, du, col); break;
-        case 9: starsShot(A_WAKE, u, du, col); break;
-        case 10: fireworkShot(A_WAKE, u, du, col); break;
-        default: rainShot(A_WAKE, u, du, col); break;
-    }
-
-    if (id <= 3) {
-        // the sparks mark settles into its own breath; any other pair fades the style's listening in
-        if (!(id === 3 && style === 3)) stateDraw(style, A_LISTENING, fr.lt, col, smooth(wake_from[id], du, u));
-    } else {
-        fr.dg = 89;
-        stateDraw(style, A_LISTENING, fr.lt, col, smooth(du - 800, du, u));
-    }
 }
 
 buildWakeTables();

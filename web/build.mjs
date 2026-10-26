@@ -9,7 +9,7 @@ import { constants, gzipSync } from "node:zlib";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const src = join(here, "src");
-const LIMIT = 48 * 1024;
+const LIMIT = 64 * 1024;
 
 const IMPORT = /^import\s*\{[^}]*\}\s*from\s*"\.\/([\w.]+)";\s*$/gm;
 
@@ -94,7 +94,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
     console.log("dist/site.html " + raw.length + " bytes (" + kb(raw.length) + "), gzip " + gz.length + " bytes (" + kb(gz.length) + ") of " + kb(LIMIT));
     console.log("firmware/src/site_page.h written");
     if (gz.length > LIMIT) {
-        console.error("the gzipped page is over 48 KB");
+        console.error("the gzipped page is over 64 KB");
         process.exit(1);
     }
 }
