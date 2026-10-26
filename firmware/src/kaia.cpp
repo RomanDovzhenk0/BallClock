@@ -1998,10 +1998,10 @@ static void handleState() {
     // what plays now (a running text's words never appear)
     s += F(",\"play\":");
     if (playing) {
-        char name[sizeof(anim_names[0])], p[112];
+        char name[sizeof(anim_names[0])], p[128];
         strcpy_P(name, anim_names[pn]);
-        snprintf_P(p, sizeof(p), PSTR("{\"name\":\"%s\",\"style\":%u,\"wake\":%u,\"speed\":%u,\"t\":%u,\"color\":\"%06x\"}"),
-                   name, (unsigned)ov.style, (unsigned)ov.wake, (unsigned)ov.speed, (unsigned)pt, (unsigned)playColor(pn));
+        snprintf_P(p, sizeof(p), PSTR("{\"name\":\"%s\",\"style\":%u,\"look\":%u,\"wake\":%u,\"speed\":%u,\"t\":%u,\"color\":\"%06x\"}"),
+                   name, (unsigned)ov.style, (unsigned)plook, (unsigned)ov.wake, (unsigned)ov.speed, (unsigned)pt, (unsigned)playColor(pn));
         s += p;
     } else {
         s += F("null");
@@ -2104,12 +2104,19 @@ static void handleAnim() {
     bool own;
     long ms = KAIA_STATE_MS;
     // a try-out from the site: this call's look only, nothing is saved; absent = the saved settings
-    long style = 0, wake = -1, speed = 0;
+    long style = 0, wake = -1, speed = 0, look = -1;
     if (!readColor(color, own)) return replyError(400, F("color: RRGGBB"));
     if (!readNum(F("ms"), 100, 60000, ms)) return replyError(400, F("ms: 100-60000"));
     if (!readNum(F("style"), 1, 3, style)) return replyError(400, F("style: 1-3"));
-    if (!readNum(F("wake"), 0, WAKE_COUNT - 1, wake)) return replyError(400, F("wake: 0-11"));
+    if (!readNum(F("wake"), 0, WAKE_COUNT - 1, wake)) return replyError(400, F("wake: 0-14"));
     if (!readNum(F("speed"), 50, 200, speed)) return replyError(400, F("speed: 50-200"));
+    // look= for every name but off: the event's animation for this call (wake= is its old name for the wake)
+    if (n == A_WAKE) {
+        if (!readNum(F("look"), 0, WAKE_COUNT - 1, look)) return replyError(400, F("look: 0-14 for wake"));
+        if (look < 0) look = wake;
+    } else if (n != A_OFF) {
+        if (!readNum(F("look"), 0, LOOK_COUNT - 1, look)) return replyError(400, F("look: 0-8"));
+    }
 
     ov.text_waits = false;
     if (n == A_OFF) {
@@ -2123,16 +2130,16 @@ static void handleAnim() {
     if (!own_style) style = db[kk::kaia_anim].toInt();
     if (style < 1 || style > 3) return replyOk();  // animations are off in the settings
 
-    // wake and speed matter only for a wake; Kaya's own calls play the saved ones, and every event its saved look
-    ov.wake = n == A_WAKE && wake >= 0 ? wake : savedLook(A_WAKE);
-    ov.speed = n == A_WAKE && speed ? speed : savedWakeSpeed();
-    ov.look = n == A_WAKE ? ov.wake : savedLook((Anim)n);
+    // Kaya's own calls carry no look: every event plays its saved one (0 = as the style); speed matters only for a wake
+    ov.look = look >= 0 ? look : savedLook((Anim)n);
     ov.lk = savedLook(A_LISTENING);
+    ov.wake = n == A_WAKE ? ov.look : savedLook(A_WAKE);
+    ov.speed = n == A_WAKE && speed ? speed : savedWakeSpeed();
 
     char shown[sizeof(anim_names[0])];
     strcpy_P(shown, anim_names[n]);
-    if (n == A_WAKE) LOGF(LG_DEBUG, "kaia", "anim=%s style=%u wake=%u speed=%u", shown, (unsigned)style, (unsigned)ov.wake, (unsigned)ov.speed);
-    else LOGF(LG_DEBUG, "kaia", "anim=%s style=%u", shown, (unsigned)style);
+    if (n == A_WAKE) LOGF(LG_DEBUG, "kaia", "anim=%s style=%u look=%u speed=%u", shown, (unsigned)style, (unsigned)ov.look, (unsigned)ov.speed);
+    else LOGF(LG_DEBUG, "kaia", "anim=%s style=%u look=%u", shown, (unsigned)style, (unsigned)ov.look);
 
     ov.anim = (Anim)n;
     ov.style = style;
