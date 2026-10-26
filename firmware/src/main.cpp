@@ -5,6 +5,8 @@
 #include <WiFiConnector.h>
 
 #include "config.h"
+#include "crash.h"
+#include "log.h"
 #include "matrix.h"
 #include "settings.h"
 
@@ -27,6 +29,7 @@ void runString(String str) {
 
 void setup() {
     Serial.begin(115200);
+    crashBegin();
     Serial.println("\n" PROJECT_NAME " v" PROJECT_VER);
 
     matrix.begin();
@@ -34,16 +37,18 @@ void setup() {
     WiFiConnector.setName(PROJECT_NAME);
 
     WiFiConnector.onConnect([]() {
+        logWifiCheck();
         NTP.begin();
 
         Serial.print("Connected: ");
         Serial.println(WiFi.localIP());
         if (db[kk::show_ip]) runString(WiFi.localIP().toString());
         
-        ota.checkUpdate();
+        otaCheck();
     });
 
     WiFiConnector.onError([]() {
+        logWifiDown();
         String str("Error! AP: ");
         str += WiFi.softAPSSID();
         Serial.println(str);

@@ -8,6 +8,7 @@
 
 #include "config.h"
 #include "kaia.h"
+#include "log.h"
 #include "palettes.h"
 #include "redraw.h"
 
@@ -117,6 +118,7 @@ static void build(sets::Builder& b) {
         b.Slider(kk::kaia_bright, "Яркость", 0, 255);
         b.Select(kk::kaia_night, "Ночью", "Как обычно;Тусклее;Не показывать");
         b.Pass(kk::page_pass, "Пароль страницы", "");
+        b.Input(kk::log_host, "Сервер логов");
     }
     {
         sets::Group g(b, "Update");
@@ -130,6 +132,7 @@ static void build(sets::Builder& b) {
     if (b.Confirm("ota_update"_h)) {
         if (b.build.value.toBool()) {
             Serial.println("OTA update!");
+            LOGF(LG_INFO, "ota", "update result=start");
             ota.update();
         }
     }
@@ -139,6 +142,14 @@ static void build(sets::Builder& b) {
             case kk::ntp_gmt: NTP.setGMT(b.build.value); break;
             case kk::ntp_host: NTP.setHost(b.build.value); break;
             case kk::page_pass: sett.setPass(b.build.value); break;
+            case kk::log_host: {
+                String v = b.build.value.toString();
+                if (!logSetTarget(v.c_str())) LOGF(LG_WARN, "error", "what=\"log_host: IP:port\"");
+                if (v != logTarget()) {  // not valid, or written in full
+                    db[kk::log_host] = logTarget();
+                    b.reload();
+                }
+            } break;
         }
     }
 
@@ -151,13 +162,36 @@ LP_LISTENER_("wifi_connect", []() {
     WiFiConnector.connect(db[kk::wifi_ssid], db[kk::wifi_pass]);
 });
 
+static const char* otaError() {
+    switch (ota.getError()) {
+        case AutoOTA::Error::None: return "ok";
+        case AutoOTA::Error::Connect: return "connect";
+        case AutoOTA::Error::Timeout: return "timeout";
+        case AutoOTA::Error::HTTP: return "http";
+        case AutoOTA::Error::NoVersion: return "noversion";
+        case AutoOTA::Error::NoPlatform: return "noplatform";
+        case AutoOTA::Error::NoPath: return "nopath";
+        case AutoOTA::Error::NoUpdates: return "none";
+        case AutoOTA::Error::NoFile: return "nofile";
+        case AutoOTA::Error::OtaStart: return "otastart";
+        case AutoOTA::Error::OtaEnd: return "otaend";
+    }
+    return "unknown";
+}
+
+void otaCheck() {
+    bool found = ota.checkUpdate();
+    bool failed = !found && ota.getError() != AutoOTA::Error::NoUpdates;
+    LOGF(failed ? LG_WARN : LG_INFO, "ota", "check result=%s", found ? "update" : otaError());
+}
+
 LP_LISTENER_("check_updates", []() {
-    ota.checkUpdate();
+    otaCheck();
 });
 
 LP_TICKER([]() {
     if (Looper.thisSetup()) {
-        LittleFS.begin();
+        bool fs = LittleFS.begin();
         db.begin();
 
         db.init(kk::wifi_ssid, "");
@@ -197,6 +231,10 @@ LP_TICKER([]() {
         db.init(kk::kaia_bright, 255);
         db.init(kk::kaia_night, 1);
         db.init(kk::page_pass, "");
+        db.init(kk::log_host, "");
+
+        logBegin(db[kk::log_host].toString().c_str());
+        if (!fs) LOGF(LG_ERROR, "error", "what=\"LittleFS\"");
 
         WiFiConnector.connect(db[kk::wifi_ssid], db[kk::wifi_pass]);
         sett.begin();
@@ -204,6 +242,7 @@ LP_TICKER([]() {
         sett.onUpdate(update);
         sett.setPass(db[kk::page_pass].toString());  // empty = no password
         kaiaBegin(sett.server);
+        logHttpAttach(sett.server);
 
         NTP.setHost(db[kk::ntp_host]);
         NTP.setGMT(db[kk::ntp_gmt]);
@@ -211,12 +250,15 @@ LP_TICKER([]() {
 
     WiFiConnector.tick();
     sett.tick();
-    ota.tick();
+    logHttpEnd();
+    if (ota.tick()) {  // it only comes back when the update failed
+        LOGF(LG_ERROR, "ota", "update result=%s", otaError());
+    }
     NTP.tick();
 });
 
 LP_TIMER(24ul * 60 * 60 * 1000, []() {
-    ota.checkUpdate();
+    otaCheck();
 });
 
 // LP_TIMER(1000, []() {
