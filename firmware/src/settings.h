@@ -6,6 +6,9 @@
 extern GyverDBFile db;
 extern AutoOTA ota;
 
+// ota.checkUpdate() with a line in the log
+void otaCheck();
+
 DB_KEYS(
     kk,
     wifi_ssid,
@@ -44,6 +47,7 @@ DB_KEYS(
     kaia_color,
     kaia_bright,
     kaia_night,   // 0 as usual, 1 dimmer, 2 none
-    page_pass
+    page_pass,
+    log_host      // "IP:port" the log goes to, empty = nowhere
 
 );

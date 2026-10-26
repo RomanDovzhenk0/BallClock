@@ -3,8 +3,11 @@
 #include <FastLED.h>
 #include <GyverNTP.h>
 #include <RunningGFX.h>
+#include <StringUtils.h>
 
 #include "config.h"
+#include "crash.h"
+#include "log.h"
 #include "matrix.h"
 #include "redraw.h"
 #include "settings.h"
@@ -701,15 +704,20 @@ static const char state_keys[] PROGMEM =
     "show_ip,ntp_gmt,ntp_host,bright,auto_bright,bright_min,bright_max,adc_min,adc_max,"
     "night_mode,night_mode_auto,night_mode_auto_since,night_mode_auto_to,night_color,night_trsh,"
     "clock_style,clock_style_zero,clock_color,back_mode,back_pal,back_speed,back_angle,back_scale,back_bright,"
-    "kaia_anim,kaia_color,kaia_bright,kaia_night";
+    "kaia_anim,kaia_color,kaia_bright,kaia_night,log_host";
 
 // as the settings page answers
-static void reply(int code, const String& json) {
+static void corsHeaders() {
 #ifndef SETS_NO_CORS
     srv->sendHeader(F("Access-Control-Allow-Origin"), F("*"));
     srv->sendHeader(F("Access-Control-Allow-Private-Network"), F("true"));
     srv->sendHeader(F("Access-Control-Allow-Methods"), F("*"));
 #endif
+}
+
+static void reply(int code, const String& json) {
+    corsHeaders();
+    logHttpCode(code);
     srv->send(code, "application/json", json);
 }
 
@@ -783,7 +791,7 @@ static void handleState() {
     if (!authorized()) return;
 
     String s;
-    s.reserve(900);
+    s.reserve(1100);
     s += F("{\"name\":\"" PROJECT_NAME "\",\"version\":\"" PROJECT_VER "\",\"time\":\"");
     s += NTP.timeToString();
     s += F("\",\"synced\":");
@@ -796,6 +804,16 @@ static void handleState() {
     s += redrawBright();
     s += F(",\"night\":");
     s += redrawNight() ? F("true") : F("false");
+    s += F(",\"uptime\":");
+    s += millis() / 1000;
+    s += F(",\"reset\":\"");
+    s += crashResetReason();
+    s += F("\",\"heap\":");
+    s += ESP.getFreeHeap();
+    s += F(",\"block\":");
+    s += ESP.getMaxFreeBlockSize();
+    s += F(",\"crash\":");
+    crashJson(s);
     s += F(",\"overlay\":\"");
     s += ov.mode == M_TEXT ? F("text") : ov.mode == M_NONE ? F("none") : F("anim");
     s += F("\",\"anim\":");
@@ -841,6 +859,20 @@ static void handleState() {
     reply(200, s);
 }
 
+// GET /kaia/log: the last lines of the clock's log; ?to=IP:port sets where it sends them (empty = nowhere)
+static void handleLog() {
+    if (!authorized()) return;
+
+    if (srv->hasArg(F("to"))) {
+        if (!logSetTarget(srv->arg(F("to")).c_str())) return replyError(400, F("to: IP:port, or empty to switch off"));
+        db[kk::log_host] = logTarget();
+        return replyOk();
+    }
+
+    corsHeaders();
+    logDump(*srv);
+}
+
 static void handleShow() {
     if (!authorized()) return;
 
@@ -855,6 +887,7 @@ static void handleShow() {
     if (!readNum(F("speed"), 1, 20, speed)) return replyError(400, F("speed: 1-20"));
     if (!readNum(F("repeat"), 1, 5, repeat)) return replyError(400, F("repeat: 1-5"));
 
+    LOGF(LG_DEBUG, "kaia", "show");
     memcpy(txt.str, text.c_str(), text.length() + 1);
     txt.color = color;
     txt.own_color = own;
@@ -885,12 +918,17 @@ static void handleAnim() {
 
     ov.text_waits = false;
     if (n == A_OFF) {
+        LOGF(LG_DEBUG, "kaia", "off");
         ov.mode = M_NONE;
         return replyOk();
     }
 
     uint8_t style = db[kk::kaia_anim].toInt();
     if (style < 1 || style > 3) return replyOk();  // animations are off in the settings
+
+    char shown[sizeof(anim_names[0])];
+    strcpy_P(shown, anim_names[n]);
+    LOGF(LG_DEBUG, "kaia", "anim=%s", shown);
 
     ov.anim = (Anim)n;
     ov.style = style;
@@ -909,4 +947,5 @@ void kaiaBegin(KaiaServer& server) {
     server.on("/kaia/state", HTTP_GET, handleState);
     server.on("/kaia/show", HTTP_GET, handleShow);
     server.on("/kaia/anim", HTTP_GET, handleAnim);
+    server.on("/kaia/log", HTTP_GET, handleLog);
 }

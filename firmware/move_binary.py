@@ -44,5 +44,11 @@ def move_firmware_files(source, target, env):
                 shutil.copy(src_file, dest_file)
                 print(f"Moved: {src_file} -> {dest_file}")
 
+                # рядом лежит firmware.elf: по нему addr2line расшифровывает адреса из журнала сбоев
+                elf_file = os.path.join(root, "firmware.elf")
+                if os.path.exists(elf_file):
+                    shutil.copy(elf_file, os.path.join(dest_folder, "firmware.elf"))
+                    print(f"Moved: {elf_file} -> {os.path.join(dest_folder, 'firmware.elf')}")
+
 # Добавляем пост-действие после сборки
 env.AddPostAction("$BUILD_DIR/firmware.bin", move_firmware_files)
