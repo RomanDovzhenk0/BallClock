@@ -47,6 +47,8 @@ DB_KEYS(
     kaia_color,
     kaia_bright,
     kaia_night,   // 0 as usual, 1 dimmer, 2 none
+    kaia_wake,        // 0 the style's own wake, 1.. the wakes of kaia.cpp
+    kaia_wake_speed,  // 50..200 %
     page_pass,
     log_host      // "IP:port" the log goes to, empty = nowhere
 

@@ -11,6 +11,7 @@
 #include "log.h"
 #include "palettes.h"
 #include "redraw.h"
+#include "site.h"
 
 AutoOTA ota(PROJECT_VER, PROJECT_URL);
 
@@ -116,6 +117,8 @@ static void build(sets::Builder& b) {
         b.Select(kk::kaia_anim, "Анимации", "Выкл;Рябь из центра;Орбита по краю;Искры в знак");
         b.Color(kk::kaia_color, "Цвет Каи");
         b.Slider(kk::kaia_bright, "Яркость", 0, 255);
+        b.Select(kk::kaia_wake, "Пробуждение", FPSTR(kaia_wake_names));
+        b.Slider(kk::kaia_wake_speed, "Скорость пробуждения", 50, 200, 1, "%");
         b.Select(kk::kaia_night, "Ночью", "Как обычно;Тусклее;Не показывать");
         b.Pass(kk::page_pass, "Пароль страницы", "");
         b.Input(kk::log_host, "Сервер логов");
@@ -230,6 +233,8 @@ LP_TICKER([]() {
         db.init(kk::kaia_color, 0x00d1ff);
         db.init(kk::kaia_bright, 255);
         db.init(kk::kaia_night, 1);
+        db.init(kk::kaia_wake, 0);
+        db.init(kk::kaia_wake_speed, 100);
         db.init(kk::page_pass, "");
         db.init(kk::log_host, "");
 
@@ -237,11 +242,12 @@ LP_TICKER([]() {
         if (!fs) LOGF(LG_ERROR, "error", "what=\"LittleFS\"");
 
         WiFiConnector.connect(db[kk::wifi_ssid], db[kk::wifi_pass]);
+        kaiaBegin(sett.server);  // first: its check of /settings set and click goes before the library's handler
+        siteBegin(sett.server);
         sett.begin();
         sett.onBuild(build);
         sett.onUpdate(update);
         sett.setPass(db[kk::page_pass].toString());  // empty = no password
-        kaiaBegin(sett.server);
         logHttpAttach(sett.server);
 
         NTP.setHost(db[kk::ntp_host]);

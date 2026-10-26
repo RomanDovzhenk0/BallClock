@@ -27,7 +27,8 @@ bool logSetTarget(const char* hostPort);
 // the target as set: "IP:port", or ""
 const char* logTarget();
 
-// hook the web server: one http line for every request
+// hook the web server: one http line for every request, but /kaia/state and /kaia/frame answered 200 make one
+// "http poll path=… n=… ms_max=… heap_min=…" line a minute per path
 void logHttpAttach(KaiaServer& server);
 
 // the code a handler of ours answered with (the Settings library answers 200)
