@@ -39,9 +39,14 @@ struct OtaRecord {
     char ssid[33];  // the network, kept from the confirm to the update boot only
     char pass[65];
     uint8_t pad[2];
-    uint32_t sum;
+    uint32_t sum;  // the fields above: the layout of v1.5.1-1.5.2, whose update boot writes the record this one reads
+    // from v1.5.3 on, with a checksum of their own (over the whole record): a v1.5.2 update boot leaves them invalid
+    uint32_t heap0, block0;        // at the update boot's start
+    uint32_t heap_min, block_min;  // the lowest over its stages
+    uint32_t sum_heap;
 };
 static_assert(sizeof(OtaRecord) % 4 == 0, "RTC memory is written in words");
+static_assert(offsetof(OtaRecord, sum) == 148, "v1.5.2 update boots write the record up to this sum");
 static_assert(OTA_RTC_WORDS * 4 + sizeof(OtaRecord) <= 512, "RTC user memory is 512 bytes");
 
 // static RAM is heap the download does not get: the record lives on the stack of the update boot
@@ -49,15 +54,21 @@ static OtaRecord* rec = nullptr;
 static String result;  // the result this boot found or made, until the DB has it
 static uint32_t restart_at = 0;
 
-static uint32_t checksum(const OtaRecord& r) {
+// over the record's first bytes (a multiple of 4)
+static uint32_t checksum(const OtaRecord& r, size_t bytes) {
     const uint32_t* w = (const uint32_t*)&r;
     uint32_t s = 0x9e3779b9;
-    for (size_t i = 0; i < (sizeof(r) - sizeof(r.sum)) / 4; i++) s = (s << 5 | s >> 27) ^ w[i];
+    for (size_t i = 0; i < bytes / 4; i++) s = (s << 5 | s >> 27) ^ w[i];
     return s;
 }
 
+static bool heapValid(const OtaRecord& r) {
+    return r.sum_heap == checksum(r, offsetof(OtaRecord, sum_heap));
+}
+
 static void save(OtaRecord& r) {
-    r.sum = checksum(r);
+    r.sum = checksum(r, offsetof(OtaRecord, sum));
+    r.sum_heap = checksum(r, offsetof(OtaRecord, sum_heap));
     ESP.rtcUserMemoryWrite(OTA_RTC_WORDS, (uint32_t*)&r, sizeof(r));
 }
 
@@ -111,6 +122,8 @@ static void stage(const char* name, size_t done, size_t total) {
     OtaRecord& r = *rec;
     r.heap = ESP.getFreeHeap();
     r.block = ESP.getMaxFreeBlockSize();
+    if (r.heap < r.heap_min) r.heap_min = r.heap;
+    if (r.block < r.block_min) r.block_min = r.block;
     r.done = done;
     r.total = total;
     strlcpy(r.stage, name, sizeof(r.stage));
@@ -122,14 +135,22 @@ static void stage(const char* name, size_t done, size_t total) {
 
 void otaBoot() {
     OtaRecord r;
-    if (!ESP.rtcUserMemoryRead(OTA_RTC_WORDS, (uint32_t*)&r, sizeof(r)) || r.magic != OTA_MAGIC || r.sum != checksum(r)) return;
+    if (!ESP.rtcUserMemoryRead(OTA_RTC_WORDS, (uint32_t*)&r, sizeof(r)) || r.magic != OTA_MAGIC ||
+        r.sum != checksum(r, offsetof(OtaRecord, sum)))
+        return;
     r.stage[sizeof(r.stage) - 1] = 0;
     r.from[sizeof(r.from) - 1] = 0;
 
     if (r.state == OS_DONE) {
-        // the firmware before flashed this one: it runs, unless the same version came back
-        if (strcmp(r.from, PROJECT_VER)) setResult(PSTR("result=ok from=%s kb=%u"), r.from, (unsigned)(r.total / 1024));
-        else setResult(PSTR("result=same kb=%u"), (unsigned)(r.total / 1024));
+        // the firmware before flashed this one: it runs, unless the same version came back. The update boot's heap
+        // goes with it: its own log lines were lost at the restart
+        char mem[64] = "";
+        if (heapValid(r)) {
+            snprintf_P(mem, sizeof(mem), PSTR(" heap0=%u block0=%u heap_min=%u block_min=%u"), (unsigned)r.heap0,
+                       (unsigned)r.block0, (unsigned)r.heap_min, (unsigned)r.block_min);
+        }
+        if (strcmp(r.from, PROJECT_VER)) setResult(PSTR("result=ok from=%s kb=%u%s"), r.from, (unsigned)(r.total / 1024), mem);
+        else setResult(PSTR("result=same kb=%u%s"), (unsigned)(r.total / 1024), mem);
         clear(r);
         return;
     }
@@ -155,11 +176,13 @@ void otaBoot() {
     memset(r.pass, 0, sizeof(r.pass));
     r.state = OS_RUNNING;
     strlcpy(r.stage, "wifi", sizeof(r.stage));
+    r.heap0 = r.heap_min = ESP.getFreeHeap();
+    r.block0 = r.block_min = ESP.getMaxFreeBlockSize();
     save(r);
     rec = &r;
 
     Serial.println(F("OTA: the update boot"));
-    LOGF(LG_INFO, "ota", "update boot from=%s heap=%u block=%u", r.from, (unsigned)ESP.getFreeHeap(), (unsigned)ESP.getMaxFreeBlockSize());
+    LOGF(LG_INFO, "ota", "update boot from=%s heap=%u block=%u", r.from, (unsigned)r.heap0, (unsigned)r.block0);
 
     // a station only: no access point for the SDK to keep and answer probes with
     uint32_t t0 = millis();
