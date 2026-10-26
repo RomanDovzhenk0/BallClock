@@ -60,7 +60,7 @@ where the C++ types do, and the float steps of the boot tables and the old wakes
 | `kaia.js` `tent`, `smooth`, `wave`, `voice`, `comet`, `mix`, `dim`, `put`, `dimAll`; lib8 `sin8` | `src/kaia.cpp`; FastLED `lib8tion/trig8.h` `sin8_C` | `fr.sc` (kaia_bright, ×77/255 at night with rule 1) and `fr.dg` (what the digit balls keep) |
 | `kaia.js` `rippleState`/`Shot`, `orbitState`/`Shot`, `sparksState`/`Shot`, `mark`, `pict`, `shot_ms` | `src/kaia.cpp` | the error thump (`expf`) and the orbit/sparks wakes (`powf`, floats) use `Math.fround` steps |
 | `frame.js` `kaiaDraw`, `resolvePlay`, `duckStep`, `backScale` | `src/kaia.cpp` `kaiaDraw`, `kaiaBackScale` | the night rule 2 hides the overlay; done / error / notify default to green / red / amber |
-| `wakes.js` | the new code for `kaia.cpp` (v1.5) | see below |
+| `wakes.js` | `src/kaia.cpp` (v1.5) `wakeDraw`, `wakeLength`, `dawnShot` … `rainShot` | see below; the C++ keeps `b_col`, `b_row`, `b_x` in one byte a ball (`b_cr`, column and row) and computes `h1`–`h3` inline: the same values, 640 B less RAM |
 
 Not modelled: NeoPixel's `setBrightness` pre-multiplies the strip and `getPixelColor` scales back, so on the clock a
 read-modify-write (the dots, `put`, `dimAll`) at brightness < 255 loses low bits. The brightness belongs to the
