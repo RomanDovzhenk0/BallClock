@@ -38,6 +38,12 @@ DB_KEYS(
     back_speed,
     back_angle,
     back_scale,
-    back_bright
+    back_bright,
+
+    kaia_anim,    // 0 off, 1 ripple, 2 orbit, 3 sparks
+    kaia_color,
+    kaia_bright,
+    kaia_night,   // 0 as usual, 1 dimmer, 2 none
+    page_pass
 
 );

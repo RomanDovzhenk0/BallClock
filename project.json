@@ -1,8 +1,8 @@
 {
   "name": "BallClock",
   "about": "Часы из шариков для пинг-понга",
-  "version": "1.3",
-  "notes": "Релиз",
+  "version": "1.4",
+  "notes": "K.A.I.A.: анимации и бегущая строка",
   "builds": [
     {
       "chipFamily": "ESP8266",

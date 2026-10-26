@@ -7,6 +7,7 @@
 #include <WiFiConnector.h>
 
 #include "config.h"
+#include "kaia.h"
 #include "palettes.h"
 #include "redraw.h"
 
@@ -109,6 +110,15 @@ static void build(sets::Builder& b) {
         }
     }
     {
+        sets::Group g(b, "K.A.I.A.");
+
+        b.Select(kk::kaia_anim, "Анимации", "Выкл;Рябь из центра;Орбита по краю;Искры в знак");
+        b.Color(kk::kaia_color, "Цвет Каи");
+        b.Slider(kk::kaia_bright, "Яркость", 0, 255);
+        b.Select(kk::kaia_night, "Ночью", "Как обычно;Тусклее;Не показывать");
+        b.Pass(kk::page_pass, "Пароль страницы", "");
+    }
+    {
         sets::Group g(b, "Update");
         b.Label("current_version"_h, "Текущая версия прошивки", PROJECT_VER);
         if (b.Button("check_updates"_h, "Проверить обновления")) {
@@ -128,6 +138,7 @@ static void build(sets::Builder& b) {
         switch (b.build.id) {
             case kk::ntp_gmt: NTP.setGMT(b.build.value); break;
             case kk::ntp_host: NTP.setHost(b.build.value); break;
+            case kk::page_pass: sett.setPass(b.build.value); break;
         }
     }
 
@@ -181,10 +192,18 @@ LP_TICKER([]() {
         db.init(kk::back_scale, 50);
         db.init(kk::back_angle, 0);
 
+        db.init(kk::kaia_anim, 1);
+        db.init(kk::kaia_color, 0x00d1ff);
+        db.init(kk::kaia_bright, 255);
+        db.init(kk::kaia_night, 1);
+        db.init(kk::page_pass, "");
+
         WiFiConnector.connect(db[kk::wifi_ssid], db[kk::wifi_pass]);
         sett.begin();
         sett.onBuild(build);
         sett.onUpdate(update);
+        sett.setPass(db[kk::page_pass].toString());  // empty = no password
+        kaiaBegin(sett.server);
 
         NTP.setHost(db[kk::ntp_host]);
         NTP.setGMT(db[kk::ntp_gmt]);

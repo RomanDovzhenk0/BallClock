@@ -37,7 +37,21 @@ class BallMatrix : public GyverGFX {
 
     void setLED(int x, int y, uint32_t color) {
         int led = _diag_mode ? ledDiag(x, y) : ledXY(x, y);
-        if (led >= 0) setLED(led, color);
+        if (led < 0) return;
+        if (_marking) _marks[led >> 3] |= 1 << (led & 7);
+        setLED(led, color);
+    }
+
+    // marks: the balls drawn by x, y between beginMarks and endMarks (the clock digits)
+    void beginMarks() {
+        memset(_marks, 0, sizeof(_marks));
+        _marking = true;
+    }
+    void endMarks() {
+        _marking = false;
+    }
+    bool marked(uint8_t idx) {
+        return _marks[idx >> 3] & (1 << (idx & 7));
     }
     uint32_t getLED(int x, int y) {
         int led = _diag_mode ? ledDiag(x, y) : ledXY(x, y);
@@ -55,6 +69,8 @@ class BallMatrix : public GyverGFX {
 
    private:
     bool _diag_mode = false;
+    bool _marking = false;
+    uint8_t _marks[MX_LED_AMOUNT / 8] = {};
     uint16_t _buf16;
     uint32_t _buf32;
 };
