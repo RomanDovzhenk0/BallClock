@@ -14,6 +14,7 @@
 #define LOG_PER_SEC 20       // lines made a second; datagrams sent a second
 #define LOG_PRI_LEN 5        // "<131>"
 #define LOG_HEAP_MS 60000
+#define LOG_POLL_MS 60000    // a poll line per path a minute
 
 static char line[LOG_LINE_MAX + 1];  // the line being made, or being sent
 
@@ -304,12 +305,46 @@ void logHttpCode(int code) {
     rq.code = code;
 }
 
+// the site polls these: answered 200, they make one line a minute per path instead of one a request
+static struct Poll {
+    const char* path;
+    uint32_t since;  // the first request of this minute
+    uint16_t n;
+    unsigned ms_max, heap_min;
+} polls[] = {{"/kaia/state"}, {"/kaia/frame"}};
+
+static bool pollCount(unsigned ms, unsigned heap) {
+    if (rq.code != 200) return false;
+    for (Poll& p : polls) {
+        if (strcmp(rq.path, p.path)) continue;
+        if (!p.n) {
+            p.since = rq.t0;
+            p.ms_max = 0;
+            p.heap_min = UINT_MAX;
+        }
+        if (p.n < UINT16_MAX) p.n++;
+        p.ms_max = max(p.ms_max, ms);
+        p.heap_min = min(p.heap_min, min(rq.heap0, heap));
+        return true;
+    }
+    return false;
+}
+
+static void pollLines(uint32_t now) {
+    for (Poll& p : polls) {
+        if (!p.n || now - p.since < LOG_POLL_MS) continue;
+        LOGF(LG_INFO, "http", "poll path=%s n=%u ms_max=%u heap_min=%u", p.path, (unsigned)p.n, p.ms_max, p.heap_min);
+        p.n = 0;
+    }
+}
+
 void logHttpEnd() {
     if (!rq.active) return;
     rq.active = false;
 
     unsigned ms = millis() - rq.t0;
     unsigned heap = ESP.getFreeHeap(), block = ESP.getMaxFreeBlockSize();
+    if (pollCount(ms, heap)) return;
     LogSev sev = rq.code >= 500 ? LG_ERROR : rq.code >= 400 ? LG_WARN : LG_INFO;
 
     // the settings page says what it does in "action"; its value is never logged
@@ -341,6 +376,7 @@ static void logTick() {
     flush();
 
     logWifiCheck();
+    pollLines(now);
 
     bool s = NTP.synced();
     if (s && !synced) LOGF(LG_INFO, "ntp", "synced");
