@@ -5,7 +5,7 @@
   "description": "The BallClock site served from the clock's flash (firmware v1.5): a live preview, Kaya's wakes, every setting.",
   "type": "module",
   "scripts": {
-    "test": "node --test test/",
+    "test": "node --test test/*.test.mjs",
     "build": "node build.mjs",
     "test:render": "node test/render.mjs"
   }
