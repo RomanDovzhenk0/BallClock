@@ -132,6 +132,16 @@ New in v1.5:
   classic page, linked as `old`.
 - With a page password, set and click without the right auth → 401.
 
+New in v1.5.1:
+- `update` stays true while a newer firmware waits (before, the first poll used it up). `/kaia/state` adds
+  `update_last`: null, or the result of the last update over the air as the log wrote it, e.g.
+  `"result=ok from=1.5.1 kb=645"`, `"result=lowmem try=1 free=… block=… need=…"`,
+  `"result=connect try=3 stage=connect kb=0/0 heap=… block=… ssl=-1000"`, `"result=crash try=1 stage=write kb=256/645 …"`,
+  `"result=wifi ms=20000"`. See `../firmware/README.md`.
+- The update (ota_update = 1) answers, then the clock restarts within 0.5 s and updates before its server starts:
+  for about a minute the page gets no answer (connection refused), then the new version, or the old one with
+  `update_last` saying why.
+
 How the page uses it: the state every 5 s while the tab is visible; «Сейчас» runs the renderer on the saved settings
 with the clock's millis, night, brightness and play, and the dots in step with NTP: each state rules out the
 phases of NTP's second that would have put its time in another second (`clock.js`), so after a few answers the

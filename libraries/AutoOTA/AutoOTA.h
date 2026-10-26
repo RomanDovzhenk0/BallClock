@@ -32,6 +32,7 @@
 #endif
 
 #define GOTA_TIMEOUT 2500
+#define GOTA_STAGE_BYTES (128 * 1024)  // BallClock: a "write" stage every so many bytes
 
 class AutoOTA {
    public:
@@ -49,7 +50,27 @@ class AutoOTA {
         NoFile,
         OtaStart,
         OtaEnd,
+        Size,  // BallClock: the bin came without a Content-Length, or shorter than it
     };
+
+    // BallClock: the stages of updateNow() ("json", "connect", "headers", "begin", "write", "end", "restart"),
+    // with the bytes written and the bytes of the bin (0 until its headers are read)
+    typedef void (*StageCallback)(const char* stage, size_t done, size_t total);
+
+    void onStage(StageCallback cb) {
+        _stage_cb = cb;
+    }
+
+#if defined(ESP8266)
+    // BallClock: BearSSL's last error of a failed connect (0 none, -1000 out of memory) and its text
+    int sslError() {
+        return _ssl_err;
+    }
+
+    const char* sslErrorText() {
+        return _ssl_txt.c_str();
+    }
+#endif
 
     // текущая версия
     const char* version() {
@@ -84,6 +105,11 @@ class AutoOTA {
         return _has_update ? _has_update = false, true : false;
     }
 
+    // BallClock: есть обновление, без сброса (for a state that is polled)
+    bool updateAvailable() {
+        return _has_update;
+    }
+
     // обновить прошивку из loop
     void update() {
         _ota_f = true;
@@ -93,12 +119,17 @@ class AutoOTA {
     bool updateNow() {
 #if defined(ESP8266)
         BearSSL::WiFiClientSecure client;
+        // BallClock: project.json fits the small buffers of checkUpdate (the handshake's records are streamed)
+        client.setBufferSizes(1024, 512);
+        _ssl_err = 0;
+        _ssl_txt = String();
 #elif defined(ESP32)
         WiFiClientSecure client;
 #endif
         client.setInsecure();
 
-        if (!_request(client, _jsonReq())) return false;
+        _stage("json", 0, 0);
+        if (!_request(client, _jsonReq())) return _sslFailed(client), false;
         String bin;
 
         while (true) {
@@ -121,28 +152,49 @@ class AutoOTA {
         }
         client.stop();
 
+#if defined(ESP8266)
+        // BallClock: the bin comes in records of up to 16 KB: the full receive buffer
+        client.setBufferSizes(16384, 512);
+#endif
+
         // req file
         bin = ("GET ") + bin + F(" HTTP/1.1\r\n\r\n");
-        if (!_request(client, bin)) return false;
+        _stage("connect", 0, 0);
+        if (!_request(client, bin)) return _sslFailed(client), false;
+
+        // BallClock: flash exactly the Content-Length and nothing less: a stalled or short download must not be
+        // flashed (it was Update.begin(free sketch space) and Update.end(evenIfRemaining = true))
+        size_t length = _length;
+        if (!length) return _err = Error::Size, false;
+        _stage("headers", 0, length);
 
         if (!_waitClient(client)) return _err = Error::NoFile, false;
 
-#ifdef ESP8266
-        size_t ota_size = (size_t)((ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000);
-#else
-        size_t ota_size = UPDATE_SIZE_UNKNOWN;
-#endif
-
-        if (!Update.begin(ota_size, U_FLASH)) {
+        if (!Update.begin(length, U_FLASH)) {
             return _err = Error::OtaStart, false;
         }
+        _stage("begin", 0, length);
 
-        while (_waitClient(client)) Update.write(client);
+        size_t done = 0, next = GOTA_STAGE_BYTES;
+        while (done < length && !Update.hasError() && _waitClient(client)) {
+            done += Update.write(client);
+            if (done >= next) {
+                _stage("write", done, length);
+                next += GOTA_STAGE_BYTES;
+            }
+        }
+        _stage("end", done, length);
 
-        if (!Update.end(true)) {
+        if (done != length) {
+            bool flash = Update.hasError();  // before end(): it marks an empty download as an error of its own
+            Update.end();                    // premature: the old firmware stays
+            return _err = flash ? Error::OtaEnd : Error::Size, false;
+        }
+        if (!Update.end()) {
             return _err = Error::OtaEnd, false;
         }
 
+        _stage("restart", done, length);
         ESP.restart();
         _err = Error::None;
         return true;
@@ -176,6 +228,28 @@ class AutoOTA {
     Error _err = Error::None;
     bool _has_update = false;
     bool _ota_f = false;
+    size_t _length = 0;  // Content-Length of the last answer, 0 = none
+    StageCallback _stage_cb = nullptr;
+#if defined(ESP8266)
+    int _ssl_err = 0;
+    String _ssl_txt;  // on the heap, only after a failure
+#endif
+
+    void _stage(const char* stage, size_t done, size_t total) {
+        if (_stage_cb) _stage_cb(stage, done, total);
+    }
+
+    // the TLS error behind a failed connect
+    template <typename T>
+    void _sslFailed(T& client) {
+#if defined(ESP8266)
+        if (_err == Error::Connect) {
+            char txt[96];
+            _ssl_err = client.getLastSSLError(txt, sizeof(txt));
+            _ssl_txt = txt;
+        }
+#endif
+    }
 
     String _jsonReq() {
         String req(F("GET /"));
@@ -215,6 +289,7 @@ class AutoOTA {
     }
 
     bool _request(Client& client, const String& req) {
+        _length = 0;
         if (!client.connected()) client.connect(_host, _port);
 
         if (client.connected()) {
@@ -225,10 +300,17 @@ class AutoOTA {
             client.readStringUntil(' ');  // HTTP/1.1 CODE
 
             if (client.parseInt() == 200) {
-                while (client.available() && client.connected()) {
+                // BallClock: waits for the headers that come in a later record (was: available() only)
+                while (_waitClient(client)) {
                     delay(0);
-                    if (client.readStringUntil('\n').length() == 1) {  // \r\n
+                    String line = client.readStringUntil('\n');
+                    if (line.length() == 1) {  // \r\n
                         return true;
+                    }
+                    // BallClock: the size of the body
+                    if (line.length() > 15 && line.substring(0, 15).equalsIgnoreCase(F("Content-Length:"))) {
+                        long n = line.substring(15).toInt();
+                        _length = n > 0 ? n : 0;
                     }
                 }
             }

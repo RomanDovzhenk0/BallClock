@@ -8,6 +8,7 @@
 #include "crash.h"
 #include "log.h"
 #include "matrix.h"
+#include "otaboot.h"
 #include "settings.h"
 
 void runString(String str) {
@@ -31,6 +32,13 @@ void setup() {
     Serial.begin(115200);
     crashBegin();
     Serial.println("\n" PROJECT_NAME " v" PROJECT_VER);
+
+    // the clock keeps its network in the DB: the mode changes (AP on while connecting, off once connected) and
+    // WiFi.begin need not write the SDK's config to flash every time
+    WiFi.persistent(false);
+
+    // an update the confirm asked for runs here, before anything else takes heap; back = nothing to do, or it failed
+    otaBoot();
 
     matrix.begin();
 
