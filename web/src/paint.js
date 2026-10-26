@@ -1,4 +1,4 @@
-// The canvas layer: the 128 balls on the real layout (matrix.cpp diagToLed), glossy ping-pong balls on the
+// The canvas layer: the 128 balls on the real layout (matrix.cpp diagToLed), glossy ivory ping-pong balls on the
 // hexagon plate. The unlit balls and the gloss are drawn once per size; a frame adds only the light.
 import { ledDiag, MX_DIAG_H, MX_DIAG_W, MX_LED_AMOUNT } from "./matrix.js";
 
@@ -12,6 +12,8 @@ for (let y = 0; y < MX_DIAG_H; y++) {
         ballY[i] = y * S3 * D;
     }
 }
+// an unlit ball is ivory plastic (its shade darkens toward the rim); an LED inside makes the disc glow with its own hue
+const IVORY = [200, 195, 180];
 const CX = (19 * D) / 2, CY = 3 * S3 * D;
 const R_ = D / 2 + 0.12 * D, TIP = -1.1547 * R_, HX = 0.5774 * (CY + R_);
 const X0 = TIP - 0.45 * D, X1 = 2 * CX - TIP + 0.45 * D, Y0 = -R_ - 0.45 * D, Y1 = 2 * CY + R_ + 0.45 * D;
@@ -68,8 +70,9 @@ function caches(v) {
             for (let i = 0; i < MX_LED_AMOUNT; i++) {
                 const x = L.X(ballX[i]), y = L.Y(ballY[i]);
                 const g = c.createRadialGradient(x - 0.28 * r, y - 0.32 * r, r * 0.1, x, y, r);
-                g.addColorStop(0, "#4a4c54");
-                g.addColorStop(1, "#16171b");
+                g.addColorStop(0, "#ebe6d6");
+                g.addColorStop(0.55, "#c8c3b1");
+                g.addColorStop(1, "#6f6b5d");
                 c.fillStyle = g;
                 c.beginPath();
                 c.arc(x, y, r, 0, 6.2832);
@@ -77,7 +80,7 @@ function caches(v) {
             }
         });
         v.gloss = v.simple ? null : layer(L, (c) => {
-            c.fillStyle = "rgba(255,255,255,.2)";
+            c.fillStyle = "rgba(255,255,255,.38)";
             for (let i = 0; i < MX_LED_AMOUNT; i++) {
                 const x = L.X(ballX[i]), y = L.Y(ballY[i]);
                 c.beginPath();
@@ -103,33 +106,34 @@ export function paint(v, leds, gain, clip) {
     for (let i = 0; i < MX_LED_AMOUNT; i++) {
         const col = leds[i], x = L.X(ballX[i]), y = L.Y(ballY[i]);
         const R = Math.min(255, ((col >> 16) & 255) * gain) | 0, G = Math.min(255, ((col >> 8) & 255) * gain) | 0, B = Math.min(255, (col & 255) * gain) | 0;
+        const m = Math.max(R, G, B), l = m / 255;
         if (v.simple) {
-            c.fillStyle = "rgb(" + Math.min(255, 32 + R * 0.95 | 0) + "," + Math.min(255, 34 + G * 0.95 | 0) + "," + Math.min(255, 38 + B * 0.95 | 0) + ")";
+            const a = l <= 0.012 ? 0 : 0.3 + 0.7 * Math.sqrt(l), k = m ? 255 / m : 0;
+            c.fillStyle = "rgb(" + (IVORY[0] + (R * k - IVORY[0]) * a | 0) + "," + (IVORY[1] + (G * k - IVORY[1]) * a | 0) + "," + (IVORY[2] + (B * k - IVORY[2]) * a | 0) + ")";
             c.beginPath();
             c.arc(x, y, r, 0, 6.2832);
             c.fill();
             continue;
         }
-        const l = Math.max(R, G, B) / 255;
         if (l <= 0.012) continue;
-        c.globalCompositeOperation = "lighter";
-        const wr = R + (255 - R) * 0.22 * l | 0, wg = G + (255 - G) * 0.22 * l | 0, wb = B + (255 - B) * 0.22 * l | 0, rgb = R + "," + G + "," + B;
-        let g = c.createRadialGradient(x, y, 0, x, y, r);
-        g.addColorStop(0, "rgba(" + wr + "," + wg + "," + wb + ",.95)");
-        g.addColorStop(0.7, "rgba(" + rgb + ",.78)");
-        g.addColorStop(1, "rgba(" + rgb + ",.42)");
+        // the hue at full strength, shown with a coverage that follows the brightness: a dim LED still tints the ivory
+        const k = 255 / m, nr = R * k | 0, ng = G * k | 0, nb = B * k | 0, a = 0.3 + 0.7 * Math.sqrt(l);
+        const wr = nr + (255 - nr) * 0.3 * l | 0, wg = ng + (255 - ng) * 0.3 * l | 0, wb = nb + (255 - nb) * 0.3 * l | 0, rgb = nr + "," + ng + "," + nb;
+        let g = c.createRadialGradient(x, y, r * 1.0, x, y, r * 1.8);
+        g.addColorStop(0, "rgba(" + rgb + "," + (0.26 * a * l).toFixed(3) + ")");
+        g.addColorStop(1, "rgba(" + rgb + ",0)");
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(x, y, r * 1.8, 0, 6.2832);
+        c.fill();
+        g = c.createRadialGradient(x, y, 0, x, y, r);
+        g.addColorStop(0, "rgba(" + wr + "," + wg + "," + wb + "," + (0.96 * a).toFixed(3) + ")");
+        g.addColorStop(0.7, "rgba(" + rgb + "," + (0.88 * a).toFixed(3) + ")");
+        g.addColorStop(1, "rgba(" + rgb + "," + (0.66 * a).toFixed(3) + ")");
         c.fillStyle = g;
         c.beginPath();
         c.arc(x, y, r, 0, 6.2832);
         c.fill();
-        g = c.createRadialGradient(x, y, r * 0.6, x, y, r * 1.9);
-        g.addColorStop(0, "rgba(" + rgb + "," + (0.3 * l).toFixed(3) + ")");
-        g.addColorStop(1, "rgba(" + rgb + ",0)");
-        c.fillStyle = g;
-        c.beginPath();
-        c.arc(x, y, r * 1.9, 0, 6.2832);
-        c.fill();
-        c.globalCompositeOperation = "source-over";
     }
     if (v.gloss) c.drawImage(v.gloss, 0, 0, L.W, L.H);
     c.restore();
