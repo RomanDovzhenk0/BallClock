@@ -7,11 +7,11 @@
 <div class="mock" id="mockbar" hidden><b>Макет</b><span>часы на странице, данные примера:</span><span class="seg" id="mk"><button data-m="ok" class="on">Норма</button><button data-m="auth">Пароль (401)</button><button data-m="offline">Нет связи</button><button data-m="ap">Точка доступа</button><button data-m="upd">Есть обновление</button><button data-m="text">Бегущая строка</button></span></div>
 <header class="top"><span class="logo"></span><h1>BallClock</h1><span class="ver" id="ver">…</span><span class="sp"></span><span class="stat"><i class="dot warn" id="sdot"></i><span id="stxt">подключаюсь…</span></span><button class="btn sm" id="logout" hidden>Выйти</button></header>
 <div id="ban"></div>
-<div class="mini" id="mini"><canvas id="cv2"></canvas><div class="mc"><span class="seg"><button data-s="now">Сейчас</button><button data-s="draft">Черновик</button><button data-s="cmp">Сравнить</button></span><div class="ks2"><button class="chip" data-ks="wake">Пробуждение</button><button class="chip" data-ks="off">Стоп</button></div></div></div>
+<div class="mini" id="mini"><canvas id="cv2"></canvas><div class="mc"><span class="seg"><button data-s="now">Сейчас</button><button data-s="draft">Черновик</button><button data-s="cmp">Сравнить</button></span><div class="ks2"><button class="chip" data-ks="cur">Играть снова</button><button class="chip" data-ks="off">Стоп</button></div></div></div>
 <div class="b">
 <section class="hero" id="hero">
 <div class="hl">
-<div class="pvh"><span class="seg" id="src"><button data-s="now">Сейчас</button><button data-s="draft" class="on">Черновик</button><button data-s="cmp">Сравнить</button></span><span class="seg" id="day"><button data-d="0">День</button><button data-d="1">Ночь</button></span><span class="seg" id="live" hidden><button data-l="calc" class="on">Расчёт</button><button data-l="mirror">Зеркало</button></span></div>
+<div class="pvh"><span class="seg" id="src"><button data-s="now">Сейчас</button><button data-s="draft" class="on">Черновик</button><button data-s="cmp">Сравнить</button></span><span class="pvr"><span class="seg" id="day"><button data-d="0">День</button><button data-d="1">Ночь</button></span><span class="seg" id="live" hidden><button data-l="calc" class="on">Расчёт</button><button data-l="mirror">Зеркало</button></span><button class="ico" id="gear" aria-label="Шарики без света" aria-expanded="false" title="Шарики без света"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></span></div>
 <div class="wall" id="wall"><canvas id="cv"></canvas><span class="badge" id="badge"></span><span class="lbl l">Сейчас</span><span class="lbl r">Черновик</span></div>
 <small class="hint" id="pst"></small>
 </div>
@@ -19,7 +19,14 @@
 <h3>Кая на превью</h3>
 <div class="ksg" id="ks"></div>
 <div class="hsum" id="hsum"></div>
-<div class="pvf"><button class="btn pri" data-act="onclock">Показать на часах</button></div>
+<div class="pvf"><button class="btn pri" data-act="onclock"></button><small class="cl-st"></small></div>
+</div>
+<div class="pop" id="pop" hidden>
+<div class="prow"><h4>Шарики без света</h4><button class="btn sm" id="ubreset">Как в v1.5.2</button></div>
+<small>Только вид этой страницы: хранится в этом браузере и на часы не отправляется. Действует на превью и на плитки.</small>
+<div class="pre" id="upre"><button class="chip" data-up="ivory">Слоновая кость</button><button class="chip" data-up="white">Белые</button><button class="chip" data-up="graphite">Графит</button><button class="chip" data-up="glass">Стекло</button></div>
+<div class="prow"><span>Цвет</span><input type="color" id="ucol" value="#c8c3b4" aria-label="Цвет шариков без света"></div>
+<div><div class="prow"><span>Прозрачность</span><output id="utro">0 %</output></div><input type="range" id="utr" min="0" max="100" value="0" aria-label="Прозрачность шариков без света"></div>
 </div>
 </section>
 <nav class="tabs" id="tabs"></nav>

@@ -1,5 +1,5 @@
 // The canvas layer: the 128 balls on the real layout (matrix.cpp diagToLed), glossy ivory ping-pong balls on the
-// hexagon plate. The unlit balls and the gloss are drawn once per size; a frame adds only the light.
+// hexagon plate. The unlit balls and the gloss are drawn once per size and unlit setting; a frame adds only the light.
 import { ledDiag, MX_DIAG_H, MX_DIAG_W, MX_LED_AMOUNT } from "./matrix.js";
 
 const D = 39.9, S3 = Math.sqrt(3) / 2;
@@ -13,7 +13,40 @@ for (let y = 0; y < MX_DIAG_H; y++) {
     }
 }
 // an unlit ball is ivory plastic (its shade darkens toward the rim); an LED inside makes the disc glow with its own hue
-const IVORY = [200, 195, 180];
+export const IVORY = 0xc8c3b4;
+
+// the unlit balls' colour and transparency (0–100 %): only this page's look, kept in this browser, never sent to the
+// clock. v bumps on a change, so the cached layers are drawn again.
+export const UNLIT_KEY = "ballclock.unlit";
+export const unlit = { c: IVORY, tr: 0, v: 0 };
+
+// the stored setting, or v1.5.2's ivory, opaque
+export function readUnlit(store) {
+    try {
+        const j = JSON.parse(store.getItem(UNLIT_KEY) || "null");
+        if (j && /^#[0-9a-f]{6}$/i.test(j.c) && j.tr >= 0 && j.tr <= 100) return { c: parseInt(j.c.slice(1), 16), tr: Math.round(j.tr) };
+    } catch {
+        // no storage, or something else under the key
+    }
+    return { c: IVORY, tr: 0 };
+}
+
+// use u = {c, tr}; with a store, keep it there (the default as nothing)
+export function setUnlit(u, store) {
+    unlit.c = u.c;
+    unlit.tr = u.tr;
+    unlit.v++;
+    if (!store) return;
+    try {
+        if (u.c === IVORY && !u.tr) store.removeItem(UNLIT_KEY);
+        else store.setItem(UNLIT_KEY, JSON.stringify({ c: "#" + u.c.toString(16).padStart(6, "0"), tr: u.tr }));
+    } catch {
+        // private mode: the setting lives only in this tab
+    }
+}
+
+const rgbOf = (c) => [(c >> 16) & 255, (c >> 8) & 255, c & 255];
+const css = (a) => "rgb(" + a.map((x) => Math.round(x)).join(",") + ")";
 const CX = (19 * D) / 2, CY = 3 * S3 * D;
 const R_ = D / 2 + 0.12 * D, TIP = -1.1547 * R_, HX = 0.5774 * (CY + R_);
 const X0 = TIP - 0.45 * D, X1 = 2 * CX - TIP + 0.45 * D, Y0 = -R_ - 0.45 * D, Y1 = 2 * CY + R_ + 0.45 * D;
@@ -63,16 +96,21 @@ function plate(c, L) {
 
 function caches(v) {
     const L = v.L, r = (D / 2) * L.s * 0.93;
-    if (!v.base) {
+    if (!v.base || v.uv !== unlit.v) {
+        v.uv = unlit.v;
+        // the ivory of v1.5.2 as it was; another colour: lighter at the highlight, darker at the rim
+        const u = rgbOf(unlit.c), al = 1 - unlit.tr / 100;
+        const st = unlit.c === IVORY ? ["#ebe6d6", "#c8c3b1", "#6f6b5d"] : [css(u.map((x) => x + (255 - x) * 0.6)), css(u), css(u.map((x) => x * 0.55))];
         v.base = layer(L, (c) => {
             plate(c, L);
             if (v.simple) return;
+            c.globalAlpha = al;
             for (let i = 0; i < MX_LED_AMOUNT; i++) {
                 const x = L.X(ballX[i]), y = L.Y(ballY[i]);
                 const g = c.createRadialGradient(x - 0.28 * r, y - 0.32 * r, r * 0.1, x, y, r);
-                g.addColorStop(0, "#ebe6d6");
-                g.addColorStop(0.55, "#c8c3b1");
-                g.addColorStop(1, "#6f6b5d");
+                g.addColorStop(0, st[0]);
+                g.addColorStop(0.55, st[1]);
+                g.addColorStop(1, st[2]);
                 c.fillStyle = g;
                 c.beginPath();
                 c.arc(x, y, r, 0, 6.2832);
@@ -80,7 +118,7 @@ function caches(v) {
             }
         });
         v.gloss = v.simple ? null : layer(L, (c) => {
-            c.fillStyle = "rgba(255,255,255,.38)";
+            c.fillStyle = "rgba(255,255,255," + (0.38 * (0.3 + 0.7 * al)).toFixed(3) + ")";
             for (let i = 0; i < MX_LED_AMOUNT; i++) {
                 const x = L.X(ballX[i]), y = L.Y(ballY[i]);
                 c.beginPath();
@@ -94,7 +132,7 @@ function caches(v) {
 
 // leds: 0xRRGGBB per LED as drawn; gain: how the brightness shows (0.3 + 0.7·bright/255); dim: an extra factor
 export function paint(v, leds, gain, clip) {
-    const c = v.ctx, L = v.L, r = caches(v);
+    const c = v.ctx, L = v.L, r = caches(v), u = rgbOf(unlit.c), al = 1 - unlit.tr / 100;
     c.save();
     if (clip) {
         c.beginPath();
@@ -109,7 +147,7 @@ export function paint(v, leds, gain, clip) {
         const m = Math.max(R, G, B), l = m / 255;
         if (v.simple) {
             const a = l <= 0.012 ? 0 : 0.3 + 0.7 * Math.sqrt(l), k = m ? 255 / m : 0;
-            c.fillStyle = "rgb(" + (IVORY[0] + (R * k - IVORY[0]) * a | 0) + "," + (IVORY[1] + (G * k - IVORY[1]) * a | 0) + "," + (IVORY[2] + (B * k - IVORY[2]) * a | 0) + ")";
+            c.fillStyle = "rgba(" + (u[0] + (R * k - u[0]) * a | 0) + "," + (u[1] + (G * k - u[1]) * a | 0) + "," + (u[2] + (B * k - u[2]) * a | 0) + "," + (al + (1 - al) * a).toFixed(3) + ")";
             c.beginPath();
             c.arc(x, y, r, 0, 6.2832);
             c.fill();

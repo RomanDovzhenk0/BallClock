@@ -169,3 +169,32 @@ test("the mock clock answers the whole API", async () => {
     api.pass = MOCK_PASS;
     await api.state();
 });
+
+test("the unlit balls: kept in this browser's localStorage only, the ivory of v1.5.2 by default", async () => {
+    const { IVORY, readUnlit, setUnlit, unlit, UNLIT_KEY } = await import("../src/paint.js");
+    const mem = new Map(), store = { getItem: (k) => (mem.has(k) ? mem.get(k) : null), setItem: (k, v) => mem.set(k, String(v)), removeItem: (k) => mem.delete(k) };
+    assert.deepEqual(readUnlit(store), { c: IVORY, tr: 0 });
+    const v0 = unlit.v;
+    setUnlit({ c: 0x4a4d55, tr: 50 }, store);
+    assert.equal(mem.get(UNLIT_KEY), '{"c":"#4a4d55","tr":50}');
+    assert.deepEqual(readUnlit(store), { c: 0x4a4d55, tr: 50 });
+    assert.deepEqual([unlit.c, unlit.tr], [0x4a4d55, 50]);
+    assert.ok(unlit.v > v0, "the cached unlit layers are drawn again");
+    setUnlit({ c: 0xdfe6ee, tr: 100 }, store);
+    assert.deepEqual(readUnlit(store), { c: 0xdfe6ee, tr: 100 });
+    // the reset: back to the ivory, nothing stored
+    setUnlit({ c: IVORY, tr: 0 }, store);
+    assert.equal(mem.size, 0);
+    // something else under the key, or no storage at all
+    mem.set(UNLIT_KEY, "{bad");
+    assert.deepEqual(readUnlit(store), { c: IVORY, tr: 0 });
+    mem.set(UNLIT_KEY, '{"c":"#123456","tr":140}');
+    assert.deepEqual(readUnlit(store), { c: IVORY, tr: 0 });
+    const broken = { getItem: () => { throw new Error("denied"); }, setItem: () => { throw new Error("denied"); }, removeItem: () => {} };
+    assert.deepEqual(readUnlit(broken), { c: IVORY, tr: 0 });
+    setUnlit({ c: 0x112233, tr: 10 }, broken);
+    assert.equal(unlit.c, 0x112233, "still used in this tab");
+    // never a setting of the clock
+    const { DEFAULTS } = await import("../src/settings.js");
+    assert.ok(!Object.keys(DEFAULTS).some((k) => /unlit/.test(k)));
+});

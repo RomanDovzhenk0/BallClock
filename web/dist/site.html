@@ -35,7 +35,7 @@ a{color:var(--acc)}
 .ban.err{border-color:rgba(255,59,48,.55);background:rgba(255,59,48,.1)}.ban.warn{border-color:rgba(255,176,32,.55);background:rgba(255,176,32,.09)}.ban.acc{border-color:rgba(0,209,255,.5);background:rgba(0,209,255,.08)}
 #ban{padding:0 16px}
 .b{max-width:1280px;margin:0 auto;padding:0 16px 130px}
-.hero{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,1fr);gap:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.hero{position:relative;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,1fr);gap:16px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
 .hl,.hr{min-width:0}
 .pvh{display:flex;gap:8px;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap}
 .wall{position:relative;overflow:hidden;border-radius:10px;background:radial-gradient(120% 140% at 50% 40%,#1b1f26 0,#0c0e11 70%);padding:24px 8px 10px;border:1px solid var(--line)}
@@ -50,6 +50,15 @@ canvas{display:block;max-width:100%}
 .ksg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .ksg .chip{border-radius:10px;text-align:left;padding:8px 12px}
 .hsum{background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--muted)}.hsum b{color:var(--text)}
+.pvr{display:flex;gap:8px;align-items:center}
+.pvf{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.cl-st{color:var(--muted);font-size:13px;line-height:1.3}
+.short{display:none}
+.pop{position:absolute;right:14px;top:60px;z-index:30;width:min(330px,calc(100% - 28px));background:#242a31;border:1px solid var(--line2);border-radius:14px;padding:14px;box-shadow:0 12px 36px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:12px}
+.pop h4{font-size:15px}.pop small{color:var(--muted);font-size:12.5px;line-height:1.3;display:block}
+.prow{display:flex;align-items:center;gap:12px;justify-content:space-between}.prow output{color:var(--muted);font-variant-numeric:tabular-nums}
+.pre{display:flex;gap:6px;flex-wrap:wrap}
+#gear{background:var(--field)}
 .mini{position:fixed;top:0;left:0;right:0;z-index:45;display:none;gap:14px;align-items:center;justify-content:center;background:rgba(14,17,21,.96);border-bottom:1px solid var(--line2);padding:8px 16px;backdrop-filter:blur(6px)}
 body.minion .mini{display:flex}
 .mini canvas{width:240px}.mc{display:flex;flex-direction:column;gap:6px}.ks2{display:flex;gap:6px}
@@ -107,21 +116,35 @@ input[type=range]{accent-color:var(--acc);width:100%;min-height:28px}
 .val{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;overflow-wrap:anywhere}
 .led{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}.led i{width:10px;height:10px;border-radius:50%;background:var(--err)}.led.on i{background:var(--ok);box-shadow:0 0 8px var(--ok)}
 .btns{display:flex;gap:8px;flex-wrap:wrap}
+.kopts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 28px}
+.kopts .fld{border-top:0;border-bottom:1px solid var(--line)}
+.kopts.one{display:block}.kopts.one .fld{border-bottom:0}
+.stseg{display:flex}.stseg button{flex:1}
+.sub{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.evh{display:flex;flex-direction:column;gap:2px;margin:12px 0 8px}.evh small{color:var(--muted);font-size:13px}
+.kb{display:grid;grid-template-columns:minmax(250px,320px) minmax(0,1fr);gap:16px;align-items:start}
+.evl{display:flex;flex-direction:column;gap:8px}
+.er{position:relative;display:flex;align-items:center;gap:12px;padding:8px 12px 8px 8px;border-radius:12px;border:1px solid var(--line2);background:var(--field);cursor:pointer;text-align:left;min-height:56px;color:inherit;font:inherit}
+.er canvas{width:84px;flex:none;border-radius:6px}
+.er .et{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}.er .et small{color:var(--muted);font-size:12.5px}
+.er .chev{color:var(--muted);font-size:22px;line-height:1}
+.er.on{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset;background:var(--tab)}
+.er.chg .et b::after{content:" ●";color:var(--acc);font-size:10px}
+.evd{min-width:0;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px}
+.evdh{display:flex;gap:12px;align-items:center}.evdh .back{display:none}
+.evt h3{font-size:18px}.evt small{color:var(--muted);font-size:13.5px}
+.gh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:14px 0 8px}.gh h4{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}.gh small{color:var(--muted);font-size:12.5px}
+.note{margin:8px 0;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,176,32,.55);background:rgba(255,176,32,.09);color:var(--text);font-size:13.5px}
+.gal.dis .wg{opacity:.4;pointer-events:none}
+.gfoot{display:flex;gap:6px 14px;align-items:center;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.gfoot .cl-st{flex:1 1 200px}
+.pl{position:absolute;top:10px;right:10px;font:600 10.5px/1.5 "Segoe UI",system-ui,sans-serif;font-style:normal;padding:0 7px;border-radius:99px;background:rgba(0,0,0,.62);color:var(--text)}
 .wg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-.tile{display:flex;flex-direction:column;gap:6px;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:6px;cursor:pointer;text-align:left;min-width:0}
+.tile{position:relative;display:flex;flex-direction:column;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px;cursor:pointer;text-align:left;min-width:0}
 .tile:hover{border-color:var(--line2)}.tile.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
 .tile canvas{border-radius:6px;width:100%}
 .tn{display:flex;flex-direction:column;line-height:1.25;min-width:0}.tn b{font-weight:600;font-size:13.5px;overflow-wrap:anywhere}.tn i{font-style:normal;color:var(--muted);font-size:12px}
 .spd .row{display:flex;gap:6px;flex-wrap:wrap}
-.doc{margin-top:10px;background:var(--field);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-.doc h4{font-size:14px;margin-bottom:4px}.doc h4 span{color:var(--muted);font-weight:400;margin-left:6px;font-size:12.5px}
-.doc p{margin:4px 0;color:var(--muted);font-size:13px}
-pre{margin:6px 0;padding:8px 10px;background:#0e1115;border:1px solid var(--line);border-radius:8px;font:12px/1.5 Consolas,"Cascadia Mono",monospace;white-space:pre-wrap;overflow-wrap:anywhere;color:#cfd6dd}
-details.all{margin-top:10px}details.all summary{cursor:pointer;color:var(--acc);padding:4px 0}
-.film .shot{margin-top:10px}.film .nm{font-weight:600;margin-bottom:4px}.film .nm span{color:var(--muted);font-weight:400;font-size:13px;margin-left:6px}
-.frames{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
-.frames div{background:#0c0e11;border:1px solid var(--line);border-radius:6px;padding:3px}
-.frames canvas{width:100%;border-radius:3px}.frames small{display:block;text-align:center;color:var(--muted);font:11px Consolas,monospace}
 .card>.hint{margin:0 0 6px}
 .sbar{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:40;display:flex;gap:10px;align-items:center;width:min(720px,calc(100% - 24px));background:#242a31;border:1px solid var(--acc);border-radius:14px;padding:10px 12px;box-shadow:0 8px 30px rgba(0,0,0,.55)}
 .sbar[hidden]{display:none}
@@ -137,10 +160,22 @@ details.all{margin-top:10px}details.all summary{cursor:pointer;color:var(--acc);
 .off .grp{opacity:.5;pointer-events:none}.off .wall canvas{filter:saturate(.3)}
 .auth .wall canvas{filter:blur(3px)}
 footer{max-width:1280px;margin:0 auto;padding:0 16px 140px;color:var(--muted);font-size:13px;display:flex;gap:16px;flex-wrap:wrap}
+@media(min-width:901px){.er .chev{display:none}}
 @media(max-width:900px){
 .b{padding:0 12px 150px}
 .hero{grid-template-columns:minmax(0,1fr);gap:6px;position:sticky;top:0;z-index:20;margin:0 -12px 10px;border-radius:0 0 16px 16px;padding:8px 12px;border-top:0}
-.hr h3,.hsum,.hr .pvf,.hl .hint{display:none}
+.hr{flex-direction:row;align-items:center;gap:8px}.hr h3,.hsum,.hl .hint,.pvf .long,.pvf .cl-st{display:none}
+.hr .ksg{flex:1;min-width:0}.pvf .short{display:inline}.pvf{flex:none}
+.pvh{flex-wrap:nowrap}.seg button{padding:5px 8px}
+#day button:not(.on){display:none}
+.pop{position:fixed;left:12px;right:12px;bottom:136px;top:auto;width:auto}
+.kb{display:block}
+.evd{display:none}
+.kb.open .evd{display:flex;position:fixed;left:0;right:0;bottom:0;top:var(--hh,330px);z-index:55;flex-direction:column;background:var(--card);border:0;border-top:1px solid var(--acc);border-radius:16px 16px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.5);padding:0}
+.evd .evdh{flex:none;padding:10px 12px;border-bottom:1px solid var(--line)}.evdh .back{display:inline-flex;align-items:center}
+.evd #evg{flex:1;min-height:0;overflow-y:auto;padding:0 12px 8px}
+.evd .gfoot{flex:none;margin:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#12161a;border-top:1px solid var(--line2);border-radius:0}
+body.sheet{overflow:hidden}
 .ksg{display:flex;overflow-x:auto;scrollbar-width:none;gap:6px}.ksg::-webkit-scrollbar{display:none}
 .ksg .chip{flex:none;border-radius:99px;padding:5px 12px}
 .wall{padding:22px 4px 6px}
@@ -159,14 +194,14 @@ body.minion .mini{display:none}
 .bscr{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;padding:2px}.bscr::-webkit-scrollbar{display:none}
 }
 @media(min-width:521px) and (max-width:900px){.hl{max-width:560px;width:100%;margin:0 auto}.ksg{justify-content:center}}
-@media(max-width:520px){.wg{grid-template-columns:repeat(2,minmax(0,1fr))}.seg button{padding:5px 8px}.card{padding:12px}.frames{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:520px){.wg{grid-template-columns:repeat(2,minmax(0,1fr))}.seg button{padding:5px 8px}.card{padding:12px}}
 [hidden]{display:none!important}
 .top .btn{min-height:32px;padding:4px 10px}
 .wall canvas{touch-action:pan-y}
 .tile{color:inherit;font:inherit}
 code{font:12px Consolas,monospace;color:var(--acc);overflow-wrap:anywhere}
 @media(max-width:900px){
-.seg button,.chip,.btn,.btn.sm,.top .btn,.tab{min-height:44px}
+.seg button,.chip,.btn,.btn.sm,.top .btn,.tab,.er{min-height:44px}
 .chip{min-width:44px}
 select,input[type=text],input[type=password],input[type=time]{min-height:44px}
 input[type=color]{height:44px;width:52px}
@@ -175,16 +210,16 @@ input[type=range]{min-height:44px}
 .rv{min-width:44px;min-height:44px;justify-content:center;align-items:center}
 .fld.is-chg .rv{display:inline-flex}
 .sw{height:44px;width:52px}.sw i{inset:9px 3px}
-footer a,details.all summary{display:inline-flex;align-items:center;min-height:44px}
+footer a{display:inline-flex;align-items:center;min-height:44px}
 }</style></head><body>
 <div class="mock" id="mockbar" hidden><b>Макет</b><span>часы на странице, данные примера:</span><span class="seg" id="mk"><button data-m="ok" class="on">Норма</button><button data-m="auth">Пароль (401)</button><button data-m="offline">Нет связи</button><button data-m="ap">Точка доступа</button><button data-m="upd">Есть обновление</button><button data-m="text">Бегущая строка</button></span></div>
 <header class="top"><span class="logo"></span><h1>BallClock</h1><span class="ver" id="ver">…</span><span class="sp"></span><span class="stat"><i class="dot warn" id="sdot"></i><span id="stxt">подключаюсь…</span></span><button class="btn sm" id="logout" hidden>Выйти</button></header>
 <div id="ban"></div>
-<div class="mini" id="mini"><canvas id="cv2"></canvas><div class="mc"><span class="seg"><button data-s="now">Сейчас</button><button data-s="draft">Черновик</button><button data-s="cmp">Сравнить</button></span><div class="ks2"><button class="chip" data-ks="wake">Пробуждение</button><button class="chip" data-ks="off">Стоп</button></div></div></div>
+<div class="mini" id="mini"><canvas id="cv2"></canvas><div class="mc"><span class="seg"><button data-s="now">Сейчас</button><button data-s="draft">Черновик</button><button data-s="cmp">Сравнить</button></span><div class="ks2"><button class="chip" data-ks="cur">Играть снова</button><button class="chip" data-ks="off">Стоп</button></div></div></div>
 <div class="b">
 <section class="hero" id="hero">
 <div class="hl">
-<div class="pvh"><span class="seg" id="src"><button data-s="now">Сейчас</button><button data-s="draft" class="on">Черновик</button><button data-s="cmp">Сравнить</button></span><span class="seg" id="day"><button data-d="0">День</button><button data-d="1">Ночь</button></span><span class="seg" id="live" hidden><button data-l="calc" class="on">Расчёт</button><button data-l="mirror">Зеркало</button></span></div>
+<div class="pvh"><span class="seg" id="src"><button data-s="now">Сейчас</button><button data-s="draft" class="on">Черновик</button><button data-s="cmp">Сравнить</button></span><span class="pvr"><span class="seg" id="day"><button data-d="0">День</button><button data-d="1">Ночь</button></span><span class="seg" id="live" hidden><button data-l="calc" class="on">Расчёт</button><button data-l="mirror">Зеркало</button></span><button class="ico" id="gear" aria-label="Шарики без света" aria-expanded="false" title="Шарики без света"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button></span></div>
 <div class="wall" id="wall"><canvas id="cv"></canvas><span class="badge" id="badge"></span><span class="lbl l">Сейчас</span><span class="lbl r">Черновик</span></div>
 <small class="hint" id="pst"></small>
 </div>
@@ -192,7 +227,14 @@ footer a,details.all summary{display:inline-flex;align-items:center;min-height:4
 <h3>Кая на превью</h3>
 <div class="ksg" id="ks"></div>
 <div class="hsum" id="hsum"></div>
-<div class="pvf"><button class="btn pri" data-act="onclock">Показать на часах</button></div>
+<div class="pvf"><button class="btn pri" data-act="onclock"></button><small class="cl-st"></small></div>
+</div>
+<div class="pop" id="pop" hidden>
+<div class="prow"><h4>Шарики без света</h4><button class="btn sm" id="ubreset">Как в v1.5.2</button></div>
+<small>Только вид этой страницы: хранится в этом браузере и на часы не отправляется. Действует на превью и на плитки.</small>
+<div class="pre" id="upre"><button class="chip" data-up="ivory">Слоновая кость</button><button class="chip" data-up="white">Белые</button><button class="chip" data-up="graphite">Графит</button><button class="chip" data-up="glass">Стекло</button></div>
+<div class="prow"><span>Цвет</span><input type="color" id="ucol" value="#c8c3b4" aria-label="Цвет шариков без света"></div>
+<div><div class="prow"><span>Прозрачность</span><output id="utro">0 %</output></div><input type="range" id="utr" min="0" max="100" value="0" aria-label="Прозрачность шариков без света"></div>
 </div>
 </section>
 <nav class="tabs" id="tabs"></nav>
@@ -203,150 +245,6 @@ footer a,details.all summary{display:inline-flex;align-items:center;min-height:4
 <div class="modal" id="modal" hidden></div>
 <div class="toast" id="toast" hidden></div>
 <script>(()=>{"use strict";
-function hash32(s) {
-let h = 0;
-for (const c of new TextEncoder().encode(s)) h = (h + (h << 5) + c) >>> 0;
-return h;
-}
-const keyId = (key) => hash32(key) & 0x1fffffff;
-const ID_WIFI_SAVE = hash32("wifi_save"), ID_CHECK_UPDATES = hash32("check_updates"), ID_OTA_UPDATE = hash32("ota_update");
-class AuthError extends Error {}
-class OfflineError extends Error {}
-class ClockApi {
-constructor(send, timeoutMs = 5000) {
-this.send = send;
-this.timeoutMs = timeoutMs;
-this.pass = "";
-this.tail = Promise.resolve();
-this.busy = 0;
-}
-call(path, params = {}) {
-const run = () => this.once(path, params);
-const p = this.tail.then(run, run);
-this.tail = p.catch(() => {});
-return p;
-}
-async once(path, params) {
-const qs = new URLSearchParams(params);
-if (this.pass) qs.set("auth", hash32(this.pass).toString(16));
-const q = qs.toString(), url = path + (q ? "?" + q : "");
-const ac = typeof AbortController === "function" ? new AbortController() : null;
-let timer = 0;
-this.busy++;
-try {
-const res = await Promise.race([
-this.send(url, ac && ac.signal),
-new Promise((_, no) => {
-timer = setTimeout(() => {
-if (ac) ac.abort();
-no(new OfflineError("timeout"));
-}, this.timeoutMs);
-}),
-]);
-if (res.status === 401) throw new AuthError("401");
-if (res.status < 200 || res.status > 299) throw new Error(path + ": HTTP " + res.status);
-return res.json;
-} catch (e) {
-if (e instanceof AuthError || e instanceof OfflineError || /HTTP/.test(e.message)) throw e;
-throw new OfflineError(e.message || "offline");
-} finally {
-clearTimeout(timer);
-this.busy--;
-}
-}
-state() {
-return this.call("kaia/state");
-}
-frame() {
-return this.call("kaia/frame");
-}
-wifi() {
-return this.call("kaia/wifi");
-}
-anim(name, extra = {}) {
-return this.call("kaia/anim", { name, ...extra });
-}
-set(id, raw) {
-return this.call("settings", { action: "set", id: (id >>> 0).toString(16), value: String(raw) });
-}
-click(id) {
-return this.call("settings", { action: "click", id: (id >>> 0).toString(16) });
-}
-}
-async function fetchSend(url, signal) {
-const res = await fetch(url, { cache: "no-store", signal });
-let json = null;
-if ((res.headers.get("content-type") || "").includes("json")) {
-try {
-json = await res.json();
-} catch {
-json = null;
-}
-}
-return { status: res.status, json };
-}
-function parseLeds(hex) {
-const out = new Uint32Array(128);
-if (typeof hex !== "string") return out;
-for (let i = 0; i < 128; i++) out[i] = parseInt(hex.substr(i * 6, 6), 16) || 0;
-return out;
-}
-function ledsHex(leds) {
-let s = "";
-for (let i = 0; i < 128; i++) s += (leds[i] >>> 0).toString(16).padStart(6, "0");
-return s;
-}
-const STEP = 5;  // φ candidates every 5 ms
-function parseTime(text) {
-const m = /(\d{1,2}):(\d{2}):(\d{2})/.exec(text || "");
-return m ? +m[1] * 3600 + +m[2] * 60 + +m[3] : 0;
-}
-class ClockSync {
-constructor() {
-this.ref = null;  // the first answer of the run: {sec, ms}
-this.last = null;
-this.cand = null;
-}
-add(sec, ms) {
-if (this.last && ms < this.last.ms) this.ref = null;  // the clock rebooted
-if (!this.ref) {
-this.ref = { sec, ms };
-this.cand = [];
-for (let p = 0; p < 1000; p += STEP) this.cand.push(p);
-} else {
-const want = (((sec - this.ref.sec) % 86400) + 86400) % 86400;
-const keep = this.cand.filter((p) => Math.floor((ms - p) / 1000) - Math.floor((this.ref.ms - p) / 1000) === want);
-if (keep.length) this.cand = keep;
-else this.reset(sec, ms);  // NTP stepped: start over from this answer
-}
-this.last = { sec, ms };
-}
-reset(sec, ms) {
-this.ref = null;
-this.add(sec, ms);
-}
-phase() {
-const c = this.cand;
-if (!c || !c.length || c.length * STEP >= 1000) return 0;
-let gap = 0, at = 0;
-for (let k = 0; k < c.length; k++) {
-const next = k + 1 < c.length ? c[k + 1] : c[0] + 1000, g = next - c[k];
-if (g > gap) gap = g, at = k + 1;
-}
-const start = c[at % c.length], span = 1000 - gap + STEP;
-return Math.round(start + span / 2 - STEP / 2) % 1000;
-}
-spread() {
-return this.cand ? Math.min(1000, this.cand.length * STEP) : 1000;
-}
-at(millis) {
-if (!this.last) return { hour: 0, minute: 0, second: 0, ms: 0 };
-const p = this.phase();
-const d = Math.floor((millis - p) / 1000) - Math.floor((this.last.ms - p) / 1000);
-const s = ((this.last.sec + d) % 86400 + 86400) % 86400;
-return { hour: (s / 3600) | 0, minute: ((s % 3600) / 60) | 0, second: s % 60, ms: (((millis - p) % 1000) + 1000) % 1000 };
-}
-}
 const b_m16_interleave = [0, 49, 49, 41, 90, 27, 117, 10];
 function sin8(theta) {
 theta &= 255;
@@ -727,6 +625,31 @@ function dimAll(k) {
 if (k >= 255) return;
 for (let i = 0; i < MX_LED_AMOUNT; i++) matrix.setLED(i, dim(matrix.getLED(i), k));
 }
+function ballRX(x, row) {
+if (row < 0 || row > 6) return -1;
+return ledDiag((x - 2 + row) >> 1, row);
+}
+function ballAt(p, q) {
+if (p < -80 || p > 80 || q < -24 || q > 24) return -1;
+return ballRX(((p + 76) * 2 + 4) / 8 | 0, ((q + 21) * 2 + 7) / 14 | 0);
+}
+function oct(dx, dy) {
+dx = abs(dx);
+dy = abs(dy);
+return dx > dy ? dx + (dy * 3 >> 3) : dy + (dx * 3 >> 3);
+}
+function segDist(p, q, s, v) {
+const dx = s[2] - s[0], dy = s[3] - s[1];
+let u = ((p - s[0]) * dx + (q - s[1]) * dy) * 256 / (dx * dx + dy * dy) | 0;
+u = u < 0 ? 0 : u > v ? v : u;
+return oct(p - s[0] - (dx * u / 256 | 0), q - s[1] - (dy * u / 256 | 0));
+}
+function hash8(n) {
+return Math.imul(n + 1, 2654435761) >>> 24;  // (uint32_t)(n + 1) * 2654435761u >> 24
+}
+function putb(i, color, a) {
+if (i >= 0) put(i, color, a);
+}
 function rippleState(n, t, col, k) {
 if (k <= 0) return;
 const c = n === A_THINKING ? mix(col, C_VIOLET, 128) : col;
@@ -1015,6 +938,1055 @@ default: sparksShot(n, t, du, col); break;
 }
 }
 buildTables();
+const TEXT_KEYS = ["ntp_host", "log_host", "wifi_ssid", "wifi_pass", "page_pass"];
+const SECRET_KEYS = ["wifi_pass", "page_pass"];
+const DEFAULTS = {
+wifi_ssid: "", wifi_pass: "", show_ip: 1,
+ntp_host: "pool.ntp.org", ntp_gmt: 3,
+bright: 100, auto_bright: 0, bright_min: 10, bright_max: 255, adc_min: 0, adc_max: 1023,
+night_mode: 0, night_mode_auto: 0, night_mode_auto_since: 0, night_mode_auto_to: 0, night_color: 0xff0000, night_trsh: 50,
+clock_style: 1, clock_style_zero: 0, clock_color: 0xffffff,
+back_mode: 1, back_pal: 0, back_bright: 200, back_speed: 50, back_scale: 50, back_angle: 0,
+kaia_anim: 1, kaia_wake: 0, kaia_wake_speed: 100,
+kaia_listen: 0, kaia_think: 0, kaia_speak: 0, kaia_done: 0, kaia_error: 0, kaia_notify: 0,
+kaia_color: 0x00d1ff, kaia_bright: 255, kaia_night: 1,
+page_pass: "", log_host: "",
+};
+const LOOK_KEYS = ["kaia_wake", "kaia_listen", "kaia_think", "kaia_speak", "kaia_done", "kaia_error", "kaia_notify"];
+function normalize(raw) {
+const s = {};
+for (const k of Object.keys(DEFAULTS)) {
+const v = raw && raw[k];
+if (TEXT_KEYS.includes(k)) s[k] = v == null ? DEFAULTS[k] : String(v);
+else {
+const n = typeof v === "boolean" ? +v : Number(v);
+s[k] = v == null || v === "" || !Number.isFinite(n) ? DEFAULTS[k] : Math.trunc(n);
+}
+}
+return s;
+}
+const rawOf = (k, v) => (TEXT_KEYS.includes(k) ? String(v) : String(Math.trunc(Number(v))));
+function hash32(s) {
+let h = 0;
+for (const c of new TextEncoder().encode(s)) h = (h + (h << 5) + c) >>> 0;
+return h;
+}
+const keyId = (key) => hash32(key) & 0x1fffffff;
+const ID_WIFI_SAVE = hash32("wifi_save"), ID_CHECK_UPDATES = hash32("check_updates"), ID_OTA_UPDATE = hash32("ota_update");
+class AuthError extends Error {}
+class OfflineError extends Error {}
+class ClockApi {
+constructor(send, timeoutMs = 5000) {
+this.send = send;
+this.timeoutMs = timeoutMs;
+this.pass = "";
+this.tail = Promise.resolve();
+this.busy = 0;
+}
+call(path, params = {}) {
+const run = () => this.once(path, params);
+const p = this.tail.then(run, run);
+this.tail = p.catch(() => {});
+return p;
+}
+async once(path, params) {
+const qs = new URLSearchParams(params);
+if (this.pass) qs.set("auth", hash32(this.pass).toString(16));
+const q = qs.toString(), url = path + (q ? "?" + q : "");
+const ac = typeof AbortController === "function" ? new AbortController() : null;
+let timer = 0;
+this.busy++;
+try {
+const res = await Promise.race([
+this.send(url, ac && ac.signal),
+new Promise((_, no) => {
+timer = setTimeout(() => {
+if (ac) ac.abort();
+no(new OfflineError("timeout"));
+}, this.timeoutMs);
+}),
+]);
+if (res.status === 401) throw new AuthError("401");
+if (res.status < 200 || res.status > 299) throw new Error(path + ": HTTP " + res.status);
+return res.json;
+} catch (e) {
+if (e instanceof AuthError || e instanceof OfflineError || /HTTP/.test(e.message)) throw e;
+throw new OfflineError(e.message || "offline");
+} finally {
+clearTimeout(timer);
+this.busy--;
+}
+}
+state() {
+return this.call("kaia/state");
+}
+frame() {
+return this.call("kaia/frame");
+}
+wifi() {
+return this.call("kaia/wifi");
+}
+anim(name, extra = {}) {
+return this.call("kaia/anim", { name, ...extra });
+}
+set(id, raw) {
+return this.call("settings", { action: "set", id: (id >>> 0).toString(16), value: String(raw) });
+}
+click(id) {
+return this.call("settings", { action: "click", id: (id >>> 0).toString(16) });
+}
+}
+const TRY_STATE_MS = 6000;
+function tryOut(name, s) {
+const n = ANIM_NAMES.indexOf(name);
+const q = { style: s.kaia_anim, look: s[LOOK_KEYS[n]] };
+if (n === 0) q.speed = s.kaia_wake_speed;
+if (n >= 1 && n <= 3) q.ms = TRY_STATE_MS;
+return q;
+}
+async function fetchSend(url, signal) {
+const res = await fetch(url, { cache: "no-store", signal });
+let json = null;
+if ((res.headers.get("content-type") || "").includes("json")) {
+try {
+json = await res.json();
+} catch {
+json = null;
+}
+}
+return { status: res.status, json };
+}
+function parseLeds(hex) {
+const out = new Uint32Array(128);
+if (typeof hex !== "string") return out;
+for (let i = 0; i < 128; i++) out[i] = parseInt(hex.substr(i * 6, 6), 16) || 0;
+return out;
+}
+function ledsHex(leds) {
+let s = "";
+for (let i = 0; i < 128; i++) s += (leds[i] >>> 0).toString(16).padStart(6, "0");
+return s;
+}
+const STEP = 5;  // φ candidates every 5 ms
+function parseTime(text) {
+const m = /(\d{1,2}):(\d{2}):(\d{2})/.exec(text || "");
+return m ? +m[1] * 3600 + +m[2] * 60 + +m[3] : 0;
+}
+class ClockSync {
+constructor() {
+this.ref = null;  // the first answer of the run: {sec, ms}
+this.last = null;
+this.cand = null;
+}
+add(sec, ms) {
+if (this.last && ms < this.last.ms) this.ref = null;  // the clock rebooted
+if (!this.ref) {
+this.ref = { sec, ms };
+this.cand = [];
+for (let p = 0; p < 1000; p += STEP) this.cand.push(p);
+} else {
+const want = (((sec - this.ref.sec) % 86400) + 86400) % 86400;
+const keep = this.cand.filter((p) => Math.floor((ms - p) / 1000) - Math.floor((this.ref.ms - p) / 1000) === want);
+if (keep.length) this.cand = keep;
+else this.reset(sec, ms);  // NTP stepped: start over from this answer
+}
+this.last = { sec, ms };
+}
+reset(sec, ms) {
+this.ref = null;
+this.add(sec, ms);
+}
+phase() {
+const c = this.cand;
+if (!c || !c.length || c.length * STEP >= 1000) return 0;
+let gap = 0, at = 0;
+for (let k = 0; k < c.length; k++) {
+const next = k + 1 < c.length ? c[k + 1] : c[0] + 1000, g = next - c[k];
+if (g > gap) gap = g, at = k + 1;
+}
+const start = c[at % c.length], span = 1000 - gap + STEP;
+return Math.round(start + span / 2 - STEP / 2) % 1000;
+}
+spread() {
+return this.cand ? Math.min(1000, this.cand.length * STEP) : 1000;
+}
+at(millis) {
+if (!this.last) return { hour: 0, minute: 0, second: 0, ms: 0 };
+const p = this.phase();
+const d = Math.floor((millis - p) / 1000) - Math.floor((this.last.ms - p) / 1000);
+const s = ((this.last.sec + d) % 86400 + 86400) % 86400;
+return { hour: (s / 3600) | 0, minute: ((s % 3600) / 60) | 0, second: s % 60, ms: (((millis - p) % 1000) + 1000) % 1000 };
+}
+}
+const WAKE_NAMES = ["Как у стиля", "Рябь", "Орбита", "Искры", "Рассвет", "Радар", "Спираль", "Сердцебиение", "Глаз", "Звёзды", "Салют", "Дождь",
+"Включение", "Зайчик", "«КАЯ»"];
+const wake_ms = [0, 1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000, 1800, 2000, 2200];
+const WAKE_COUNT = 15;
+const wake_from = [0, 1100, 1500, 1600];
+const b_col = new Uint8Array(MX_LED_AMOUNT);  // x in the diagonal grid, 0..19
+const b_row = new Uint8Array(MX_LED_AMOUNT);  // y, 0 (top) .. 6
+const b_x = new Uint8Array(MX_LED_AMOUNT);    // x across in half-balls: 2·col + 3 − row, 0..38 (19 = the middle)
+const h1 = new Uint8Array(MX_LED_AMOUNT), h2 = new Uint8Array(MX_LED_AMOUNT), h3 = new Uint8Array(MX_LED_AMOUNT);  // a hash of the ball
+function buildWakeTables() {
+for (let y = 0; y < MX_DIAG_H; y++) {
+for (let x = 0; x < MX_DIAG_W; x++) {
+const i = ledDiag(x, y);
+if (i < 0) continue;
+b_col[i] = x;
+b_row[i] = y;
+b_x[i] = 2 * x + 3 - y;
+}
+}
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+h1[i] = Math.imul(i + 1, 2654435761) >>> 24;
+h2[i] = Math.imul(i + 1, 2246822519) >>> 24;
+h3[i] = Math.imul(i + 1, 3266489917) >>> 24;
+}
+}
+const pict_heart = [0x36, 0x7f, 0x7f, 0x3e, 0x08];  // 7 wide
+function dawnShot(n, t, du, col) {
+const fo = smooth(du, du - 400, t);
+const F = smooth(0, 1500, t) * 140 / 255 | 0;  // the edge, 1/16 row up from the bottom
+fr.dg = 115;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const dp = F - (6 - b_row[i]) * 16;
+if (dp < -24) continue;
+let a = 0, c = col;
+if (dp < 0) {
+a = 90 * (24 + dp) / 24 | 0;  // the glow above the edge
+} else {
+a = 70 + (185 * imax(0, 96 - dp) / 96 | 0);
+const side = 255 - abs(b_x[i] - 19) * 4;
+a = a * (190 + (65 * side / 255 | 0)) / 255 | 0;
+c = mix(col, C_WHITE, 140 * imax(0, 48 - dp) / 48 | 0);
+}
+put(i, c, a * fo / 255 | 0);
+}
+}
+function radarShot(n, t, du, col) {
+const fo = smooth(du, du - 400, t);
+const th = t * 256 / 1400 | 0;  // the beam's angle, 0..256 a turn
+const hub = t < 400 ? tent(t - 100, 300) : 0;
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const dl = th - b_ang[i], d = b_dist[i];
+let a = 0, c = col;
+if (dl >= 0) {
+if (dl < 96) {
+const x = (96 - dl) * 255 / 96 | 0;
+a = x * x / 255 | 0;
+}
+if (h1[i] < 34 && dl < 150) {
+a = imax(a, 215 * (150 - dl) / 150 | 0);
+c = mix(col, C_WHITE, 160);
+}
+a = a * (150 + (105 * d / 38 | 0)) / 255 | 0;
+if (dl < 12) c = mix(col, C_WHITE, (12 - dl) * 200 / 12 | 0);
+}
+if (hub && d < 10) a = imax(a, hub * (10 - d) / 10 | 0);
+put(i, c, a * fo / 255 | 0);
+}
+}
+function spiralShot(n, t, du, col) {
+const fo = smooth(du, du - 400, t);
+const R = smooth(0, 1250, t) * 46 / 255 | 0;  // the front, quarter-balls
+const rho = t * 256 / 1700 | 0;
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const d = b_dist[i];
+if (d > R) continue;
+const v = (b_ang[i] * 2 + d * 7 - rho) & 255, dd = imin(v, 256 - v);
+let a = tent(dd, 56);
+if (d < 9 && t < 500) a = imax(a, tent(t - 150, 350) * (9 - d) / 9 | 0);
+if (!a) continue;
+a = a * (255 - d * 3) / 255 | 0;
+const hd = R - d;
+put(i, hd < 7 ? mix(col, C_WHITE, (7 - hd) * 30) : col, a * fo / 255 | 0);
+}
+}
+function heartShot(n, t, du, col) {
+const fo = smooth(du, du - 400, t);
+let env = 0;
+for (let k = 0; k < 2; k++) {  // the beats at 150 and 540 ms
+const q = t - (k ? 540 : 150), pk = k ? 190 : 255;
+const b = q < 0 ? 0 : q < 90 ? pk * q / 90 | 0 : imax(0, pk - (pk * (q - 90) / 380 | 0));
+env = imax(env, b);
+}
+const hide = smooth(0, 140, t) * fo / 255 | 0;
+dimAll(255 - (200 * hide / 255 | 0));
+fr.dg = 255;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+if (lensOf(i) === 1) put(i, col, (70 * env / 255 | 0) * hide / 255 | 0);
+}
+pict(pict_heart, 7, mix(col, C_WHITE, 110 * env / 255 | 0), (60 + (195 * env / 255 | 0)) * hide / 255 | 0, 0);
+}
+function eyeShot(n, t, du, col) {
+const fo = smooth(du, du - 400, t);
+const o = smooth(250, 950, t) * (255 - (215 * smooth(1750, 1980, t) / 255 | 0)) / 255 | 0;  // how open
+const w = smooth(0, 250, t) * 17 / 255 | 0;  // the slit's half-length, half-balls
+const hd = smooth(0, 300, t) * fo / 255 | 0;
+dimAll(255 - (170 * hd / 255 | 0));
+fr.dg = 89;
+const off = (-20 * smooth(1000, 1200, t) + 40 * smooth(1250, 1450, t) - 20 * smooth(1500, 1700, t)) / 255 | 0;
+const pk = smooth(550, 850, t);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const ax = abs(b_x[i] - 19), dr = b_row[i] - 3;
+let a = 0, c = col;
+if (ax <= w) {
+const dxn = ax * 255 / 17 | 0;
+const H = o * (255 - (dxn * dxn / 255 | 0)) / 255 | 0, mg = H - abs(dr) * 85;
+if (mg >= 0) a = 45;  // the white
+a = imax(a, 230 * tent(mg, 64) / 255 | 0);  // the lid
+}
+if (o > 110 && pk) {
+const px = 4 * (b_x[i] - 19) - off, d2 = px * px + 49 * dr * dr;
+if (d2 < 340) {
+const pa = d2 <= 169 ? 255 : (340 - d2) * 255 / 171 | 0, core = imax(0, (110 - d2) * 255 / 110 | 0);
+if (pa > a || core) {
+a = imax(a, pa * pk / 255 | 0);
+c = mix(col, C_WHITE, 60 + (150 * core / 255 | 0));
+}
+}
+}
+put(i, c, a * fo / 255 | 0);
+}
+}
+function starsShot(n, t, du, col) {
+const fo = smooth(du, du - 400, t);
+const dth = (smooth(0, 1250, t) * 240 / 255 | 0) + 10;
+const fl = t > 1300 ? tent(t - 1500, 200) : 0;
+fr.dg = 140;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+let a = 0, c = mix(col, C_WHITE, (h1[i] & 1) ? 150 : 60);
+if (h1[i] < dth) {
+const ph = (h2[i] + (t * (220 + (h3[i] & 63)) / 1000 | 0)) & 255, s = 255 - abs(ph - 128) * 2;
+a = s * s / 255 | 0;
+}
+if (fl) {
+const fl2 = fl * (255 - b_dist[i] * 3) / 255 | 0;
+if (fl2 > a) {
+a = fl2;
+c = mix(col, C_WHITE, 210);
+}
+}
+put(i, c, a * fo / 255 | 0);
+}
+}
+function fireworkShot(n, t, du, col) {
+const fo = smooth(du, du - 400, t);
+const trail = [255, 153, 77, 31];
+fr.dg = 115;
+if (t < 780) {
+const hr = 96 - (smooth(0, 720, t) * 48 / 255 | 0);  // the head, 1/16 row
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+if (abs(b_x[i] - 19) > 1) continue;
+const df = b_row[i] * 16 - hr;
+if (df < -8 || df > 48) continue;
+const a = df < 8 ? 255 : (48 - df) * 255 / 48 | 0;
+put(i, df < 8 ? mix(col, C_WHITE, 170) : col, (a * a / 255 | 0) * fo / 255 | 0);
+}
+}
+const q = t - 780;
+if (q < 0) return;
+if (q < 260) {
+const fl = 255 * tent(q - 70, 160) / 255 | 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) put(i, mix(col, C_WHITE, 200), (fl * tent(b_dist[i], 16) / 255 | 0) * fo / 255 | 0);
+}
+const xf = imin(q, 650) * 256 / 650 | 0, j256 = xf * (512 - xf) / 256 | 0;  // ease out, 0..256
+for (let k = 0; k < SPARKS; k++) {
+let len = 0;
+while (len < SPARK_LEN && spark[k][len] !== 255) len++;
+const head = (len - 1) * j256 / 256 | 0;  // the path read from its end: centre → rim
+for (let q2 = 0; q2 < 4 && head - q2 >= 0; q2++) put(spark[k][len - 1 - (head - q2)], (k & 1) ? mix(col, C_WHITE, 170) : col, trail[q2] * fo / 255 | 0);
+}
+if (q > 400) {
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const t2 = q - 400 - (h2[i] * 5 / 3 | 0);
+if (t2 >= 0 && t2 < 500 && h3[i] < 120 && b_dist[i] > 10) put(i, mix(col, C_WHITE, 120), (220 * (500 - t2) / 500 | 0) * fo / 255 | 0);
+}
+}
+}
+function rainShot(n, t, du, col) {
+const fo = smooth(du, du - 400, t);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const kA = b_col[i], kB = b_col[i] - b_row[i] + 6;  // the two diagonals through the ball
+let a = 0, c = col;
+const dfA = ((t - ((kA * 37 + 11) & 31) * 26) * 128 / 1000 | 0) - 16 - b_row[i] * 16;
+if (dfA >= 0) {
+if (dfA < 96) {
+const x = (96 - dfA) * 255 / 96 | 0;
+a = x * x / 255 | 0;
+if (dfA < 20) c = mix(col, C_WHITE, (20 - dfA) * 9);
+} else {
+a = 26;
+}
+}
+const dfB = ((t - ((kB * 29 + 5) & 31) * 26 - 110) * 128 / 1000 | 0) - 16 - b_row[i] * 16;
+if (dfB >= 0) {
+let a2 = 26;
+if (dfB < 96) {
+const x = (96 - dfB) * 255 / 96 | 0;
+a2 = x * x / 255 | 0;
+}
+if (a2 > a) {
+a = a2;
+c = mix(col, C_WHITE, dfB < 20 ? (20 - dfB) * 6 + 110 : 110);
+}
+}
+put(i, c, a * fo / 255 | 0);
+}
+}
+function powerOnWake(n, t, du, col) {
+const fo = smooth(du, du - 400, t);
+const hw = smooth(200, 550, t) * 20 / 255 | 0;  // the line's half-length, half-balls
+const hv = smooth(600, 950, t) * 56 / 255 | 0;  // the picture's half-height, 1/16 row
+const glow = 255 - (190 * smooth(950, 1400, t) / 255 | 0);
+const wc = mix(col, C_WHITE, 200), lc = mix(col, C_WHITE, 40);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const dv = abs(b_row[i] - 3) * 16, dh = abs(b_x[i] - 19);
+let a = 0, c = wc;
+if (b_dist[i] < 3 && t < 950) a = smooth(0, 150, t);
+if (t >= 200 && !dv && dh <= hw + 1) a = 255;
+if (t >= 600 && dv <= hv) {
+a = imax(a, glow);
+c = hv - dv < 16 ? wc : lc;
+}
+put(i, c, a * fo / 255 | 0);
+}
+}
+function bunnyWake(n, t, du, col) {
+const g = (smooth(0, 150, t) * (255 - smooth(1300, 1700, t)) / 255 | 0) * smooth(du, du - 400, t) / 255 | 0;
+const wc = mix(col, C_WHITE, 170), bp = [0, 0, 0, 0], bq = [0, 0, 0, 0];
+for (let j = 0; j < 4; j++) {  // the spot and its trail, 45 ms apart
+const u = imax(0, t - j * 45);
+const a1 = posMod((u * 150 / 1000 | 0) + 60, 240), a2 = posMod((u * 56 / 1000 | 0) + 14, 56);
+bp[j] = a1 < 120 ? a1 - 60 : 180 - a1;  // a triangle wave: it bounces off ±60 and ±14
+bq[j] = a2 < 28 ? a2 - 14 : 42 - a2;
+}
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = 0, c = col;
+for (let j = 0; j < 4; j++) {
+const r = j ? 10 : 14, d = oct(p - bp[j], q - bq[j]);
+if (d >= r) continue;
+const v = (r - d) * (j ? 210 - j * 40 : 255) / r | 0;
+if (v > a) {
+a = v;
+c = j ? col : wc;
+}
+}
+put(i, c, a * g / 255 | 0);
+}
+}
+const pict_kaya = [0x523, 0x655, 0x473, 0x655, 0x555];  // 11 wide: К А Я
+function nameWake(n, t, du, col) {
+dimAll(255 - ((200 * smooth(0, 200, t) / 255 | 0) * smooth(1900, 1500, t) / 255 | 0));
+fr.dg = 255;
+const x0 = (194 - 10 * 11) / 20 | 0;
+for (let gy = 0; gy < 5; gy++) {
+for (let gx = 0; gx < 11; gx++) {
+if (!((pict_kaya[gy] >> (10 - gx)) & 1)) continue;
+const u = t - 100 - gx * 70 - gy * 10;  // since the pen reached it
+if (u < 0) continue;
+const out = 1450 + ((gx * 7 + gy * 3) % 11) * 40;  // when it scatters
+putb(ledDiag(x0 + gx + (gy >> 1), 1 + gy), mix(col, C_WHITE, 220 * tent(u, 200) / 255 | 0), 255 - smooth(out, out + 150, t));
+}
+}
+}
+function wakeLength(id, speed) {
+return wake_ms[id] * 100 / speed | 0;
+}
+buildWakeTables();
+const LOOK_NAMES = [
+WAKE_NAMES,
+["Как у стиля", "Рябь", "Орбита", "Искры", "Эхо", "Прилив", "Сияние", "Взгляд", "Пузырьки"],
+["Как у стиля", "Рябь", "Орбита", "Искры", "Змейка", "Нейроны", "Песочные часы", "Три точки", "Атом"],
+["Как у стиля", "Рябь", "Орбита", "Искры", "Эквалайзер", "Осциллограф", "Лучи", "Динамики", "Губы"],
+["Как у стиля", "Рябь", "Орбита", "Искры", "Галочка", "Шкала", "Конфетти", "Кольцо", "«ОК»"],
+["Как у стиля", "Рябь", "Орбита", "Искры", "Нет-нет", "Крест", "Сбой", "Сирена", "Отключение"],
+["Как у стиля", "Рябь", "Орбита", "Искры", "«!»", "Тук-тук", "Маяк", "Конверт", "Значок"],
+];
+const LOOK_COUNT = 9;
+const look_ms = [
+[1600, 1500, 1800, 1700, 1600],
+[1400, 1600, 1300, 1600, 1500],
+[1500, 1500, 1600, 1700, 1600],
+];
+function shotLength(n, look, style) {
+if (look >= 4) return look_ms[n - A_DONE][look - 4];
+return shot_ms[(look ? look : style) - 1][n - A_DONE + 1];
+}
+function echoListen(n, t, col, k) {
+if (k <= 0) return;
+const ph = t * 76 / 1600 | 0;  // the fronts, 1/8 ball from a point 100 to the side: 24 (the edge) .. 100 (the middle)
+const f1 = 24 + posMod(ph, 76), f2 = 24 + posMod(ph + 38, 76);
+const e1 = (f1 - 24) * (100 - f1) * 210 / 1444 | 0, e2 = (f2 - 24) * (100 - f2) * 210 / 1444 | 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const q = 7 * (b_row[i] - 3), dx = 100 - abs(4 * (b_x[i] - 19));
+const dd = dx + (q * q / (2 * dx) | 0);
+let a = imax(tent(dd - f1, 12) * e1 / 255 | 0, tent(dd - f2, 12) * e2 / 255 | 0);
+if (dx <= 40) a += 28;
+put(i, col, a * k / 255 | 0);
+}
+}
+function tideListen(n, t, col, k) {
+if (k <= 0) return;
+const L = 38 + (wave(t, 64) * 14 / 128 | 0);  // the level, 1/16 row up from the bottom row's foot
+const sp = t * 60 / 1000 | 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const s = L + ((sin8((b_x[i] * 14 + sp) & 255) - 128) * 9 / 128 | 0);
+const dp = s - ((6 - b_row[i]) * 16 + 8);  // how deep the ball's centre is under the surface
+if (dp < -10) continue;
+let a = 0, c = col;
+if (dp < 0) {
+a = 40 * (10 + dp) / 10 | 0;
+} else {
+a = 70 + (150 * tent(dp, 28) / 255 | 0);
+c = mix(col, C_WHITE, 100 * tent(dp, 12) / 255 | 0);
+}
+put(i, c, a * k / 255 | 0);
+}
+}
+const aur_fall = [255, 215, 150, 70];  // rows 0..3
+function auroraListen(n, t, col, k) {
+if (k <= 0) return;
+const s1 = t * 40 / 1000 | 0, s2 = t * 27 / 1000 | 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const r = b_row[i];
+if (r > 3) continue;
+const u = sin8((b_x[i] * 9 + r * 6 + s1) & 255), v = sin8((b_x[i] * 5 - s2 + 64) & 255);
+const a = 40 + (215 * (u * v / 255 | 0) / 255 | 0);
+put(i, mix(col, C_WHITE, 90 * v / 255 | 0), (a * aur_fall[r] / 255 | 0) * k / 255 | 0);
+}
+}
+function gazeListen(n, t, col, k) {
+if (k <= 0) return;
+const pc = wave(t, 37) * 46 / 128 | 0, qc = wave(t + 900, 61) * 9 / 128 | 0;  // the spot's centre
+const wc = mix(col, C_WHITE, 120);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const d = oct(4 * (b_x[i] - 19) - pc, 7 * (b_row[i] - 3) - qc);
+if (d >= 26) continue;
+const u = (26 - d) * 255 / 26 | 0;
+put(i, d < 8 ? wc : col, (255 * (u * u / 255 | 0) / 255 | 0) * k / 255 | 0);
+}
+}
+const bub_x = [7, 31, 15, 25, 11, 21, 35, 3, 29, 17];  // half-balls across
+function bubblesListen(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(col, C_WHITE, 70);
+for (let j = 0; j < 10; j++) {
+const per = 2200 + (j * 3 % 5) * 260;
+const y = 112 - (posMod(t + j * 470, per) * 128 / per | 0);  // 1/16 row from row 0: 112 (under the plate) .. -16
+const x = bub_x[j] + (wave(t + j * 300, 170) * 2 / 128 | 0);
+const env = ((112 - y) * (y + 16) * 255 / 4096 | 0) * k / 255 | 0;  // 0 at both ends
+const r0 = y >> 4, fy = y & 15, a0 = env * (16 - fy) >> 4;
+putb(ballRX(x, r0), c, a0);
+putb(ballRX(x, r0 + 1), c, env * fy >> 4);
+putb(ballRX(x - 2, r0), col, a0 >> 2);  // a faint rim either side
+putb(ballRX(x + 2, r0), col, a0 >> 2);
+}
+}
+function snakeThink(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(col, C_VIOLET, 128), hc = mix(c, C_WHITE, 150);
+const h = posMod(t * 8 / 100 | 0, 280);  // the head on the path, half-balls: 40 a row
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const r = b_row[i], s = r * 40 + ((r & 1) ? 38 - b_x[i] : b_x[i]);
+const d = posMod(h - s, 280);
+let a = 18;
+if (d < 30) {
+const u = (30 - d) * 255 / 30 | 0;
+a = imax(a, u * u / 255 | 0);
+}
+put(i, d < 3 ? hc : c, a * k / 255 | 0);
+}
+}
+function neuronThink(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(col, C_VIOLET, 128), wc = mix(c, C_WHITE, 170);
+const j0 = t / 250 | 0, cp = [0, 0, 0], cq = [0, 0, 0], age = [-1, -1, -1];
+for (let m = 0; m < 3; m++) {
+const j = j0 - m;
+if (j < 0) continue;
+const b = hash8(j) >> 1;
+cp[m] = 4 * (b_x[b] - 19);
+cq[m] = 7 * (b_row[b] - 3);
+age[m] = t - j * 250;
+}
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = 14, cc = c;
+for (let m = 0; m < 3; m++) {
+if (age[m] < 0) continue;
+const d = oct(p - cp[m], q - cq[m]);
+if (age[m] < 120 && d < 5) {
+a = 255;
+cc = wc;
+continue;
+}
+a = imax(a, tent(d - (age[m] * 26 / 750 | 0), 7) * (255 - (age[m] * 255 / 750 | 0)) / 255 | 0);
+}
+put(i, cc, a * k / 255 | 0);
+}
+}
+function hourglassThink(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(col, C_VIOLET, 128);
+const ph = posMod(t, 3000), P = smooth(0, 2700, ph), F = smooth(2700, 3000, ph);
+const lv = P * 48 / 255 | 0;  // 1/16 row: how far the top has sunk, how high the heap stands
+const flow = P > 0 && P < 255;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const r = b_row[i], ax = abs(b_x[i] - 19), w = abs(r - 3) * 6 + 1;  // the glass, half-balls each side
+if (ax > w) continue;
+let a = ax >= w - 1 ? 30 : 0;
+if (r < 3) {
+const s = r * 16 + 8 >= lv ? 255 : 0;
+a = imax(a, (s + ((255 - s) * F / 255 | 0)) * 200 / 255 | 0);
+} else if (r > 3) {
+const s = (6 - r) * 16 + 8 <= lv ? 255 : 0;
+a = imax(a, (s * (255 - F) / 255 | 0) * 200 / 255 | 0);
+}
+if (flow && ax <= 1 && r >= 3 && r <= 5 && ((h1[i] + (t / 60 | 0)) & 1)) a = imax(a, 170);
+put(i, c, a * k / 255 | 0);
+}
+}
+function dotsThink(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(mix(col, C_VIOLET, 128), C_WHITE, 60), wc = mix(c, C_WHITE, 140);
+const ph = posMod(t, 1200);
+for (let j = 0; j < 3; j++) {
+const x = 11 + 8 * j, b = tent(ph - 200 * j - 180, 180);  // the jump, 0..255
+const up = (150 + (105 * b / 255 | 0)) * k / 255 | 0, cc = b > 128 ? wc : c;
+putb(ballRX(x, 6), c, (150 * (255 - b) / 255 | 0) * k / 255 | 0);
+putb(ballRX(x - 1, 5), cc, up);
+putb(ballRX(x + 1, 5), cc, up);
+putb(ballRX(x, 4), wc, b * k / 255 | 0);
+}
+}
+const atom_sh = [-40, 0, 40];  // the tilt: q += sh·p/256
+function atomThink(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(col, C_VIOLET, 128), wc = mix(c, C_WHITE, 150);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+if (b_dist[i] < 5) put(i, wc, (110 + (wave(t, 300) * 50 / 128 | 0)) * k / 255 | 0);
+}
+for (let j = 0; j < 3; j++) {
+const th0 = (t * 256 / (1300 + 200 * j) | 0) + j * 85;
+for (let q2 = 3; q2 >= 0; q2--) {  // the tail first, the head last
+const th = th0 - q2 * 9;
+const p = 56 * (sin8((th + 64) & 255) - 128) / 128 | 0;
+const q = (12 * (sin8(th & 255) - 128) / 128 | 0) + (atom_sh[j] * p / 256 | 0);
+putb(ballAt(p, q), q2 ? c : wc, (255 - q2 * 60) * k / 255 | 0);
+}
+}
+}
+function eqSpeak(n, t, col, k) {
+if (k <= 0) return;
+const wc = mix(col, C_WHITE, 150), lvb = [];
+for (let b = 0; b < 13; b++) lvb[b] = voice(t - ((b * 5 + 3) % 13) * 23) * (255 - abs(b - 6) * 20) / 255 | 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const dr = abs(b_row[i] - 3), e = lvb[b_x[i] / 3 | 0] - dr * 64;  // > 0: inside the bar
+if (e <= -16) continue;
+put(i, dr && e < 40 ? wc : col, imin(230, (e + 16) * 4) * k / 255 | 0);
+}
+}
+function scopeSpeak(n, t, col, k) {
+if (k <= 0) return;
+const ph = t * 300 / 1000 | 0, wc = mix(col, C_WHITE, 110);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const amp = voice(t - abs(b_x[i] - 19) * 14) * 19 / 255 | 0;  // 1/8 ball
+const y = amp * (sin8((b_x[i] * 18 - ph) & 255) - 128) / 128 | 0;
+const d = abs(7 * (b_row[i] - 3) - y);
+if (d >= 9) continue;
+put(i, d < 3 ? wc : col, (tent(d, 9) * 240 / 255 | 0) * k / 255 | 0);
+}
+}
+function raysSpeak(n, t, col, k) {
+if (k <= 0) return;
+const wc = mix(col, C_WHITE, 160);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+if (b_dist[i] < 4) put(i, wc, 150 * k / 255 | 0);
+}
+for (let s = 0; s < SPARKS; s++) {
+let len = 0;
+while (len < SPARK_LEN && spark[s][len] !== 255) len++;
+const L = voice(t - ((s * 7) % SPARKS) * 17) * len * 16 / 255 | 0;  // the ray, 1/16 ball from the centre
+for (let j = 0; j < len; j++) {  // the path read from its end: centre → rim
+const e = L - j * 16;
+if (e <= 0) break;
+put(spark[s][len - 1 - j], e < 16 ? wc : col, imin(220, e * 14) * k / 255 | 0);
+}
+}
+}
+function speakersSpeak(n, t, col, k) {
+if (k <= 0) return;
+const vl = voice(t), vr = voice(t - 60), wc = mix(col, C_WHITE, 140);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const v = b_x[i] < 19 ? vl : vr;
+const d = oct(abs(4 * (b_x[i] - 19)) - 52, 7 * (b_row[i] - 3));  // both speakers at ±52 (6½ balls)
+const r = 10 + (v * 12 / 255 | 0);  // the cone's edge
+let a = d < 22 ? 24 : d < 27 ? 40 : 0, c = col;
+a = imax(a, tent(d - r, 7) * (130 + (v * 125 / 255 | 0)) / 255 | 0);
+if (d < 5) {
+a = 120 + (v * 135 / 255 | 0);
+c = wc;
+}
+put(i, c, a * k / 255 | 0);
+}
+}
+function lipsSpeak(n, t, col, k) {
+if (k <= 0) return;
+const h = 2 + (voice(t) * 17 / 255 | 0);  // how far they part at the middle, 1/8 ball
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19);
+if (abs(p) > 60) continue;
+const dxn = abs(p) * 255 / 60 | 0, H = h * (255 - (dxn * dxn / 255 | 0)) / 255 | 0;
+const e = abs(7 * (b_row[i] - 3)) - H;  // 0 on a lip
+let a = tent(e, 7) * 235 / 255 | 0;
+if (e < 0) a = imax(a, 30);
+put(i, col, a * k / 255 | 0);
+}
+}
+const chk_s1 = [-44, -2, -14, 18], chk_s2 = [-14, 18, 46, -20];  // 1/8 ball: 36 and 71 long
+function checkDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const L = smooth(100, 700, t) * 107 / 255 | 0;  // the pen along both strokes
+const v1 = imin(256, L * 256 / 36 | 0), v2 = L > 36 ? (L - 36) * 256 / 71 | 0 : -1;
+const tx = v2 < 0 ? -44 + (30 * v1 / 256 | 0) : -14 + (60 * v2 / 256 | 0);  // the pen's tip
+const ty = v2 < 0 ? -2 + (20 * v1 / 256 | 0) : 18 - (38 * v2 / 256 | 0);
+const pen = t > 100 && t < 720, fl = tent(t - 780, 160);
+dimAll(255 - ((190 * smooth(0, 200, t) / 255 | 0) * fo / 255 | 0));
+fr.dg = 255;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let d = v1 > 0 ? segDist(p, q, chk_s1, v1) : 99;
+if (v2 >= 0) d = imin(d, segDist(p, q, chk_s2, v2));
+if (d >= 10) continue;
+const w = pen && oct(p - tx, q - ty) < 9 ? 230 : 200 * fl / 255 | 0;
+put(i, mix(col, C_WHITE, w), imin(255, tent(d, 10) * 3 / 2 | 0) * fo / 255 | 0);
+}
+}
+function barDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const F = (smooth(0, 800, t) * 44 / 255 | 0) - 2;  // the front, half-balls
+const fl = tent(t - 900, 180), sp = t * 500 / 1000 | 0;
+const fc = mix(col, C_WHITE, 120), flc = mix(col, C_WHITE, 160 * fl / 255 | 0);
+fr.dg = 153;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const e = F + ((sin8((b_row[i] * 40 + sp) & 255) - 128) * 2 / 128 | 0) - b_x[i];  // > 0: filled
+if (e < 0) continue;
+let a = 120, c = col;
+if (e < 4 && t < 820) {
+a = 255;
+c = fc;
+}
+if (fl) {
+a = imax(a, fl);
+c = flc;
+}
+put(i, c, a * fo / 255 | 0);
+}
+}
+const conf_v = [[-60, -40], [-45, -52], [-30, -30], [-18, -48], [-8, -36], [6, -54], [16, -42], [28, -50], [40, -34], [55, -46], [-50, -24], [48, -22], [-24, -58], [22, -60], [-36, -44], [34, -40]];  // 1/8 ball a second
+function confettiDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const pop = tent(t - 60, 160), pc = mix(col, C_WHITE, 200);
+fr.dg = 153;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+if (pop && b_dist[i] < 10) put(i, pc, pop * (10 - b_dist[i]) / 10 | 0);
+}
+for (let j = 0; j < 16; j++) {
+const c = j % 3 === 0 ? mix(col, C_WHITE, 190) : j % 3 === 1 ? mix(col, C_WHITE, 80) : col;
+for (let q2 = 1; q2 >= 0; q2--) {  // a trail 60 ms behind, then the bit
+const u = t - (j * 3 % 5) * 30 - q2 * 60;
+if (u <= 0) continue;
+const p = conf_v[j][0] * u / 1000 | 0, q = (conf_v[j][1] * u / 1000 | 0) + (32 * (u * u / 1000 | 0) / 1000 | 0);
+putb(ballAt(p, q), c, (q2 ? 70 : 255) * fo / 255 | 0);
+if (!q2 && ((h1[j] + (u / 90 | 0)) & 1)) putb(ballAt(p + 8, q), c, 200 * fo / 255 | 0);  // it turns: two balls, then one
+}
+}
+}
+function ringDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const nt = tracks.len, pr = smooth(0, 600, t) * nt * 128 / 255 | 0;  // how far each arc has run, 1/256 ball
+const fl = tent(t - 700, 220), age = t - 650;
+const r = 160 + (age * 640 / 1000 | 0), fw = age > 0 ? imax(0, 255 - (age * 255 / 700 | 0)) : 0;
+const wc = mix(col, C_WHITE, 160);
+fr.dg = 153;
+for (let m = 0; m < nt; m++) {
+const d = imin(m, nt - m) * 256;  // from 12 o'clock either way
+if (d <= pr) put(track[m], t < 650 && d > pr - 512 ? wc : col, 240 * fo / 255 | 0);
+}
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const l = lensOf(i);
+let a = l >= 2 ? 230 * fl / 255 | 0 : 0;
+if (fw) a = imax(a, (150 * tent(b_dist[i] * 16 - r, 90) / 255 | 0) * fw / 255 | 0);
+if (a) put(i, l >= 2 ? wc : col, a * fo / 255 | 0);
+}
+}
+const pict_ok = [0x0c9, 0x12a, 0x12c, 0x12a, 0x0c9];  // 9 wide
+function okDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+dimAll(255 - ((200 * smooth(0, 120, t) / 255 | 0) * fo / 255 | 0));
+fr.dg = 255;
+const r = (t - 80) * 700 / 1000 | 0, fw = t > 80 ? imax(0, 608 - r) * 255 / 608 | 0 : 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+if (fw) put(i, col, (140 * tent(b_dist[i] * 16 - r, 80) / 255 | 0) * fw / 255 | 0);
+}
+pict(pict_ok, 9, mix(col, C_WHITE, 255 - smooth(60, 500, t)), smooth(40, 90, t) * fo / 255 | 0, 0);
+}
+function shakeError(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const dx = wave(t, 700) * (26 * imax(0, 1100 - t) / 1100 | 0) / 128 | 0;  // the shift, 1/8 ball
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19) - dx, q = 7 * (b_row[i] - 3);
+const e = (p * p * 256 / 1600 | 0) + (q * q * 256 / 400 | 0);  // 256 on the ellipse 5 × 2½ balls
+const a = imax(tent(e - 256, 110), e < 256 ? 50 : 0);
+put(i, col, (a * 240 / 255 | 0) * fo / 255 | 0);
+}
+}
+const crs_s1 = [-30, -20, 30, 20], crs_s2 = [30, -20, -30, 20];  // 1/8 ball
+function crossError(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const v1 = smooth(100, 400, t) * 256 / 255 | 0, v2 = t > 450 ? smooth(450, 750, t) * 256 / 255 | 0 : -1;
+const on = t < 850 || (t >= 1000 && t < 1150) || t >= 1300;  // two blinks
+dimAll(255 - ((200 * smooth(0, 150, t) / 255 | 0) * fo / 255 | 0));
+fr.dg = 255;
+if (!on) return;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let d = v1 > 0 ? segDist(p, q, crs_s1, v1) : 99;
+if (v2 > 0) d = imin(d, segDist(p, q, crs_s2, v2));
+if (d >= 10) continue;
+put(i, col, imin(255, tent(d, 10) * 3 / 2 | 0) * fo / 255 | 0);
+}
+}
+function glitchError(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const busy = t < 1000, sl = t / 70 | 0, hs = hash8(sl * 7 + 3);
+if (busy && !(hs & 3)) dimAll(60);
+fr.dg = 200;
+const wc = mix(col, C_WHITE, 170), hr = [0, 0, 0, 0, 0, 0, 0];
+for (let r = 0; r < 7; r++) hr[r] = hash8(sl * 13 + r * 7 + 1);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const h = hr[b_row[i]], x0 = h * 5 % 38, x = b_x[i];
+let a = busy ? 0 : 90, c = col;
+if (busy && h < 120 && x >= x0 && x < x0 + 6 + (h & 15)) {
+a = 230;
+if (h & 1) c = wc;
+}
+if (busy && hs < 30) a = imax(a, 140);
+put(i, c, a * fo / 255 | 0);
+}
+}
+function sirenError(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const th = t * 400 / 1000 | 0;  // the beams' angle, 256 a turn
+const wc = mix(col, C_WHITE, 150);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const d = b_dist[i], da = abs(((b_ang[i] - th + 128) & 255) - 128);  // 0..128 from beam A
+const a1 = tent(da, 30), a2 = tent(128 - da, 30);
+let a = imax(a1, a2) * (150 + (105 * d / 38 | 0)) / 255 | 0, c = a2 > a1 ? wc : col;
+if (d < 5) {
+a = 200 + (wave(t, 800) * 55 / 128 | 0);
+c = col;
+}
+put(i, c, a * fo / 255 | 0);
+}
+}
+function powerOffError(n, t, du, col) {
+dimAll(255 - ((225 * smooth(0, 120, t) / 255 | 0) * smooth(du, du - 300, t) / 255 | 0));
+fr.dg = 255;
+const hv = 56 - (smooth(150, 550, t) * 56 / 255 | 0);  // half the picture's height, 1/16 row
+const hw = 20 - (smooth(550, 900, t) * 20 / 255 | 0);  // half the line's length, half-balls
+const wc = mix(col, C_WHITE, 180);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const dv = abs(b_row[i] - 3) * 16, dh = abs(b_x[i] - 19);
+let a = 0, c = col;
+if (t < 150) {
+a = 230 * smooth(0, 60, t) / 255 | 0;
+} else if (t < 550) {
+a = dv <= hv ? 230 : dv < hv + 16 ? 230 * (hv + 16 - dv) / 16 | 0 : 0;
+c = mix(col, C_WHITE, 150 * smooth(150, 550, t) / 255 | 0);
+} else if (t < 900) {
+if (!dv && dh <= hw + 1) a = 240;
+c = wc;
+} else if (b_dist[i] < 3) {
+a = 255 - smooth(950, 1300, t);
+c = mix(col, C_WHITE, 200 * a / 255 | 0);
+}
+put(i, c, a);
+}
+}
+function bangNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+const ph = t % 350, on = t >= 1050 || ph < 240;  // three blinks, then it stays
+const wh = t < 1050 ? tent(ph - 40, 80) : 0;
+const c = mix(col, C_WHITE, 200 * wh / 255 | 0);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const r = b_row[i], ax = abs(b_x[i] - 19);
+let a = 0;
+if (on && (r < 3 ? ax <= 2 : r === 3 ? ax <= 1 : r === 5 ? ax === 1 : r === 6 && !ax)) a = 255;
+if (ax >= 16) a = imax(a, 200 * wh / 255 | 0);
+put(i, c, a * fo / 255 | 0);
+}
+}
+const knock_t = [0, 180, 620, 800];
+function knockNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const q = 7 * (b_row[i] - 3), d = oct(4 * (b_x[i] - 19), 28 - q);  // from a point under the bottom edge
+let a = 0;
+for (let j = 0; j < 4; j++) {
+const age = t - knock_t[j];
+if (age < 0 || age >= 600) continue;
+const pk = j & 1 ? 255 : 210;
+a = imax(a, (tent(d - (age * 80 / 600 | 0), 10) * (600 - age) / 600 | 0) * pk / 255 | 0);
+if (b_row[i] === 6) a = imax(a, tent(age - 30, 90));
+}
+put(i, col, a * fo / 255 | 0);
+}
+}
+function beaconNotify(n, t, du, col) {
+const g = smooth(0, 150, t) * smooth(du, du - 300, t) / 255 | 0;
+const phi = -43 + (smooth(100, 1400, t) * 86 / 255 | 0);  // from straight up, 256 a turn: −60° .. +60°
+const sx = sin8(phi & 255) - 128, cy = sin8((phi + 64) & 255) - 128;
+const fl = tent(phi, 8) * 150 / 255 | 0, wc = mix(col, C_WHITE, 120);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const dx = 4 * (b_x[i] - 19), dy = 40 - 7 * (b_row[i] - 3);  // from the lamp, 5 balls under the middle
+const al = dx * sx + dy * cy, cr = abs(dx * cy - dy * sx);
+const a = imax(al > 0 ? tent(cr * 256 / al | 0, 80) : 0, fl);
+put(i, a > 200 ? wc : col, a * g / 255 | 0);
+}
+}
+const pict_mail = [0x1ff, 0x183, 0x145, 0x129, 0x1ff], pict_flap = [0, 0x082, 0x044, 0x028, 0];  // 9 wide
+function mailNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+dimAll(255 - ((190 * smooth(0, 200, t) / 255 | 0) * fo / 255 | 0));
+fr.dg = 255;
+const dx = -15 + (smooth(0, 500, t) * 16 / 255 | 0) - (smooth(520, 680, t) > 127 ? 1 : 0);
+if (t < 500) pict(pict_mail, 9, col, 90 * fo / 255 | 0, dx - 1);  // the blur behind it
+pict(pict_mail, 9, col, fo, dx);
+pict(pict_flap, 9, C_WHITE, tent(t - 850, 150) * fo / 255 | 0, dx);
+}
+function badgeNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t);
+let y = -18;  // the badge's centre, 1/8 ball
+if (t < 300) y = -50 + (32 * (t * t / 300 | 0) / 300 | 0);
+else if (t < 500) y = -18 - (8 * (10000 - (t - 400) * (t - 400)) / 10000 | 0);
+const wc = mix(col, C_WHITE, 140);
+fr.dg = 153;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const d = oct(4 * (b_x[i] - 19) - 56, 7 * (b_row[i] - 3) - y);
+let a = d < 11 ? 255 : d < 15 ? 255 * (15 - d) / 4 | 0 : 0;
+for (let j = 0; j < 2; j++) {  // the pings at 550 and 950 ms
+const age = t - 550 - 400 * j;
+if (age > 0 && age < 600) a = imax(a, (tent(d - 12 - (age * 40 / 600 | 0), 6) * (600 - age) / 600 | 0) * 200 / 255 | 0);
+}
+put(i, d < 6 ? wc : col, a * fo / 255 | 0);
+}
+}
+function stateLook(style, look, n, t, col, k) {
+if (look < 4) {
+stateDraw(look ? look : style, n, t, col, k);
+return;
+}
+if (n === A_LISTENING) {
+switch (look) {
+case 4: echoListen(n, t, col, k); break;
+case 5: tideListen(n, t, col, k); break;
+case 6: auroraListen(n, t, col, k); break;
+case 7: gazeListen(n, t, col, k); break;
+default: bubblesListen(n, t, col, k); break;
+}
+} else if (n === A_THINKING) {
+switch (look) {
+case 4: snakeThink(n, t, col, k); break;
+case 5: neuronThink(n, t, col, k); break;
+case 6: hourglassThink(n, t, col, k); break;
+case 7: dotsThink(n, t, col, k); break;
+default: atomThink(n, t, col, k); break;
+}
+} else {
+switch (look) {
+case 4: eqSpeak(n, t, col, k); break;
+case 5: scopeSpeak(n, t, col, k); break;
+case 6: raysSpeak(n, t, col, k); break;
+case 7: speakersSpeak(n, t, col, k); break;
+default: lipsSpeak(n, t, col, k); break;
+}
+}
+}
+function shotLook(style, look, n, t, col) {
+const du = shotLength(n, look, style);
+if (look < 4) {
+shotDraw(look ? look : style, n, t, du, col);
+return;
+}
+if (n === A_DONE) {
+switch (look) {
+case 4: checkDone(n, t, du, col); break;
+case 5: barDone(n, t, du, col); break;
+case 6: confettiDone(n, t, du, col); break;
+case 7: ringDone(n, t, du, col); break;
+default: okDone(n, t, du, col); break;
+}
+} else if (n === A_ERROR) {
+switch (look) {
+case 4: shakeError(n, t, du, col); break;
+case 5: crossError(n, t, du, col); break;
+case 6: glitchError(n, t, du, col); break;
+case 7: sirenError(n, t, du, col); break;
+default: powerOffError(n, t, du, col); break;
+}
+} else {
+switch (look) {
+case 4: bangNotify(n, t, du, col); break;
+case 5: knockNotify(n, t, du, col); break;
+case 6: beaconNotify(n, t, du, col); break;
+case 7: mailNotify(n, t, du, col); break;
+default: badgeNotify(n, t, du, col); break;
+}
+}
+}
+function wakeDraw(style, wake, lk, speed, t, col) {
+const id = wake ? wake : style;
+const du = wake_ms[id];
+let u = t * speed / 100 | 0;  // the wake's own time
+if (u > du) u = du;
+fr.lt = t - wakeLength(id, speed);  // the listening's time: it goes on at its own pace after the wake
+fr.ls = lk >= 4 ? 0 : lk ? lk : style;  // the listening's style (0: a new look)
+switch (id) {
+case 1: rippleShot(A_WAKE, u, du, col); break;
+case 2: orbitShot(A_WAKE, u, du, col); break;
+case 3: sparksShot(A_WAKE, u, du, col); break;
+case 4: dawnShot(A_WAKE, u, du, col); break;
+case 5: radarShot(A_WAKE, u, du, col); break;
+case 6: spiralShot(A_WAKE, u, du, col); break;
+case 7: heartShot(A_WAKE, u, du, col); break;
+case 8: eyeShot(A_WAKE, u, du, col); break;
+case 9: starsShot(A_WAKE, u, du, col); break;
+case 10: fireworkShot(A_WAKE, u, du, col); break;
+case 11: rainShot(A_WAKE, u, du, col); break;
+case 12: powerOnWake(A_WAKE, u, du, col); break;
+case 13: bunnyWake(A_WAKE, u, du, col); break;
+default: nameWake(A_WAKE, u, du, col); break;
+}
+if (id <= 3) {
+if (!(id === 3 && fr.ls === 3)) stateLook(style, lk, A_LISTENING, fr.lt, col, smooth(wake_from[id], du, u));
+} else {
+fr.dg = 89;
+stateLook(style, lk, A_LISTENING, fr.lt, col, smooth(du - 800, du, u));
+}
+}
 const NP = [
 151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225,
 140, 36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, 190, 6, 148,
@@ -1369,255 +2341,6 @@ m.setXY(x, y, col);
 break;
 }
 }
-const WAKE_NAMES = ["Как у стиля", "Рябь", "Орбита", "Искры", "Рассвет", "Радар", "Спираль", "Сердцебиение", "Глаз", "Звёзды", "Салют", "Дождь"];
-const wake_ms = [0, 1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000];
-const WAKE_COUNT = 12;
-const wake_from = [0, 1100, 1500, 1600];
-const b_col = new Uint8Array(MX_LED_AMOUNT);  // x in the diagonal grid, 0..19
-const b_row = new Uint8Array(MX_LED_AMOUNT);  // y, 0 (top) .. 6
-const b_x = new Uint8Array(MX_LED_AMOUNT);    // x across in half-balls: 2·col + 3 − row, 0..38 (19 = the middle)
-const h1 = new Uint8Array(MX_LED_AMOUNT), h2 = new Uint8Array(MX_LED_AMOUNT), h3 = new Uint8Array(MX_LED_AMOUNT);  // a hash of the ball
-function buildWakeTables() {
-for (let y = 0; y < MX_DIAG_H; y++) {
-for (let x = 0; x < MX_DIAG_W; x++) {
-const i = ledDiag(x, y);
-if (i < 0) continue;
-b_col[i] = x;
-b_row[i] = y;
-b_x[i] = 2 * x + 3 - y;
-}
-}
-for (let i = 0; i < MX_LED_AMOUNT; i++) {
-h1[i] = Math.imul(i + 1, 2654435761) >>> 24;
-h2[i] = Math.imul(i + 1, 2246822519) >>> 24;
-h3[i] = Math.imul(i + 1, 3266489917) >>> 24;
-}
-}
-const pict_heart = [0x36, 0x7f, 0x7f, 0x3e, 0x08];  // 7 wide
-function dawnShot(n, t, du, col) {
-const fo = smooth(du, du - 400, t);
-const F = smooth(0, 1500, t) * 140 / 255 | 0;  // the edge, 1/16 row up from the bottom
-fr.dg = 115;
-for (let i = 0; i < MX_LED_AMOUNT; i++) {
-const dp = F - (6 - b_row[i]) * 16;
-if (dp < -24) continue;
-let a = 0, c = col;
-if (dp < 0) {
-a = 90 * (24 + dp) / 24 | 0;  // the glow above the edge
-} else {
-a = 70 + (185 * imax(0, 96 - dp) / 96 | 0);
-const side = 255 - abs(b_x[i] - 19) * 4;
-a = a * (190 + (65 * side / 255 | 0)) / 255 | 0;
-c = mix(col, C_WHITE, 140 * imax(0, 48 - dp) / 48 | 0);
-}
-put(i, c, a * fo / 255 | 0);
-}
-}
-function radarShot(n, t, du, col) {
-const fo = smooth(du, du - 400, t);
-const th = t * 256 / 1400 | 0;  // the beam's angle, 0..256 a turn
-const hub = t < 400 ? tent(t - 100, 300) : 0;
-fr.dg = 128;
-for (let i = 0; i < MX_LED_AMOUNT; i++) {
-const dl = th - b_ang[i], d = b_dist[i];
-let a = 0, c = col;
-if (dl >= 0) {
-if (dl < 96) {
-const x = (96 - dl) * 255 / 96 | 0;
-a = x * x / 255 | 0;
-}
-if (h1[i] < 34 && dl < 150) {
-a = imax(a, 215 * (150 - dl) / 150 | 0);
-c = mix(col, C_WHITE, 160);
-}
-a = a * (150 + (105 * d / 38 | 0)) / 255 | 0;
-if (dl < 12) c = mix(col, C_WHITE, (12 - dl) * 200 / 12 | 0);
-}
-if (hub && d < 10) a = imax(a, hub * (10 - d) / 10 | 0);
-put(i, c, a * fo / 255 | 0);
-}
-}
-function spiralShot(n, t, du, col) {
-const fo = smooth(du, du - 400, t);
-const R = smooth(0, 1250, t) * 46 / 255 | 0;  // the front, quarter-balls
-const rho = t * 256 / 1700 | 0;
-fr.dg = 128;
-for (let i = 0; i < MX_LED_AMOUNT; i++) {
-const d = b_dist[i];
-if (d > R) continue;
-const v = (b_ang[i] * 2 + d * 7 - rho) & 255, dd = imin(v, 256 - v);
-let a = tent(dd, 56);
-if (d < 9 && t < 500) a = imax(a, tent(t - 150, 350) * (9 - d) / 9 | 0);
-if (!a) continue;
-a = a * (255 - d * 3) / 255 | 0;
-const hd = R - d;
-put(i, hd < 7 ? mix(col, C_WHITE, (7 - hd) * 30) : col, a * fo / 255 | 0);
-}
-}
-function heartShot(n, t, du, col) {
-const fo = smooth(du, du - 400, t);
-let env = 0;
-for (let k = 0; k < 2; k++) {  // the beats at 150 and 540 ms
-const q = t - (k ? 540 : 150), pk = k ? 190 : 255;
-const b = q < 0 ? 0 : q < 90 ? pk * q / 90 | 0 : imax(0, pk - (pk * (q - 90) / 380 | 0));
-env = imax(env, b);
-}
-const hide = smooth(0, 140, t) * fo / 255 | 0;
-dimAll(255 - (200 * hide / 255 | 0));
-fr.dg = 255;
-for (let i = 0; i < MX_LED_AMOUNT; i++) {
-if (lensOf(i) === 1) put(i, col, (70 * env / 255 | 0) * hide / 255 | 0);
-}
-pict(pict_heart, 7, mix(col, C_WHITE, 110 * env / 255 | 0), (60 + (195 * env / 255 | 0)) * hide / 255 | 0, 0);
-}
-function eyeShot(n, t, du, col) {
-const fo = smooth(du, du - 400, t);
-const o = smooth(250, 950, t) * (255 - (215 * smooth(1750, 1980, t) / 255 | 0)) / 255 | 0;  // how open
-const w = smooth(0, 250, t) * 17 / 255 | 0;  // the slit's half-length, half-balls
-const hd = smooth(0, 300, t) * fo / 255 | 0;
-dimAll(255 - (170 * hd / 255 | 0));
-fr.dg = 89;
-const off = (-20 * smooth(1000, 1200, t) + 40 * smooth(1250, 1450, t) - 20 * smooth(1500, 1700, t)) / 255 | 0;
-const pk = smooth(550, 850, t);
-for (let i = 0; i < MX_LED_AMOUNT; i++) {
-const ax = abs(b_x[i] - 19), dr = b_row[i] - 3;
-let a = 0, c = col;
-if (ax <= w) {
-const dxn = ax * 255 / 17 | 0;
-const H = o * (255 - (dxn * dxn / 255 | 0)) / 255 | 0, mg = H - abs(dr) * 85;
-if (mg >= 0) a = 45;  // the white
-a = imax(a, 230 * tent(mg, 64) / 255 | 0);  // the lid
-}
-if (o > 110 && pk) {
-const px = 4 * (b_x[i] - 19) - off, d2 = px * px + 49 * dr * dr;
-if (d2 < 340) {
-const pa = d2 <= 169 ? 255 : (340 - d2) * 255 / 171 | 0, core = imax(0, (110 - d2) * 255 / 110 | 0);
-if (pa > a || core) {
-a = imax(a, pa * pk / 255 | 0);
-c = mix(col, C_WHITE, 60 + (150 * core / 255 | 0));
-}
-}
-}
-put(i, c, a * fo / 255 | 0);
-}
-}
-function starsShot(n, t, du, col) {
-const fo = smooth(du, du - 400, t);
-const dth = (smooth(0, 1250, t) * 240 / 255 | 0) + 10;
-const fl = t > 1300 ? tent(t - 1500, 200) : 0;
-fr.dg = 140;
-for (let i = 0; i < MX_LED_AMOUNT; i++) {
-let a = 0, c = mix(col, C_WHITE, (h1[i] & 1) ? 150 : 60);
-if (h1[i] < dth) {
-const ph = (h2[i] + (t * (220 + (h3[i] & 63)) / 1000 | 0)) & 255, s = 255 - abs(ph - 128) * 2;
-a = s * s / 255 | 0;
-}
-if (fl) {
-const fl2 = fl * (255 - b_dist[i] * 3) / 255 | 0;
-if (fl2 > a) {
-a = fl2;
-c = mix(col, C_WHITE, 210);
-}
-}
-put(i, c, a * fo / 255 | 0);
-}
-}
-function fireworkShot(n, t, du, col) {
-const fo = smooth(du, du - 400, t);
-const trail = [255, 153, 77, 31];
-fr.dg = 115;
-if (t < 780) {
-const hr = 96 - (smooth(0, 720, t) * 48 / 255 | 0);  // the head, 1/16 row
-for (let i = 0; i < MX_LED_AMOUNT; i++) {
-if (abs(b_x[i] - 19) > 1) continue;
-const df = b_row[i] * 16 - hr;
-if (df < -8 || df > 48) continue;
-const a = df < 8 ? 255 : (48 - df) * 255 / 48 | 0;
-put(i, df < 8 ? mix(col, C_WHITE, 170) : col, (a * a / 255 | 0) * fo / 255 | 0);
-}
-}
-const q = t - 780;
-if (q < 0) return;
-if (q < 260) {
-const fl = 255 * tent(q - 70, 160) / 255 | 0;
-for (let i = 0; i < MX_LED_AMOUNT; i++) put(i, mix(col, C_WHITE, 200), (fl * tent(b_dist[i], 16) / 255 | 0) * fo / 255 | 0);
-}
-const xf = imin(q, 650) * 256 / 650 | 0, j256 = xf * (512 - xf) / 256 | 0;  // ease out, 0..256
-for (let k = 0; k < SPARKS; k++) {
-let len = 0;
-while (len < SPARK_LEN && spark[k][len] !== 255) len++;
-const head = (len - 1) * j256 / 256 | 0;  // the path read from its end: centre → rim
-for (let q2 = 0; q2 < 4 && head - q2 >= 0; q2++) put(spark[k][len - 1 - (head - q2)], (k & 1) ? mix(col, C_WHITE, 170) : col, trail[q2] * fo / 255 | 0);
-}
-if (q > 400) {
-for (let i = 0; i < MX_LED_AMOUNT; i++) {
-const t2 = q - 400 - (h2[i] * 5 / 3 | 0);
-if (t2 >= 0 && t2 < 500 && h3[i] < 120 && b_dist[i] > 10) put(i, mix(col, C_WHITE, 120), (220 * (500 - t2) / 500 | 0) * fo / 255 | 0);
-}
-}
-}
-function rainShot(n, t, du, col) {
-const fo = smooth(du, du - 400, t);
-fr.dg = 128;
-for (let i = 0; i < MX_LED_AMOUNT; i++) {
-const kA = b_col[i], kB = b_col[i] - b_row[i] + 6;  // the two diagonals through the ball
-let a = 0, c = col;
-const dfA = ((t - ((kA * 37 + 11) & 31) * 26) * 128 / 1000 | 0) - 16 - b_row[i] * 16;
-if (dfA >= 0) {
-if (dfA < 96) {
-const x = (96 - dfA) * 255 / 96 | 0;
-a = x * x / 255 | 0;
-if (dfA < 20) c = mix(col, C_WHITE, (20 - dfA) * 9);
-} else {
-a = 26;
-}
-}
-const dfB = ((t - ((kB * 29 + 5) & 31) * 26 - 110) * 128 / 1000 | 0) - 16 - b_row[i] * 16;
-if (dfB >= 0) {
-let a2 = 26;
-if (dfB < 96) {
-const x = (96 - dfB) * 255 / 96 | 0;
-a2 = x * x / 255 | 0;
-}
-if (a2 > a) {
-a = a2;
-c = mix(col, C_WHITE, dfB < 20 ? (20 - dfB) * 6 + 110 : 110);
-}
-}
-put(i, c, a * fo / 255 | 0);
-}
-}
-function wakeLength(id, speed) {
-return wake_ms[id] * 100 / speed | 0;
-}
-function wakeDraw(style, wake, speed, t, col) {
-const id = wake ? wake : style;
-const du = wake_ms[id];
-let u = t * speed / 100 | 0;  // the wake's own time
-if (u > du) u = du;
-fr.lt = t - wakeLength(id, speed);  // the listening's time: it goes on at its own pace after the wake
-fr.ls = style;
-switch (id) {
-case 1: rippleShot(A_WAKE, u, du, col); break;
-case 2: orbitShot(A_WAKE, u, du, col); break;
-case 3: sparksShot(A_WAKE, u, du, col); break;
-case 4: dawnShot(A_WAKE, u, du, col); break;
-case 5: radarShot(A_WAKE, u, du, col); break;
-case 6: spiralShot(A_WAKE, u, du, col); break;
-case 7: heartShot(A_WAKE, u, du, col); break;
-case 8: eyeShot(A_WAKE, u, du, col); break;
-case 9: starsShot(A_WAKE, u, du, col); break;
-case 10: fireworkShot(A_WAKE, u, du, col); break;
-default: rainShot(A_WAKE, u, du, col); break;
-}
-if (id <= 3) {
-if (!(id === 3 && style === 3)) stateDraw(style, A_LISTENING, fr.lt, col, smooth(wake_from[id], du, u));
-} else {
-fr.dg = 89;
-stateDraw(style, A_LISTENING, fr.lt, col, smooth(du - 800, du, u));
-}
-}
-buildWakeTables();
 const KAIA_STATE_MS = 30000;
 const backScale = (duck) => 255 - (140 * duck / 255 | 0);
 function duckStep(duck, playing) {
@@ -1633,13 +2356,14 @@ return d;
 const isState = (anim) => anim === A_LISTENING || anim === A_THINKING || anim === A_SPEAKING;
 const animOf = (name) => ANIM_NAMES.indexOf(name);
 function resolvePlay(play) {
-if (!play || play.anim < 0 || play.anim === 7 || !(play.style >= 1 && play.style <= 3)) return null;
-let p = play;
+if (!play || play.anim < 0 || play.anim === A_OFF || !(play.style >= 1 && play.style <= 3)) return null;
+const look = play.look != null ? play.look : play.anim === A_WAKE ? play.wake || 0 : 0;
+let p = { ...play, look: imin(look, play.anim === A_WAKE ? WAKE_COUNT - 1 : LOOK_COUNT - 1), lk: imin(play.lk || 0, LOOK_COUNT - 1) };
 if (p.anim === A_WAKE) {
-const len = wakeLength(p.wake || p.style, p.speed || 100);
-if (p.t >= len) p = { ...p, anim: A_LISTENING, t: p.t - len };
+const len = wakeLength(p.look || p.style, p.speed || 100);
+if (p.t >= len) p = { ...p, anim: A_LISTENING, look: p.lk || 0, t: p.t - len };
 } else if (!isState(p.anim)) {
-if (p.t >= shot_ms[p.style - 1][p.anim - A_DONE + 1]) return null;
+if (p.t >= shotLength(p.anim, p.look, p.style)) return null;
 }
 if (isState(p.anim) && p.t >= (p.ms || KAIA_STATE_MS)) return null;
 return p.t < 0 ? null : p;
@@ -1658,9 +2382,9 @@ if (!p || (night && rule === 2)) return false;
 fr.sc = S.kaia_bright * (night && rule === 1 ? 77 : 255) / 255 | 0;
 fr.dg = 89;
 const col = playColor(S, p);
-if (isState(p.anim)) stateDraw(p.style, p.anim, p.t, col, 255);
-else if (p.anim === A_WAKE) wakeDraw(p.style, p.wake || 0, p.speed || 100, p.t, col);
-else shotDraw(p.style, p.anim, p.t, shot_ms[p.style - 1][p.anim - A_DONE + 1], col);
+if (isState(p.anim)) stateLook(p.style, p.look, p.anim, p.t, col, 255);
+else if (p.anim === A_WAKE) wakeDraw(p.style, p.look, p.lk || 0, p.speed || 100, p.t, col);
+else shotLook(p.style, p.look, p.anim, p.t, col);
 return true;
 }
 function renderFrame(m, S, c) {
@@ -1681,31 +2405,6 @@ return m.leds;
 function frameOf(S, c) {
 return Uint32Array.from(renderFrame(new BallMatrix(), S, c));
 }
-const TEXT_KEYS = ["ntp_host", "log_host", "wifi_ssid", "wifi_pass", "page_pass"];
-const SECRET_KEYS = ["wifi_pass", "page_pass"];
-const DEFAULTS = {
-wifi_ssid: "", wifi_pass: "", show_ip: 1,
-ntp_host: "pool.ntp.org", ntp_gmt: 3,
-bright: 100, auto_bright: 0, bright_min: 10, bright_max: 255, adc_min: 0, adc_max: 1023,
-night_mode: 0, night_mode_auto: 0, night_mode_auto_since: 0, night_mode_auto_to: 0, night_color: 0xff0000, night_trsh: 50,
-clock_style: 1, clock_style_zero: 0, clock_color: 0xffffff,
-back_mode: 1, back_pal: 0, back_bright: 200, back_speed: 50, back_scale: 50, back_angle: 0,
-kaia_anim: 1, kaia_wake: 0, kaia_wake_speed: 100, kaia_color: 0x00d1ff, kaia_bright: 255, kaia_night: 1,
-page_pass: "", log_host: "",
-};
-function normalize(raw) {
-const s = {};
-for (const k of Object.keys(DEFAULTS)) {
-const v = raw && raw[k];
-if (TEXT_KEYS.includes(k)) s[k] = v == null ? DEFAULTS[k] : String(v);
-else {
-const n = typeof v === "boolean" ? +v : Number(v);
-s[k] = v == null || v === "" || !Number.isFinite(n) ? DEFAULTS[k] : Math.trunc(n);
-}
-}
-return s;
-}
-const rawOf = (k, v) => (TEXT_KEYS.includes(k) ? String(v) : String(Math.trunc(Number(v))));
 const MOCK_PASS = "kaia";
 function createMock() {
 const t0 = performance.now(), boot = 4123456;
@@ -1716,7 +2415,7 @@ night_mode: 1, night_mode_auto: 1, night_mode_auto_since: 82800, night_mode_auto
 kaia_anim: 1, kaia_wake: 0, kaia_wake_speed: 100, log_host: "192.168.1.20:9000", wifi_ssid: "HomeNet-2G",
 });
 const M = {
-mode: "ok", update: false, text: false, version: "1.5.0", wifi: { ssid: "HomeNet-2G", ip: "192.168.1.47", rssi: -58 },
+mode: "ok", update: false, text: false, version: "1.6.0", wifi: { ssid: "HomeNet-2G", ip: "192.168.1.47", rssi: -58 },
 pass: "", play: null, down: 0, settings: S,
 };
 const millis = () => boot + Math.floor(performance.now() - t0);
@@ -1766,7 +2465,10 @@ name: "BallClock", version: M.version, time: synced() ? timeText(ms) : "00:00:00
 light: light(ms), bright: brightNow(S, light(ms)), night: night(ms), overlay: M.text ? "text" : p ? "anim" : "none",
 anim: p ? ANIM_NAMES[p.anim] : null, uptime: (ms / 1000) | 0, reset: "Power On", heap: 23816, block: 17432, crash: null,
 ms, update: M.update,
-play: p && !M.text ? { name: ANIM_NAMES[p.anim], style: p.style, wake: p.wake, speed: p.speed, t: p.t, color: playColor(S, p).toString(16).padStart(6, "0") } : null,
+play: p && !M.text ? {
+name: ANIM_NAMES[p.anim], style: p.style, look: p.look, wake: M.play.anim === A_WAKE ? M.play.look : S.kaia_wake, speed: p.speed, t: p.t,
+color: playColor(S, p).toString(16).padStart(6, "0"),
+} : null,
 settings: Object.fromEntries(Object.keys(DEFAULTS).filter((k) => !["wifi_ssid", "wifi_pass", "page_pass"].includes(k)).map((k) => [k, S[k]])),
 };
 }
@@ -1787,12 +2489,14 @@ if (n === 7) {
 M.play = null;
 return { status: 200, json: { ok: true } };
 }
+const lq = q.has("look") ? q.get("look") : n === A_WAKE && q.has("wake") ? q.get("wake") : null;
+if (lq != null && !(/^\d+$/.test(lq) && +lq < (n === A_WAKE ? WAKE_COUNT : LOOK_COUNT))) return { status: 400, json: { error: "look" } };
 const style = q.has("style") ? +q.get("style") : S.kaia_anim;
 if (!(style >= 1 && style <= 3)) return { status: 200, json: { ok: true } };
 M.text = false;
 M.play = {
 anim: n, style, start: ms, ms: q.has("ms") ? +q.get("ms") : 30000,
-wake: n === A_WAKE && q.has("wake") ? +q.get("wake") : S.kaia_wake,
+look: lq != null ? +lq : S[LOOK_KEYS[n]], lk: S.kaia_listen,
 speed: n === A_WAKE && q.has("speed") ? +q.get("speed") : S.kaia_wake_speed,
 color: q.has("color") ? parseInt(q.get("color"), 16) : null,
 };
@@ -1804,7 +2508,7 @@ if (q.get("action") === "set") {
 if (id === ID_OTA_UPDATE) {
 M.down = ms + 4000;
 M.update = false;
-M.version = "1.5.1";
+M.version = "1.6.1";
 return { status: 200, json: null };
 }
 const k = keyOf(id);
@@ -1819,7 +2523,7 @@ else if (id === keyId("adc_max")) S.adc_max = light(ms);
 else if (id === ID_WIFI_SAVE) {
 M.wifi.ssid = S.wifi_ssid;
 if (M.mode === "ap") M.mode = "ok";
-} else if (id === ID_CHECK_UPDATES) M.update = M.update || M.version === "1.5.0";
+} else if (id === ID_CHECK_UPDATES) M.update = M.update || M.version === "1.6.0";
 }
 return { status: 200, json: null };
 }
@@ -1843,7 +2547,30 @@ ballX[i] = ((2 * x + 3 - y) * D) / 2;
 ballY[i] = y * S3 * D;
 }
 }
-const IVORY = [200, 195, 180];
+const IVORY = 0xc8c3b4;
+const UNLIT_KEY = "ballclock.unlit";
+const unlit = { c: IVORY, tr: 0, v: 0 };
+function readUnlit(store) {
+try {
+const j = JSON.parse(store.getItem(UNLIT_KEY) || "null");
+if (j && /^#[0-9a-f]{6}$/i.test(j.c) && j.tr >= 0 && j.tr <= 100) return { c: parseInt(j.c.slice(1), 16), tr: Math.round(j.tr) };
+} catch {
+}
+return { c: IVORY, tr: 0 };
+}
+function setUnlit(u, store) {
+unlit.c = u.c;
+unlit.tr = u.tr;
+unlit.v++;
+if (!store) return;
+try {
+if (u.c === IVORY && !u.tr) store.removeItem(UNLIT_KEY);
+else store.setItem(UNLIT_KEY, JSON.stringify({ c: "#" + u.c.toString(16).padStart(6, "0"), tr: u.tr }));
+} catch {
+}
+}
+const rgbOf = (c) => [(c >> 16) & 255, (c >> 8) & 255, c & 255];
+const css = (a) => "rgb(" + a.map((x) => Math.round(x)).join(",") + ")";
 const CX = (19 * D) / 2, CY = 3 * S3 * D;
 const R_ = D / 2 + 0.12 * D, TIP = -1.1547 * R_, HX = 0.5774 * (CY + R_);
 const X0 = TIP - 0.45 * D, X1 = 2 * CX - TIP + 0.45 * D, Y0 = -R_ - 0.45 * D, Y1 = 2 * CY + R_ + 0.45 * D;
@@ -1885,16 +2612,20 @@ c.stroke();
 }
 function caches(v) {
 const L = v.L, r = (D / 2) * L.s * 0.93;
-if (!v.base) {
+if (!v.base || v.uv !== unlit.v) {
+v.uv = unlit.v;
+const u = rgbOf(unlit.c), al = 1 - unlit.tr / 100;
+const st = unlit.c === IVORY ? ["#ebe6d6", "#c8c3b1", "#6f6b5d"] : [css(u.map((x) => x + (255 - x) * 0.6)), css(u), css(u.map((x) => x * 0.55))];
 v.base = layer(L, (c) => {
 plate(c, L);
 if (v.simple) return;
+c.globalAlpha = al;
 for (let i = 0; i < MX_LED_AMOUNT; i++) {
 const x = L.X(ballX[i]), y = L.Y(ballY[i]);
 const g = c.createRadialGradient(x - 0.28 * r, y - 0.32 * r, r * 0.1, x, y, r);
-g.addColorStop(0, "#ebe6d6");
-g.addColorStop(0.55, "#c8c3b1");
-g.addColorStop(1, "#6f6b5d");
+g.addColorStop(0, st[0]);
+g.addColorStop(0.55, st[1]);
+g.addColorStop(1, st[2]);
 c.fillStyle = g;
 c.beginPath();
 c.arc(x, y, r, 0, 6.2832);
@@ -1902,7 +2633,7 @@ c.fill();
 }
 });
 v.gloss = v.simple ? null : layer(L, (c) => {
-c.fillStyle = "rgba(255,255,255,.38)";
+c.fillStyle = "rgba(255,255,255," + (0.38 * (0.3 + 0.7 * al)).toFixed(3) + ")";
 for (let i = 0; i < MX_LED_AMOUNT; i++) {
 const x = L.X(ballX[i]), y = L.Y(ballY[i]);
 c.beginPath();
@@ -1914,7 +2645,7 @@ c.fill();
 return r;
 }
 function paint(v, leds, gain, clip) {
-const c = v.ctx, L = v.L, r = caches(v);
+const c = v.ctx, L = v.L, r = caches(v), u = rgbOf(unlit.c), al = 1 - unlit.tr / 100;
 c.save();
 if (clip) {
 c.beginPath();
@@ -1929,7 +2660,7 @@ const R = Math.min(255, ((col >> 16) & 255) * gain) | 0, G = Math.min(255, ((col
 const m = Math.max(R, G, B), l = m / 255;
 if (v.simple) {
 const a = l <= 0.012 ? 0 : 0.3 + 0.7 * Math.sqrt(l), k = m ? 255 / m : 0;
-c.fillStyle = "rgb(" + (IVORY[0] + (R * k - IVORY[0]) * a | 0) + "," + (IVORY[1] + (G * k - IVORY[1]) * a | 0) + "," + (IVORY[2] + (B * k - IVORY[2]) * a | 0) + ")";
+c.fillStyle = "rgba(" + (u[0] + (R * k - u[0]) * a | 0) + "," + (u[1] + (G * k - u[1]) * a | 0) + "," + (u[2] + (B * k - u[2]) * a | 0) + "," + (al + (1 - al) * a).toFixed(3) + ")";
 c.beginPath();
 c.arc(x, y, r, 0, 6.2832);
 c.fill();
@@ -1963,6 +2694,11 @@ const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const mock = MOCK ? createMock() : null;
 const api = new ClockApi(mock ? mock.send : fetchSend);
 const PASS_KEY = "ballclock.pass";
+let store = null;
+try {
+store = localStorage;
+} catch {
+}
 const lsGet = (k) => {
 try {
 return localStorage.getItem(k) || "";
@@ -1978,12 +2714,13 @@ else localStorage.removeItem(k);
 }
 };
 api.pass = lsGet(PASS_KEY);
+if (store) setUnlit(readUnlit(store));
 let SAVED = normalize(null);
 const DRAFT = {};
 const W = { ssid: "", pass: "" };  // the Wi-Fi fields: applied with «Подключить», not with Save
 let LIVE = null, recvAt = 0, WIFI = null, FRAME = null, everOk = false;
 const sync = new ClockSync();
-const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, cmp: 0.5, tab: "kaia", saving: false, upd: "" };
+const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, cmp: 0.5, tab: "kaia", saving: false, upd: "", ev: A_WAKE, CL: null, open: false };
 const S = () => Object.assign({}, SAVED, DRAFT);
 const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => [...(r || document).querySelectorAll(s)];
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -1997,32 +2734,21 @@ return +a[0] * 3600 + (+a[1] || 0) * 60;
 };
 const rgb = (c) => ((c >> 16) & 255) + "," + ((c >> 8) & 255) + "," + (c & 255);
 const palCss = (p) => "linear-gradient(90deg," + PALETTES[p].map((c) => "rgb(" + rgb(c) + ")").join(",") + ")";
-const STYLES = ["Выкл", "Рябь из центра", "Орбита по краю", "Искры в знак"];
-const wakeId = (s, w) => (w ? w : s.kaia_anim || 1);
-const WDOC = {
-1: ["Как сейчас (rippleShot). Три кольца расходятся от центра, белёсая вспышка в начале; со 1,1 с проявляется слушание стиля.",
-"r_k = (t-220k)*0.544            // k = 0..2, 1/16 четверти шара\nf_k = (832-r_k)/832\na   = max( fl*tent(16d,176), max_k tent(16d-r_k,88)*f_k ) * 242/255\nfl  = 255*(1-t/350); цвет к белому на 70% при fl", "0–1,9 с; слушание с 1,1 с", "b_dist (уже есть)"],
-2: ["Как сейчас (orbitShot). Комета разгоняется по ободу, потом кольца схлопываются, как диафрагма.",
-"h = 6tc + 50.69tc³ (шаров), tail = 6 + 36.4tc, tc = min(t,1100)/1000\nободок: a = 26 + 230*comet(pos,h,n0,tail)/255\nt>1100: кольца r=1..3 вспыхивают в 1100+150r мс: 217*tent(t-…,220)", "0–2,0 с; слушание с 1,5 с", "b_pos, b_ring, ring_len (уже есть)"],
-3: ["Как сейчас (sparksShot). 18 искр летят с обода к центру, знак вспыхивает и оседает.",
-"j = (u/750)^1.6 * len;  хвост 4 шара 255/153/77/31  (u = t-45*((7k)%18))\nt>1500: кольцо 102*tent(16d-r,80), r = (t-1500)*0.64\nmark(g): g = 217*прилетело/18 → вспышка 1550 → «дыхание»", "0–2,0 с; слушание с 1,6 с", "spark[18][12], b_lens (уже есть)"],
-4: ["Заря поднимается от нижнего ряда до верхнего: кромка белее, у середины ярче. Время видно.",
-"F  = smooth(0,1500,u)*140/255            // кромка, 1/16 ряда от низа\ndp = F - 16*(6-row)\ndp<-24: 0;  -24..0: ореол 90*(24+dp)/24\ndp>=0: a = (70 + 185*max(0,96-dp)/96) * (190 + 65*(255-4*|x-19|)/255)/255\nцвет = mix(Кая, белый, 140*max(0,48-dp)/48)\nfo = smooth(du,du-400,u)   // гаснет", "0–1,5 с подъём, до 1,6 держит, до 2,0 гаснет; слушание с 1,2 с", "row, x"],
-5: ["Луч обходит центр один раз по часовой от 12 часов, за ним шлейф; часть шаров «засвечивается» метками. Время видно.",
-"th = u*256/1400                           // угол луча 0..256\ndl = th - ang[i];  dl<0: ничего\nшлейф: ((96-dl)/96)² при dl<96;  голова dl<12 → белее\nметка: h1[i]<34 && dl<150 → max(a, 215*(150-dl)/150), белая\nвес по радиусу: (150 + 105*d/38)/255;  ступица tent(u-100,300) при d<10", "0–1,4 с оборот, до 1,8 с гаснет", "b_ang, b_dist + h1"],
-6: ["Два рукава-спирали раскручиваются из центра к краю и вращаются. Время видно.",
-"R   = smooth(0,1250,u)*46/255              // фронт, четверти шара\nrho = u*256/1700\nv   = (2*ang + 7*d - rho) & 255;  dd = min(v, 256-v)\na   = tent(dd,56) * (255-3d)/255   при d<=R\nфронт (R-d<7) белее;  центр: вспышка tent(u-150,350)*(9-d)/9 при u<500", "0–1,25 с рукава растут, вращаются до 2,0 с", "b_ang, b_dist"],
-7: ["Время нарочно уходит: сердце пульсирует дважды («тум-тум») и растворяется в слушании.",
-"beat(q,pk) = q<90 ? pk*q/90 : max(0, pk - pk*(q-90)/380)\nenv  = max( beat(u-150,255), beat(u-540,190) )\nhide = smooth(0,140,u) * fo/255;  dimAll(255 - 200*hide)\nсердце 0x36 0x7f 0x7f 0x3e 0x08: a = 60 + 195*env/255, к белому 110*env/255\nореол: шары линзы 1 — 70*env/255", "удары в 0,15 и 0,54 с, держит до 1,5 с, гаснет до 1,9 с", "b_lens + pict()"],
-8: ["Щель по средней строке раскрывается в глаз; зрачок смотрит влево, вправо и возвращается; глаз моргает. Фон и время приглушены.",
-"w = smooth(0,250,u)*17/255                    // длина щели, полушаров\no = smooth(250,950,u)*(255 - 215*smooth(1750,1980,u)/255)/255\nax = |x-19|, dr = row-3\nH = o*(255 - (255*ax/17)²/255)/255;  m = H - 85*|dr|\nm>=0: 45 (белок); a = max(a, 230*tent(m,64)/255)   // веко\nзрачок: px = 4(x-19) - off; d2 = px² + (7dr)²; d2<=169 → 255, до 340 спад", "0–0,25 щель, до 0,95 раскрытие, взгляд 1,0–1,7, моргание 1,75–1,98, до 2,2 с", "row, x"],
-9: ["Звёзды мерцают всё гуще, затем общая вспышка от центра.",
-"dth = 10 + smooth(0,1250,u)*240/255\nh1[i] < dth → звезда: ph = h2[i] + u*(220+(h3[i]&63))/1000\ns = 255 - 2*|ph-128|;  a = s²/255\nвспышка: f = tent(u-1500,200) * (255-3d)/255, белая", "0–1,25 с гуще, вспышка 1,3–1,7 с, до 2,0 с", "h1, h2, h3"],
-10: ["Ракета взлетает по средней колонке к центру и разрывается: 18 лучей по путям искр, затем россыпь.",
-"ракета (u<780): hr = 96 - smooth(0,720,u)*48/255;  колонка |x-19|<=1\nвзрыв q = u-780: вспышка tent(q-70,160)*tent(d,16)\nлучи: head = (len-1)*e, e = x(2-x), x = min(q,650)/650\nроссыпь q>400: t2 = q-400-h2*5/3; 0..500 → 220*(500-t2)/500 при h3<120, d>10", "ракета 0–0,78 с, взрыв 0,78–1,43, россыпь до 2,1, до 2,2 с", "spark, row, x, h2, h3"],
-11: ["Капли бегут по диагоналям решётки: влево-вниз и вправо-вниз; за ними остаётся лёгкий след. Время видно.",
-"поток A: key = col;  поток B: key = col - row + 6\nhead = (u - delay(key))*128/1000 - 16        // 8 рядов/с\ndelay_A = ((37key+11)&31)*26;  delay_B = ((29key+5)&31)*26 + 110\ndf = head - 16*row;  0<=df<96: ((96-df)/96)²;  df>=96: 26 (след)", "капли 0–1,7 с, след до 2,0 с", "col, row"],
-};
+const STY = ["Выкл", "Рябь", "Орбита", "Искры"];
+const EV = [
+["Пробуждение", "когда Кая услышала своё имя", "пробуждение"],
+["Слушает", "пока Кая ждёт вашу команду", "внимание, слух"],
+["Думает", "пока Кая готовит ответ", "размышление, работа"],
+["Говорит", "пока Кая отвечает голосом", "звук, голос"],
+["Готово", "задача выполнена", "готовность, успех"],
+["Ошибка", "что-то пошло не так", "тревога, сбой"],
+["Уведомление", "сообщение, на которое не нужно отвечать", "сигнал, внимание"],
+];
+const looksOf = (n) => (n === A_WAKE ? WAKE_COUNT : LOOK_COUNT);
+const lookName = (n, c) => LOOK_NAMES[n][c] || LOOK_NAMES[n][0];
+const styOf = (s, c) => (c >= 1 && c <= 3 ? c : s.kaia_anim || 1);
+const wakeIdOf = (s, c) => (c ? c : s.kaia_anim || 1);
+const lenOf = (n, c, s) => (n === A_WAKE ? wakeLength(wakeIdOf(s, c), s.kaia_wake_speed) : isState(n) ? 0 : shotLength(n, c, s.kaia_anim || 1));
 const GROUPS = [
 { id: "clock", tab: "look", wide: 1, cls: "three", title: "Часы", f: [
 { k: "clock_style", t: "sel", l: "Шрифт", o: ["Нет", "Тип 1", "Тип 2", "Тип 3"] },
@@ -2050,13 +2776,13 @@ const GROUPS = [
 { k: "night_mode_auto_since", t: "time", l: "С", if: (s) => s.night_mode && s.night_mode_auto },
 { k: "night_mode_auto_to", t: "time", l: "До", if: (s) => s.night_mode && s.night_mode_auto },
 { k: "_thr", t: "live", l: "Порог датчика", live: "thr", h: "Ночью, пока сигнал ниже порога. На странице порог не меняется.", if: (s) => s.night_mode }] },
-{ id: "kaia", tab: "kaia", wide: 1, title: "Кая", f: [
-{ k: "kaia_anim", t: "sel", l: "Анимации", o: STYLES },
-{ k: "kaia_wake", t: "wake", l: "Пробуждение", w: 1, if: (s) => s.kaia_anim > 0 },
-{ k: "kaia_wake_speed", t: "spd", l: "Скорость пробуждения", w: 1, if: (s) => s.kaia_anim > 0 },
-{ k: "kaia_color", t: "col", l: "Цвет Каи", if: (s) => s.kaia_anim > 0 },
-{ k: "kaia_bright", t: "rng", l: "Яркость", min: 0, max: 255, w: 1, if: (s) => s.kaia_anim > 0 },
-{ k: "kaia_night", t: "sel", l: "Ночью", o: ["Как обычно", "Тусклее", "Не показывать"], if: (s) => s.kaia_anim > 0 }] },
+{ id: "kaia", tab: "kaia", wide: 1, title: "Кая", custom: (s) => kayaHTML(s), f: [
+{ k: "kaia_anim", t: "sel", l: "Стиль", o: STY },
+...LOOK_KEYS.map((k, n) => ({ k, t: "look", l: EV[n][0], n })),
+{ k: "kaia_wake_speed", t: "spd", l: "Скорость пробуждения" },
+{ k: "kaia_color", t: "col", l: "Цвет Каи" },
+{ k: "kaia_bright", t: "rng", l: "Яркость Каи", min: 0, max: 255 },
+{ k: "kaia_night", t: "sel", l: "Ночью", o: ["Как обычно", "Тусклее", "Не показывать"] }] },
 { id: "time", tab: "net", title: "Время", f: [
 { k: "ntp_gmt", t: "num", l: "Часовой пояс", min: -12, max: 14 },
 { k: "ntp_host", t: "txt", l: "NTP-сервер", w: 1 },
@@ -2094,7 +2820,7 @@ case "sw": return v ? "вкл" : "выкл";
 case "col": return hexs(v);
 case "time": return hm(v);
 case "pal": return PAL_RU[v];
-case "wake": return WAKE_NAMES[v];
+case "look": return v + " · " + lookName(f.n, v);
 case "pwd": return v ? "••••" : "пусто";
 case "num": return (v > 0 ? "+" : "") + v;
 case "spd": case "rng": return fmtVal(k, v);
@@ -2103,15 +2829,17 @@ return String(v) || "пусто";
 }
 const RVB = (k) => '<button class="rv" data-rv="' + k + '" title="Вернуть сохранённое" aria-label="Вернуть сохранённое">↺</button>';
 const opts = (list, v) => list.map((o, i) => '<option value="' + i + '"' + (i === v ? " selected" : "") + ">" + esc(o) + "</option>").join("");
+const fld = (k, lab, hint, ctl, stack) => '<div class="fld' + (stack ? " stack" : "") + '" data-f="' + k + '"><div class="fl"><span>' + lab + (hint ? "<small>" + hint + "</small>" : "") + "</span>" + RVB(k) + "</div>" + ctl + "</div>";
+const rngCtl = (k, v, min, max, step, lab) => '<div class="rng"><input type="range" data-k="' + k + '" min="' + min + '" max="' + max + '"' + (step ? ' step="' + step + '"' : "") + ' value="' + v + '" aria-label="' + lab + '"><output>' + fmtVal(k, v) + "</output></div>";
 function fieldHTML(f, s) {
-const v = s[f.k], stack = f.w ? " stack" : "", lab = esc(f.l);
-const wrap = (c, rv = true) => '<div class="fld' + stack + '" data-f="' + f.k + '"><div class="fl"><span>' + lab + (f.h ? "<small>" + esc(f.h) + "</small>" : "") + "</span>" + (rv ? RVB(f.k) : "") + "</div>" + c + "</div>";
+const v = s[f.k], lab = esc(f.l);
+const wrap = (c, rv = true) => '<div class="fld' + (f.w ? " stack" : "") + '" data-f="' + f.k + '"><div class="fl"><span>' + lab + (f.h ? "<small>" + esc(f.h) + "</small>" : "") + "</span>" + (rv ? RVB(f.k) : "") + "</div>" + c + "</div>";
 switch (f.t) {
 case "sw": return wrap('<label class="sw"><input type="checkbox" data-k="' + f.k + '"' + (v ? " checked" : "") + ' aria-label="' + lab + '"><i></i></label>');
 case "sel": return wrap('<select data-k="' + f.k + '" aria-label="' + lab + '">' + opts(f.o, v) + "</select>");
 case "pal": return pickerHTML(f);
 case "col": return wrap('<input type="color" data-k="' + f.k + '" value="' + hexs(v) + '" aria-label="' + lab + '">');
-case "rng": return wrap('<div class="rng"><input type="range" data-k="' + f.k + '" min="' + f.min + '" max="' + f.max + '" value="' + v + '" aria-label="' + lab + '"><output>' + fmtVal(f.k, v) + "</output></div>");
+case "rng": return wrap(rngCtl(f.k, v, f.min, f.max, 0, lab));
 case "txt": return wrap('<input type="text" data-k="' + f.k + '" value="' + esc(v) + '" autocomplete="off" aria-label="' + lab + '">');
 case "pwd": return wrap('<input type="password" data-k="' + f.k + '" value="' + esc(DRAFT.page_pass || "") + '" autocomplete="new-password" placeholder="' + (api.pass ? "задан; новый — сюда" : "без пароля") + '" aria-label="' + lab + '">');
 case "wtxt": return wrap('<input type="text" data-w="ssid" value="' + esc(W.ssid) + '" autocomplete="off" aria-label="' + lab + '">', false);
@@ -2123,20 +2851,6 @@ case "led": return wrap('<span class="led" data-live="led"><i></i><span></span><
 case "btns": return wrap('<div class="btns"><button class="btn sm" data-act="admin">Запомнить мин.</button><button class="btn sm" data-act="admax">Запомнить макс.</button></div>', false);
 case "btnw": return '<div class="fld stack"><div class="btns"><button class="btn pri" data-act="wifi">Подключить</button></div><div class="fl"><span><small>' + esc(f.h) + "</small></span></div></div>";
 case "btnc": return '<div class="fld stack"><div class="btns"><button class="btn" data-act="check">Проверить обновления</button>' + (LIVE && LIVE.update ? '<button class="btn pri" data-act="upd">Доступно обновление → Обновить</button>' : "") + '</div><div class="fl"><span><small id="chkst">' + esc(P.upd || (LIVE && LIVE.update ? "Доступна новая прошивка (сейчас " + LIVE.version + ")" : "Новых версий не видно")) + "</small></span></div></div>";
-case "wake": {
-const sty = s.kaia_anim || 1;
-const tiles = [];
-for (let id = 0; id < WAKE_COUNT; id++) {
-const eff = wakeId(s, id);
-tiles.push('<button class="tile' + (v === id ? " sel" : "") + '" data-tw="' + id + '"><canvas></canvas><span class="tn"><b>' + id + " · " + WAKE_NAMES[id] + "</b><i>" + (id ? fmtS(wakeLength(eff, s.kaia_wake_speed)) : "сейчас: " + WAKE_NAMES[sty]) + "</i></span></button>");
-}
-return '<div class="fld stack" data-f="' + f.k + '"><div class="fl"><span>' + lab + "<small>Отдельно от стиля. Нажмите плитку: она сыграет на большом превью выше.</small></span>" + RVB(f.k) + '</div><div class="wg">' + tiles.join("") + '</div><div id="wdoc">' + docHTML(v, s) + "</div>" + allDocs() + "</div>";
-}
-case "spd":
-return '<div class="fld stack spd" data-f="' + f.k + '"><div class="fl"><span>' + lab + "<small>Меняет только пробуждение; слушание после него идёт в своём темпе.</small></span><output>" + fmtVal(f.k, v) + "</output>" + RVB(f.k) + "</div>" +
-'<input type="range" data-k="' + f.k + '" min="50" max="200" step="5" value="' + v + '" aria-label="' + lab + '">' +
-'<div class="row">' + [[50, "½×"], [100, "1×"], [150, "1,5×"], [200, "2×"]].map((a) => '<button class="chip' + (v === a[0] ? " on" : "") + '" data-sp="' + a[0] + '">' + a[1] + "</button>").join("") + "</div>" +
-'<div class="btns"><button class="btn pri" data-act="onclock">Показать на часах</button></div><small class="hint">Играет на часах без сохранения: <code>/kaia/anim?name=wake&amp;style=…&amp;wake=…&amp;speed=…</code></small></div>';
 }
 return "";
 }
@@ -2172,43 +2886,131 @@ const sc = b.parentNode;
 if (sc.scrollWidth > sc.clientWidth + 2) sc.scrollLeft = b.offsetLeft - sc.offsetLeft - sc.clientWidth / 2 + b.offsetWidth / 2;
 }
 }
-function docHTML(id, s) {
-const eff = wakeId(s, id), d = WDOC[eff];
-return '<div class="doc"><h4>' + (id ? "№ " + id : "№ 0 → № " + eff) + " · " + WAKE_NAMES[eff] + "<span>" + fmtS(wake_ms[eff]) + " при 1× · " + fmtS(wakeLength(eff, s.kaia_wake_speed)) + " при " + s.kaia_wake_speed + " %</span></h4><p>" + d[0] + "</p><pre>" + esc(d[1]) + "</pre><p>Тайминг: " + d[2] + ". Таблицы: " + d[3] + ".</p></div>";
+const TRY = '<span class="long">▶ Показать на часах</span><span class="short">▶ На часах</span>';
+const shortOf = (n, c) => (c ? lookName(n, c) : "Как у стиля");
+function rowText(n, s) {
+const c = s[LOOK_KEYS[n]], sv = SAVED[LOOK_KEYS[n]];
+if (!s.kaia_anim) return "выкл";
+return (c ? c + " · " : "") + shortOf(n, c) + (c !== sv ? " · было: " + shortOf(n, sv) : "");
 }
-function allDocs() {
-let h = '<details class="all"><summary>Формулы и тайминги всех пробуждений (для прошивки)</summary>';
-for (let i = 1; i < WAKE_COUNT; i++) h += '<div class="doc"><h4>№ ' + i + " · " + WAKE_NAMES[i] + "<span>" + fmtS(wake_ms[i]) + "</span></h4><p>" + WDOC[i][0] + "</p><pre>" + esc(WDOC[i][1]) + "</pre><p>Тайминг: " + WDOC[i][2] + ". Таблицы: " + WDOC[i][3] + ".</p></div>";
-return h + "</details>";
+function choiceLabel(n, s) {
+const c = s[LOOK_KEYS[n]];
+return c ? c + " · " + lookName(n, c) : "0 → " + LOOK_NAMES[n][s.kaia_anim || 1];
+}
+function tileSub(n, id, s) {
+const st = s.kaia_anim || 1, now = id ? "" : "сейчас: " + LOOK_NAMES[n][styOf(s, 0)] + " · ";
+if (isState(n)) return id ? "непрерывно" : "сейчас: " + STY[st];
+return now + fmtS(lenOf(n, id, s));
+}
+function tileHTML(n, id, s) {
+const k = LOOK_KEYS[n], cur = s[k], sav = SAVED[k];
+return '<button class="tile' + (cur === id ? " sel" : "") + '" data-tc="' + n + ":" + id + '"><canvas></canvas><span class="tn"><b>' + id + " · " + esc(lookName(n, id)) + "</b><i>" + tileSub(n, id, s) + "</i></span>" + (sav === id && cur !== id ? '<em class="pl">на часах</em>' : "") + "</button>";
+}
+const gh = (t, sub) => '<div class="gh"><h4>' + t + "</h4>" + (sub ? "<small>" + sub + "</small>" : "") + "</div>";
+const tilesFor = (n, a, b, s) => {
+let h = "";
+for (let id = a; id <= b; id++) h += tileHTML(n, id, s);
+return '<div class="wg">' + h + "</div>";
+};
+function galleryHTML(n, s) {
+let h = '<div class="gal' + (s.kaia_anim ? "" : " dis") + '">';
+if (!s.kaia_anim) h += '<p class="note">Анимации Каи выключены в стиле. Выберите Рябь, Орбиту или Искры, и здесь можно выбирать анимацию для события.</p>';
+h += gh("Как у стиля и версии стиля", "0 — следует за стилем · 1 Рябь · 2 Орбита · 3 Искры") + tilesFor(n, 0, 3, s);
+if (n === A_WAKE) h += gh("Тематические пробуждения", "4–11") + tilesFor(n, 4, 11, s) + gh("Новые пробуждения", "12–" + (WAKE_COUNT - 1)) + tilesFor(n, 12, WAKE_COUNT - 1, s);
+else h += gh("Новые по теме", "4–" + (LOOK_COUNT - 1) + " · " + EV[n][2]) + tilesFor(n, 4, LOOK_COUNT - 1, s);
+return h + "</div>";
+}
+function speedHTML(s) {
+const sp = s.kaia_wake_speed;
+return fld("kaia_wake_speed", "Скорость пробуждения", "Только пробуждение; слушание после него идёт в своём темпе.", rngCtl("kaia_wake_speed", sp, 50, 200, 5, "Скорость пробуждения") +
+'<div class="row">' + [[50, "½×"], [100, "1×"], [150, "1,5×"], [200, "2×"]].map((a) => '<button class="chip' + (sp === a[0] ? " on" : "") + '" data-sp="' + a[0] + '">' + a[1] + "</button>").join("") + "</div>", 1).replace('class="fld stack"', 'class="fld stack spd"');
+}
+function kayaHTML(s) {
+const on = s.kaia_anim;
+let h = '<div class="kopts one">' + fld("kaia_anim", "Стиль", "«Выкл» отключает все анимации Каи; «Как у стиля» следует за выбранным стилем.", '<div class="seg stseg">' + STY.map((t, i) => '<button data-sty="' + i + '"' + (on === i ? ' class="on"' : "") + ">" + t + "</button>").join("") + "</div>", 1) + "</div>";
+h += '<div class="evh"><h3 class="sub">Анимация для каждого события</h3><small>В списке виден выбор для всех семи событий; нажмите событие, чтобы выбрать другую анимацию.</small></div>';
+h += '<div class="kb' + (P.open ? " open" : "") + '" id="kb"><div class="evl">' + EV.map((e, n) => '<button class="er" data-ev="' + n + '"><canvas data-th="' + n + '"></canvas><span class="et"><b>' + e[0] + "</b><small></small></span><span class=\"chev\">›</span></button>").join("") + "</div>" +
+'<div class="evd" id="evd"><div class="evdh"><button class="chip back" data-close aria-label="К списку событий">‹ События</button><div class="evt"><h3 id="evt"></h3><small id="evs"></small></div></div><div id="evg"></div>' +
+'<div class="gfoot"><button class="btn pri" data-act="onclock">' + TRY + '</button><small class="cl-st"></small></div></div></div>';
+if (on) {
+h += '<div class="evh"><h3 class="sub">Цвет и яркость Каи</h3></div><div class="kopts">' + fld("kaia_color", "Цвет Каи", "", '<input type="color" data-k="kaia_color" value="' + hexs(s.kaia_color) + '" aria-label="Цвет Каи">') +
+fld("kaia_bright", "Яркость", "", rngCtl("kaia_bright", s.kaia_bright, 0, 255, 0, "Яркость Каи"), 1) +
+fld("kaia_night", "Ночью", "", '<select data-k="kaia_night" aria-label="Ночью">' + opts(FLD.kaia_night.o, s.kaia_night) + "</select>") + "</div>";
+}
+return h;
+}
+function fillEv() {
+const s = S(), n = P.ev;
+if (!$("#evg")) return;
+$("#evt").textContent = EV[n][0];
+$("#evs").textContent = EV[n][1];
+$("#evg").innerHTML = galleryHTML(n, s) + (n === A_WAKE && s.kaia_anim ? speedHTML(s) : "");
+}
+function updKaya() {
+const s = S();
+$$(".er").forEach((b) => {
+const n = +b.dataset.ev;
+b.classList.toggle("on", n === P.ev);
+b.classList.toggle("chg", LOOK_KEYS[n] in DRAFT);
+b.querySelector("small").textContent = rowText(n, s);
+});
+$$(".tile[data-tc]").forEach((t) => {
+const [n, id] = t.dataset.tc.split(":").map(Number), k = LOOK_KEYS[n], cur = s[k], sav = SAVED[k];
+t.classList.toggle("sel", cur === id);
+t.querySelector("i").textContent = tileSub(n, id, s);
+const pl = t.querySelector(".pl"), want = sav === id && cur !== id;
+if (want && !pl) t.insertAdjacentHTML("beforeend", '<em class="pl">на часах</em>');
+else if (!want && pl) pl.remove();
+});
+$$("[data-sp]").forEach((b) => b.classList.toggle("on", +b.dataset.sp === s.kaia_wake_speed));
+$$('[data-f="kaia_wake_speed"] output').forEach((o) => (o.textContent = fmtVal("kaia_wake_speed", s.kaia_wake_speed)));
+}
+function setSheet(o) {
+P.open = o;
+const kb = $("#kb");
+if (kb) kb.classList.toggle("open", o);
+document.body.classList.toggle("sheet", o);
+if (o) document.documentElement.style.setProperty("--hh", Math.round($("#hero").getBoundingClientRect().bottom) + "px");
+}
+function setEvent(n, open) {
+P.ev = n;
+if (open) setSheet(true);
+fillEv();
+bindTiles();
+updKaya();
+markKs();
+hsum();
+clUI();
+play(ANIM_NAMES[n]);
 }
 let tiles = [];
-let filmT = 0;
 function renderGroup(g) {
 const el = document.getElementById("g-" + g.id), s = S();
 if (!el) return;
-el.querySelector(".gbody").innerHTML = g.f.filter((f) => !f.if || f.if(s)).map((f) => fieldHTML(f, s)).join("");
-if (g.id === "kaia") bindTiles();
+el.querySelector(".gbody").innerHTML = g.custom ? g.custom(s) : g.f.filter((f) => !f.if || f.if(s)).map((f) => fieldHTML(f, s)).join("");
+if (g.id === "kaia") {
+fillEv();
+bindTiles();
+updKaya();
+clUI();
+}
 if (g.id === "back") updPal();
 markDirty();
 refreshLive();
-filmSoon();
 }
 function renderAll() {
 GROUPS.forEach(renderGroup);
 }
 function buildGroups() {
-$("#groups").innerHTML = GROUPS.map((g) => '<section class="card grp' + (g.wide ? " wide" : "") + '" id="g-' + g.id + '" data-tab="' + g.tab + '"><h2>' + g.title + '</h2><div class="gbody' + (g.cls ? " " + g.cls : "") + '"></div></section>').join("") +
-'<section class="card film grp wide" id="film" data-tab="kaia"><h2>Пробуждения по кадрам</h2><p class="hint">Те же формулы, шесть моментов каждого пробуждения при 100 %, с вашими фоном, шрифтом и цветом Каи.</p><div id="filmbody"></div></section>';
+$("#groups").innerHTML = GROUPS.map((g) => '<section class="card grp' + (g.wide ? " wide" : "") + '" id="g-' + g.id + '" data-tab="' + g.tab + '"><h2>' + g.title + '</h2><div class="gbody' + (g.cls ? " " + g.cls : "") + '"></div></section>').join("");
 $("#tabs").innerHTML = TABS.map((t) => '<button class="tab" data-tab="' + t.id + '"><svg viewBox="0 0 24 24">' + t.i + "</svg><span>" + t.t + "</span></button>").join("");
 }
 function showTab(id) {
 P.tab = id;
+if (id !== "kaia") setSheet(false);
 $$(".tab").forEach((b) => b.classList.toggle("on", b.dataset.tab === id));
 $$("#groups>.grp").forEach((g) => (g.hidden = g.dataset.tab !== id));
-requestAnimationFrame(() => {
-sizeTiles();
-if (id === "kaia") buildFilm();
-});
+requestAnimationFrame(sizeTiles);
 }
 const groupOf = (k) => GROUPS.find((g) => g.f.some((f) => f.k === k));
 function markDirty() {
@@ -2222,8 +3024,14 @@ $("#sbsave").disabled = P.conn !== "ok" || P.saving;
 hsum();
 }
 function hsum() {
-const s = S(), id = wakeId(s, s.kaia_wake);
-$("#hsum").innerHTML = s.kaia_anim ? "Пробуждение: <b>" + (s.kaia_wake ? s.kaia_wake + " · " : "0 → ") + WAKE_NAMES[id] + "</b><br>" + s.kaia_wake_speed + " % · " + fmtS(wakeLength(id, s.kaia_wake_speed)) + " · затем слушание «" + STYLES[s.kaia_anim] + "»" : "Анимации Каи выключены.";
+const s = S(), n = P.ev;
+let d = "Анимации Каи выключены.";
+if (s.kaia_anim) {
+d = "Событие: <b>" + EV[n][0] + "</b><br>Анимация: <b>" + esc(choiceLabel(n, s)) + "</b><br>";
+if (n === A_WAKE) d += fmtS(lenOf(n, s.kaia_wake, s)) + " при " + s.kaia_wake_speed + " % · затем слушание «" + esc(shortOf(1, s.kaia_listen)) + "»";
+else d += isState(n) ? "идёт, пока Кая в этом состоянии" : "один раз · " + fmtS(lenOf(n, s[LOOK_KEYS[n]], s));
+}
+$("#hsum").innerHTML = d;
 }
 function setVal(k, v) {
 if (v === SAVED[k] && k !== "page_pass") delete DRAFT[k];
@@ -2231,20 +3039,11 @@ else DRAFT[k] = v;
 if (k === "page_pass" && v === "") delete DRAFT[k];
 if (P.src === "now") setSrc("draft");
 markDirty();
-if (k === "kaia_wake_speed" || k === "kaia_wake") updWakeUI();
-if (k === "back_pal") updPal();
-filmSoon();
+if (k.startsWith("kaia_")) {
+updKaya();
+clUI();
 }
-function updWakeUI() {
-const s = S(), d = $("#wdoc");
-if (d) d.innerHTML = docHTML(s.kaia_wake, s);
-$$(".tile").forEach((t) => {
-const id = +t.dataset.tw, eff = wakeId(s, id);
-t.classList.toggle("sel", id === s.kaia_wake);
-t.querySelector("i").textContent = id ? fmtS(wakeLength(eff, s.kaia_wake_speed)) : "сейчас: " + WAKE_NAMES[eff];
-});
-$$("[data-sp]").forEach((b) => b.classList.toggle("on", +b.dataset.sp === s.kaia_wake_speed));
-$$('[data-f="kaia_wake_speed"] output').forEach((o) => (o.textContent = fmtVal("kaia_wake_speed", s.kaia_wake_speed)));
+if (k === "back_pal") updPal();
 }
 function refreshLive() {
 const s = S(), L = LIVE, light = L ? L.light : 0;
@@ -2272,6 +3071,7 @@ $("#sdot").className = "dot " + st[0];
 $("#stxt").textContent = st[1];
 $("#ver").textContent = L ? "v" + L.version : "…";
 $("#logout").hidden = !api.pass;
+$$("#day button").forEach((b) => b.classList.toggle("on", +b.dataset.d === (P.forceNight != null ? P.forceNight : +!!P.night)));
 }
 function banners() {
 let h = "";
@@ -2355,7 +3155,6 @@ await new Promise((r) => setTimeout(r, Math.max(0, 250 - (performance.now() - t)
 }
 mirrorOn = false;
 }
-const KS = [["wake", "Пробуждение"], ["listening", "Слушает"], ["thinking", "Думает"], ["speaking", "Говорит"], ["done", "Готово"], ["error", "Ошибка"], ["notify", "Уведомление"], ["off", "Стоп"]];
 const gainOf = (b) => 0.3 + (0.7 * b) / 255;
 let view = null, view2 = null;
 function timeNow() {
@@ -2369,14 +3168,14 @@ return { millis: ms, synced: true, hour: d.getHours(), minute: d.getMinutes(), m
 function playNow() {
 const p = LIVE && LIVE.play;
 if (!p) return null;
-const el = performance.now() - recvAt;
-return { anim: animOf(p.name), style: p.style, wake: p.wake || 0, speed: p.speed || 100, t: p.t + el, color: p.color ? parseInt(p.color, 16) : null };
+const el = performance.now() - recvAt, anim = animOf(p.name);
+return { anim, style: p.style, look: p.look != null ? p.look : anim === A_WAKE ? p.wake || 0 : 0, lk: SAVED.kaia_listen, speed: p.speed || 100, t: p.t + el, color: p.color ? parseInt(p.color, 16) : null };
 }
 function playDraft(s) {
 const M = P.M;
 if (!M) return null;
-const t = RM && M.still ? M.still : performance.now() - M.t0;
-return { anim: M.anim, style: s.kaia_anim || 1, wake: M.wake != null ? M.wake : s.kaia_wake, speed: M.speed || s.kaia_wake_speed, t, color: null, ms: 7000 };
+const t = RM && M.still != null ? M.still : performance.now() - M.t0;
+return { anim: M.anim, style: s.kaia_anim || 1, look: s[LOOK_KEYS[M.anim]], lk: s.kaia_listen, speed: s.kaia_wake_speed, t, color: null, ms: 7000 };
 }
 const lightNow = () => (LIVE ? LIVE.light : 500);
 const nightFor = (s, tm) => (P.forceNight != null ? !!P.forceNight : isNight(s, lightNow(), tm.hour, tm.minute));
@@ -2404,23 +3203,23 @@ markKs();
 const leds = renderFrame(work, s, { ...tm, night, play, duck: P.duck });
 return { leds: Uint32Array.from(leds), gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1), night, play };
 }
+function playLabel(p) {
+let t = EV[p.anim][0] + " · " + (p.look ? p.look + " · " + lookName(p.anim, p.look) : "0 → " + lookName(p.anim, p.style));
+if (p.anim === A_WAKE) t += " · " + p.speed + " % · " + fmtS(wakeLength(p.look || p.style, p.speed));
+return t;
+}
 function status(fr, src) {
 const pre = src === "now" ? "Сейчас · " : "Черновик · ";
 if (src === "now") {
 if (P.conn === "offline") return "нет связи · последний кадр";
 if (fr.mirror) return pre + (textNow() ? "бегущая строка · кадры с часов" : "зеркало · кадры с часов");
-const p = playNow(), r = resolvePlay(p);
-if (!r) return pre + (fr.night ? "ночь" : "день") + ", без анимации";
-return pre + KS.find((k) => k[0] === ANIM_NAMES[r.anim])[1] + (r.anim === A_WAKE ? " · " + WAKE_NAMES[wakeId({ kaia_anim: r.style }, r.wake)] : "");
+const r = resolvePlay(playNow());
+return pre + (r ? playLabel(r) : (fr.night ? "ночь" : "день") + ", без анимации");
 }
-const s = S(), p = fr.play && resolvePlay(fr.play);
+if (P.CL) return clText(P.CL);
+const p = fr.play && resolvePlay(fr.play);
 if (!p) return pre + (fr.night ? "ночь" : "день") + ", без анимации";
-let t = pre + KS.find((k) => k[0] === ANIM_NAMES[p.anim])[1];
-if (p.anim === A_WAKE) {
-const id = wakeId(s, p.wake);
-t += " · " + WAKE_NAMES[id] + " · " + p.speed + " % · " + fmtS(wakeLength(id, p.speed));
-} else if (isState(p.anim)) t += " · пока не нажмёте «Стоп»";
-return t;
+return pre + playLabel(p) + (isState(p.anim) ? " · пока не нажмёте «Стоп»" : "");
 }
 function wipe(c, L) {
 const x = Math.round(L.W * P.cmp), y = L.H / 2;
@@ -2463,6 +3262,7 @@ $("#badge").textContent = status(shown, P.src);
 }
 $("#pst").textContent = P.src === "cmp" ? "Слева «Сейчас», справа «Черновик»: тяните границу." : P.src === "now" ? (shown.mirror ? "«Сейчас»: кадры часов, 4 раза в секунду." : "«Сейчас»: расчёт на странице по состоянию часов.") : "«Черновик»: расчёт на странице по тем же данным.";
 if (view2 && document.body.classList.contains("minion")) paint(view2, shown.leds, shown.gain);
+P.night = !!d.night;
 P.duck = duckStep(P.duck, !!(d.play && !(d.night && S().kaia_night === 2) && S().kaia_anim));
 }
 function fit() {
@@ -2471,6 +3271,7 @@ const w = Math.floor(wall.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(
 if (w > 0 && (!view || view.L.W !== w)) view = fitCanvas($("#cv"), w);
 if (!view2) view2 = fitCanvas($("#cv2"), 240);
 sizeTiles();
+if (P.open) setSheet(true);
 }
 function setSrc(v) {
 P.src = v;
@@ -2484,7 +3285,7 @@ P.live = v;
 $$("[data-l]").forEach((b) => b.classList.toggle("on", b.dataset.l === v));
 if (mirrorWanted()) mirrorLoop();
 }
-function play(name, over) {
+function play(name) {
 if (name === "off") {
 P.M = null;
 markKs();
@@ -2492,29 +3293,37 @@ return;
 }
 const s = S();
 if (!s.kaia_anim) {
-toast("Анимации выключены: выберите стиль в группе «Кая»");
+toast("Анимации выключены: выберите стиль во вкладке «Кая»");
 return;
 }
 if (P.src === "now") setSrc("draft");
-const anim = ANIM_NAMES.indexOf(name);
-P.M = Object.assign({ anim, t0: performance.now() }, over || {});
-if (RM) P.M.still = anim === A_WAKE ? (wakeLength(wakeId(s, P.M.wake != null ? P.M.wake : s.kaia_wake), P.M.speed || s.kaia_wake_speed) / 2) | 0 : isState(anim) ? 1200 : (shot_ms[(s.kaia_anim || 1) - 1][anim - 3] / 2) | 0;
+const anim = ANIM_NAMES.indexOf(name), len = lenOf(anim, s[LOOK_KEYS[anim]], s);
+P.M = { anim, t0: performance.now() };
+if (RM) P.M.still = isState(anim) ? 1200 : (len / 2) | 0;
 markKs();
 }
 function markKs() {
-$$("[data-ks]").forEach((c) => c.classList.toggle("on", !!P.M && c.dataset.ks === ANIM_NAMES[P.M.anim]));
+$$("[data-ks]").forEach((c) => {
+const k = c.dataset.ks;
+c.classList.toggle("on", k === "off" ? !P.M : k !== "cur" && +k === P.ev);
+});
 }
 let tileIO = null;
 const seen = new Set();
 function bindTiles() {
-tiles = $$(".tile canvas").map((c) => ({ c, id: +c.closest(".tile").dataset.tw, t0: performance.now() - +c.closest(".tile").dataset.tw * 130, v: null, w: 0, play: false }));
+const now = performance.now();
+tiles = $$(".tile canvas,.er canvas").map((c) => {
+if (c.dataset.th != null) return { c, n: +c.dataset.th, id: -1, t0: now - +c.dataset.th * 230, v: null, w: 0, play: false };
+const [n, id] = c.closest(".tile").dataset.tc.split(":").map(Number);
+return { c, n, id, t0: now - id * 130, v: null, w: 0, play: false };
+});
 if ("IntersectionObserver" in window) {
 if (tileIO) tileIO.disconnect();
 seen.clear();
 tileIO = new IntersectionObserver((es) => es.forEach((e) => (e.isIntersecting ? seen.add(e.target) : seen.delete(e.target))));
 tiles.forEach((t) => tileIO.observe(t.c));
 }
-sizeTiles();
+requestAnimationFrame(sizeTiles);
 }
 function sizeTiles() {
 tiles.forEach((t) => {
@@ -2531,7 +3340,7 @@ const s0 = S(), s = Object.assign({}, s0, { kaia_anim: s0.kaia_anim || 1, kaia_n
 const tm = timeNow(), night = nightFor(s, tm);
 const base = new BallMatrix();
 renderFrame(base, s, { ...tm, night, play: null, duck: 255 });
-return { s, night, base, gain: gainOf(brightNow(s, lightNow())) };
+return { s, night, base, gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1) };
 }
 function overlayOn(b, play) {
 work.leds.set(b.base.leds);
@@ -2543,42 +3352,14 @@ return work.leds;
 function tilesTick(force) {
 const live = tiles.filter((t) => t.v && t.c.isConnected && t.c.offsetParent && (!tileIO || seen.has(t.c) || force));
 if (!live.length) return;
-const b = tileBase(), now = performance.now();
+const b = tileBase(), s = b.s, now = performance.now();
 for (const tl of live) {
-const id = wakeId(b.s, tl.id), len = wakeLength(id, b.s.kaia_wake_speed), cyc = len + 1500;
 if (RM && !tl.play && !force) continue;
-let el = RM && !tl.play ? (len / 2) | 0 : (now - tl.t0) % cyc;
-if (RM && tl.play && now - tl.t0 > cyc) {
-tl.play = false;
-el = (len / 2) | 0;
-}
-paint(tl.v, overlayOn(b, { anim: A_WAKE, style: b.s.kaia_anim, wake: tl.id, speed: b.s.kaia_wake_speed, t: el, color: null }), b.gain);
-}
-}
-function filmSoon() {
-clearTimeout(filmT);
-filmT = setTimeout(buildFilm, 350);
-}
-function buildFilm() {
-const root = $("#filmbody");
-if (!root || !root.offsetParent) return;
-const b = tileBase(), cols = innerWidth <= 520 ? 3 : 6, Wd = Math.max(60, Math.floor((root.clientWidth - (cols - 1) * 6) / cols) - 8);
-root.innerHTML = "";
-for (let id = 1; id < WAKE_COUNT; id++) {
-const box = document.createElement("div");
-box.className = "shot";
-box.innerHTML = '<div class="nm">№ ' + id + " · " + WAKE_NAMES[id] + "<span>" + fmtS(wake_ms[id]) + ' при 1×</span></div><div class="frames"></div>';
-const fr = box.lastChild;
-for (let k = 0; k < 6; k++) {
-const u = Math.round((wake_ms[id] * (k + 0.5)) / 6), cell = document.createElement("div"), c = document.createElement("canvas");
-cell.appendChild(c);
-cell.insertAdjacentHTML("beforeend", "<small>" + (u / 1000).toFixed(2).replace(".", ",") + " с</small>");
-fr.appendChild(cell);
-const v = fitCanvas(c, Wd);
-v.simple = true;
-paint(v, overlayOn(b, { anim: A_WAKE, style: b.s.kaia_anim, wake: id, speed: 100, t: u, color: null }), b.gain);
-}
-root.appendChild(box);
+const n = tl.n, look = tl.id < 0 ? s[LOOK_KEYS[n]] : tl.id, len = lenOf(n, look, s), cyc = isState(n) ? 0 : len + (n === A_WAKE ? 1500 : 1100);
+let el = RM && !tl.play ? (isState(n) ? 1200 : (len / 2) | 0) : now - tl.t0;
+if (cyc) el %= cyc;
+if (RM && tl.play && now - tl.t0 > (cyc || 3000)) tl.play = false;
+paint(tl.v, overlayOn(b, { anim: n, style: s.kaia_anim, look, lk: s.kaia_listen, speed: s.kaia_wake_speed, t: el, color: null, ms: 1e9 }), b.gain);
 }
 }
 let lastT = 0, lastTiles = 0, lastLive = 0;
@@ -2591,6 +3372,7 @@ draw();
 if (now - lastTiles >= 98) {
 lastTiles = now;
 tilesTick(false);
+if (P.CL) clUI();
 }
 if (now - lastLive >= 500) {
 lastLive = now;
@@ -2721,25 +3503,50 @@ $("#toast").hidden = true;
 function showChanges() {
 modal('<h3>Не сохранено</h3><ul class="chl">' + Object.keys(DRAFT).map((k) => "<li><b>" + esc(FLD[k].g + " · " + FLD[k].l) + "</b><span>" + esc(fmtAny(k, SAVED[k])) + " → " + esc(fmtAny(k, DRAFT[k])) + "</span></li>").join("") + '</ul><div class="acts"><button class="btn" id="mc">Закрыть</button></div>', () => ($("#mc").onclick = closeModal));
 }
+const clText = (cl) => (cl.done ? "Сыграно на часах: " + cl.label + ". Ничего не сохранено." : "Идёт на часах: " + cl.label + " · ещё " + fmtS(Math.max(0, cl.t0 + cl.dur - performance.now())));
 async function onclock() {
-const s = S();
+const s = S(), n = P.ev, name = ANIM_NAMES[n];
 if (!s.kaia_anim) {
-toast("Анимации выключены: выберите стиль в группе «Кая»");
+toast("Анимации выключены: выберите стиль во вкладке «Кая»");
 return;
 }
 if (P.conn !== "ok") {
 toast("Нет связи с часами");
 return;
 }
-const q = { style: s.kaia_anim, wake: s.kaia_wake, speed: s.kaia_wake_speed };
-play("wake");
+const q = tryOut(name, s), c = q.look;
+const dur = isState(n) ? TRY_STATE_MS : lenOf(n, c, s);
+P.CL = { n, label: EV[n][0] + " · " + (c ? c + " " + lookName(n, c) : "Как у стиля"), t0: performance.now(), dur, done: false };
+play(name);
+clUI();
 try {
-await api.anim("wake", q);
-toast("Играет на часах, ничего не сохраняется<br><code>GET kaia/anim?name=wake&amp;style=" + q.style + "&amp;wake=" + q.wake + "&amp;speed=" + q.speed + "</code>");
+await api.anim(name, q);
+toast("Играет на часах" + (isState(n) ? " " + TRY_STATE_MS / 1000 + " с" : "") + ", ничего не сохраняется<br><code>GET kaia/anim?" + esc(new URLSearchParams({ name, ...q }).toString()) + "</code>");
 setTimeout(() => poll(false), 400);
 } catch (e) {
+P.CL = null;
+clUI();
 failed(e);
 }
+}
+function clUI() {
+const cl = P.CL, now = performance.now();
+if (cl && !cl.done && now >= cl.t0 + cl.dur) {
+cl.done = true;
+cl.te = now;
+} else if (cl && cl.done && now - cl.te > 6000) P.CL = null;
+const run = !!P.CL && !P.CL.done, txt = P.CL ? clText(P.CL) : "Играет на часах без сохранения.";
+$$(".cl-st").forEach((e) => {
+if (e.textContent !== txt) e.textContent = txt;
+});
+const h = run ? '<span class="long">Играет на часах…</span><span class="short">Играет…</span>' : TRY;
+$$("[data-act=onclock]").forEach((b) => {
+b.disabled = run;
+if (b.dataset.h !== h) {
+b.dataset.h = h;
+b.innerHTML = h;
+}
+});
 }
 async function clickBtn(id, msg) {
 try {
@@ -2750,8 +3557,32 @@ setTimeout(() => poll(false), 300);
 failed(e);
 }
 }
+const UP = { ivory: { c: IVORY, tr: 0 }, white: { c: 0xf2f2f2, tr: 0 }, graphite: { c: 0x4a4d55, tr: 0 }, glass: { c: 0xdfe6ee, tr: 70 } };
+function syncU() {
+$("#ucol").value = hexs(unlit.c);
+$("#utr").value = unlit.tr;
+$("#utro").textContent = unlit.tr + " %";
+$("#gear").classList.toggle("chg", unlit.c !== IVORY || unlit.tr !== 0);
+$$("#upre [data-up]").forEach((b) => {
+const p = UP[b.dataset.up];
+b.classList.toggle("on", p.c === unlit.c && p.tr === unlit.tr);
+});
+}
+function setU(c, tr) {
+setUnlit({ c, tr }, store);
+syncU();
+tilesTick(true);
+}
+function popOpen(o) {
+$("#pop").hidden = !o;
+$("#gear").setAttribute("aria-expanded", String(o));
+$("#gear").classList.toggle("on", o);
+if (o) syncU();
+}
 document.addEventListener("input", (e) => {
 const t = e.target, k = t.dataset && t.dataset.k;
+if (t.id === "ucol") return setU(unhex(t.value), unlit.tr);
+if (t.id === "utr") return setU(unlit.c, +t.value);
 if (t.dataset && t.dataset.w) {
 W[t.dataset.w] = t.value;
 return;
@@ -2767,15 +3598,18 @@ setVal(k, v);
 if (t.type === "range") {
 const o = t.closest(".fld").querySelector("output");
 if (o) o.textContent = fmtVal(k, v);
-if (k === "kaia_wake_speed") $$("[data-sp]").forEach((b) => b.classList.toggle("on", +b.dataset.sp === v));
 }
-if (t.type === "checkbox" || t.tagName === "SELECT") renderGroup(groupOf(k));
-if ((k === "kaia_color" || k === "kaia_anim") && !P.M && S().kaia_anim) play("listening");
+if (t.type === "checkbox" || (t.tagName === "SELECT" && !k.startsWith("kaia_"))) renderGroup(groupOf(k));
+if (k === "kaia_color" && !P.M && S().kaia_anim) play(ANIM_NAMES[P.ev]);
 });
 document.addEventListener("click", (e) => {
+if (!$("#pop").hidden && !e.target.closest("#pop,#gear")) popOpen(false);
 const t = e.target.closest("button,a,.sb-t");
 if (!t) return;
 const d = t.dataset;
+if (t.id === "gear") return popOpen($("#pop").hidden);
+if (t.id === "ubreset") return setU(IVORY, 0);
+if (d.up) return setU(UP[d.up].c, UP[d.up].tr);
 if (d.rv) {
 delete DRAFT[d.rv];
 renderGroup(groupOf(d.rv));
@@ -2791,34 +3625,51 @@ return;
 }
 if (d.tab) {
 showTab(d.tab);
-if (d.tab === "kaia" && !P.M && P.conn !== "offline" && S().kaia_anim) setTimeout(() => play("wake"), 250);
+if (d.tab === "kaia" && !P.M && P.conn !== "offline" && S().kaia_anim) setTimeout(() => play(ANIM_NAMES[P.ev]), 250);
 return;
 }
-if (d.tw != null) {
-const id = +d.tw;
-setVal("kaia_wake", id);
-const tl = tiles.find((x) => x.id === id);
+if (d.sty != null) {
+setVal("kaia_anim", +d.sty);
+renderGroup(groupOf("kaia_anim"));
+if (+d.sty) play(ANIM_NAMES[P.ev]);
+else play("off");
+return;
+}
+if (d.tc) {
+const [n, id] = d.tc.split(":").map(Number);
+P.ev = n;
+setVal(LOOK_KEYS[n], id);
+const tl = tiles.find((x) => x.n === n && x.id === id);
 if (tl && RM) {
 tl.play = true;
 tl.t0 = performance.now();
 }
-play("wake");
+markKs();
+hsum();
+play(ANIM_NAMES[n]);
 return;
 }
+if (d.ev != null) return setEvent(+d.ev, true);
+if (d.close != null) return setSheet(false);
 if (d.sp) {
 setVal("kaia_wake_speed", +d.sp);
-renderGroup(groupOf("kaia_wake_speed"));
+$$('[data-k="kaia_wake_speed"]').forEach((r) => (r.value = +d.sp));
 play("wake");
 return;
 }
-if (d.ks) return play(d.ks);
+if (d.ks) {
+if (d.ks === "off") play("off");
+else if (d.ks === "cur") play(ANIM_NAMES[P.ev]);
+else setEvent(+d.ks, false);
+return;
+}
 if (d.s) return setSrc(d.s);
 if (d.l) return setLive(d.l);
 if (d.d != null) {
-P.forceNight = +d.d;
-$$("#day button").forEach((b) => b.classList.toggle("on", b === t));
+const narrow = matchMedia("(max-width:900px)").matches;
+P.forceNight = narrow && t.classList.contains("on") ? 1 - +d.d : +d.d;
+refreshLive();
 tilesTick(true);
-filmSoon();
 return;
 }
 if (d.m) return mockMode(d.m);
@@ -2904,16 +3755,22 @@ $("#cv").addEventListener("pointermove", (e) => drag && moveCmp(e));
 $("#cv").addEventListener("pointerup", () => (drag = false));
 if (MOCK) $("#mockbar").hidden = false;
 buildGroups();
-$("#ks").innerHTML = KS.map((k) => '<button class="chip" data-ks="' + k[0] + '">' + k[1] + "</button>").join("");
+$("#ks").innerHTML = EV.map((e, n) => '<button class="chip" data-ks="' + n + '">' + e[0] + "</button>").join("") + '<button class="chip" data-ks="off">Стоп</button>';
 renderAll();
 showTab("kaia");
 setSrc("draft");
+syncU();
+clUI();
 new ResizeObserver(() => requestAnimationFrame(fit)).observe($("#wall"));
+window.addEventListener("resize", () => requestAnimationFrame(sizeTiles));
 if ("IntersectionObserver" in window) new IntersectionObserver((es) => document.body.classList.toggle("minion", !es[0].isIntersecting && innerWidth > 900)).observe($("#hero"));
 fit();
 banners();
 poll(true);
 requestAnimationFrame(loop);
-setTimeout(() => S().kaia_anim && !P.M && play("wake"), 600);
-window.ballclock = { P, api, S, play, setSrc, setLive, showTab, mock, sync, tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; } };
+setTimeout(() => S().kaia_anim && !P.M && play(ANIM_NAMES[P.ev]), 600);
+window.ballclock = {
+P, api, S, play, setSrc, setLive, showTab, setEvent, setSheet, mock, sync, unlit, setU,
+tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; },
+};
 })();</script></body></html>
