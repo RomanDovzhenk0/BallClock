@@ -1,4 +1,4 @@
-// The clock's API (BallClock v1.5), as the page calls it: same origin, relative URLs, GET, one request at a
+// The clock's API (BallClock v1.6), as the page calls it: same origin, relative URLs, GET, one request at a
 // time (the ESP8266 answers one at a time), 5 s each. With a page password every call carries
 // auth = hash32(password) in lowercase hex, as Home does (Home/src/gyver/driver.ts). 401 = ask for the password.
 

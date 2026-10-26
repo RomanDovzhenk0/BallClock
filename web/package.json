@@ -1,8 +1,8 @@
 {
   "name": "ballclock-web",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "private": true,
-  "description": "The BallClock site served from the clock's flash (firmware v1.5): a live preview, Kaya's wakes, every setting.",
+  "description": "The BallClock site served from the clock's flash (firmware v1.6): a live preview, Kaya's looks per event, every setting.",
   "type": "module",
   "scripts": {
     "test": "node --test test/*.test.mjs",
