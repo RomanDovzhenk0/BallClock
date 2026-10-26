@@ -40,13 +40,21 @@ ota update result=connect try=1 stage=connect kb=0/0 heap=… block=… ssl=… 
 ota update result=<word> …                                             the last result, after the boot line
 ```
 
-Results: `ok from=<old version> kb=<size>` (written by the new firmware), `same` (the same version came back),
-`lowmem`, `wifi`, `connect`, `timeout`, `http`, `nofile`, `noversion`, `noplatform`, `nopath`, `size`, `otastart`,
-`otaend` (the flash refused the image: not retried), `crash`.
+Results: `ok from=<old version> kb=<size> heap0=… block0=… heap_min=… block_min=…` (written by the new firmware),
+`same kb=<size> heap0=…` (the same version came back), `lowmem`, `wifi`, `connect`, `timeout`, `http`, `nofile`,
+`noversion`, `noplatform`, `nopath`, `size`, `otastart`, `otaend` (the flash refused the image: not retried), `crash`.
+
+A successful update boot restarts inside `updateNow()`, before the log target is set, so its `boot` and `stage`
+lines are lost with the RAM ring. From v1.5.3 on the update record keeps its heap instead and the new firmware
+reports it with `ok` / `same`: `heap0`/`block0` free heap and largest block at the update boot's start (the `boot`
+line), `heap_min`/`block_min` the lowest over its `stage` lines (the two minima can come from different stages).
+An update run by a v1.5.2 (or older) update boot has no such numbers: its `ok` ends at `kb=`.
 
 RTC user memory (512 bytes, 4-byte words): 0-31 eboot (the OTA bootloader's command), 32-58 the crash record
-(`src/crash.cpp`), 64-101 the update record (`src/otaboot.cpp`; the network is wiped as soon as the update boot
-has read it). It survives a restart and a crash, not a power cut.
+(`src/crash.cpp`), 64-105 the update record (`src/otaboot.cpp`; the network is wiped as soon as the update boot
+has read it). Words 64-101 keep the layout of v1.5.1-1.5.2 with their checksum, so a record written by an older
+update boot still reads; 102-105 (the heap, from v1.5.3 on) have a checksum of their own. It survives a restart and
+a crash, not a power cut.
 
 The access point: the clock opens it while it connects and when it cannot connect. Once the station is up,
 `WiFiConnector` switches it off for real (`softAPdisconnect(true)`, mode WIFI_STA); before v1.5.1 only its SSID was

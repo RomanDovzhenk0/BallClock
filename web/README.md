@@ -142,6 +142,13 @@ New in v1.5.1:
   for about a minute the page gets no answer (connection refused), then the new version, or the old one with
   `update_last` saying why.
 
+New in v1.5.3:
+- `GET /` answers 304 only when the request's If-None-Match holds the page's ETag. Before, a request without
+  If-None-Match after one that sent the ETag got a bodiless 304 too (the core keeps a cleared header's old bytes):
+  a blank page on a first visit.
+- `update_last` of a successful update carries the update boot's heap: `"result=ok from=1.5.3 kb=… heap0=… block0=…
+  heap_min=… block_min=…"` (also on `same`). An update run by a v1.5.2 update boot still ends at `kb=`.
+
 How the page uses it: the state every 5 s while the tab is visible; «Сейчас» runs the renderer on the saved settings
 with the clock's millis, night, brightness and play, and the dots in step with NTP: each state rules out the
 phases of NTP's second that would have put its time in another second (`clock.js`), so after a few answers the
