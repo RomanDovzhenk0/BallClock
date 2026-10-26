@@ -3,9 +3,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { AuthError, ClockApi, hash32, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, keyId, OfflineError, parseLeds } from "../src/api.js";
+import { AuthError, ClockApi, hash32, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, keyId, OfflineError, parseLeds, tryOut } from "../src/api.js";
 import { ClockSync, parseTime } from "../src/clock.js";
-import { rawOf } from "../src/settings.js";
+import { DEFAULTS, rawOf } from "../src/settings.js";
 
 // h = h·33 + c, uint32, from 0 — done with BigInt, apart from the code under test
 const ref = (s) => [...Buffer.from(s, "utf8")].reduce((h, c) => (h * 33n + BigInt(c)) % 2n ** 32n, 0n);
@@ -53,6 +53,22 @@ test("one request at a time, relative URLs, GET query strings", async () => {
         "settings?action=set&id=" + keyId("kaia_wake").toString(16) + "&value=5", "settings?action=click&id=" + ID_CHECK_UPDATES.toString(16),
     ]);
     for (const u of f.log) assert.ok(!u.startsWith("/") && !/^\w+:/.test(u), "relative: " + u);
+});
+
+test("the try-out query for each event: the draft's style and look, the wake's speed, a state's 6 s", async () => {
+    const f = fakeClock(() => ({ status: 200, json: { ok: true } }));
+    const api = new ClockApi(f.send);
+    const s = { ...DEFAULTS, kaia_anim: 2, kaia_wake: 13, kaia_wake_speed: 150, kaia_listen: 4, kaia_think: 0, kaia_speak: 8, kaia_done: 3, kaia_error: 6, kaia_notify: 7 };
+    for (const name of ["wake", "listening", "thinking", "speaking", "done", "error", "notify"]) await api.anim(name, tryOut(name, s));
+    assert.deepEqual(f.log, [
+        "kaia/anim?name=wake&style=2&look=13&speed=150",
+        "kaia/anim?name=listening&style=2&look=4&ms=6000",
+        "kaia/anim?name=thinking&style=2&look=0&ms=6000",
+        "kaia/anim?name=speaking&style=2&look=8&ms=6000",
+        "kaia/anim?name=done&style=2&look=3",
+        "kaia/anim?name=error&style=2&look=6",
+        "kaia/anim?name=notify&style=2&look=7",
+    ]);
 });
 
 test("a failed request does not stop the queue", async () => {
@@ -126,6 +142,28 @@ test("the mock clock answers the whole API", async () => {
     assert.equal(p.speed, 200);
     await api.set(keyId("kaia_wake_speed"), 150);
     assert.equal((await api.state()).settings.kaia_wake_speed, 150);
+    // v1.6: the looks per event are settings, look= is a try-out of one, a bad look is 400
+    for (const k of ["kaia_listen", "kaia_think", "kaia_speak", "kaia_done", "kaia_error", "kaia_notify"]) assert.equal(st.settings[k], 0, k);
+    await api.set(keyId("kaia_listen"), 6);
+    await api.anim("wake", { style: 1, look: 12, speed: 100 });
+    let q = (await api.state()).play;
+    assert.equal(q.look, 12);
+    assert.equal(q.wake, 12);
+    await new Promise((r) => setTimeout(r, 1900));  // the wake (1,8 s) turned into listening: the listening's look
+    q = (await api.state()).play;
+    assert.equal(q.name, "listening");
+    assert.equal(q.look, 6);
+    await api.anim("done", { style: 2, look: 5 });
+    q = (await api.state()).play;
+    assert.deepEqual([q.name, q.style, q.look], ["done", 2, 5]);
+    await api.anim("notify", {});
+    assert.equal((await api.state()).play.look, 0, "absent = the saved key");
+    await assert.rejects(api.anim("done", { look: 9 }), /HTTP 400/);
+    await assert.rejects(api.anim("wake", { look: 15 }), /HTTP 400/);
+    await assert.rejects(api.anim("error", { look: "x" }), /HTTP 400/);
+    await api.anim("wake", { wake: 14 });  // the old name of look for the wake
+    assert.equal((await api.state()).play.look, 14);
+    assert.equal((await api.state()).settings.kaia_wake, 0, "a try-out saves nothing");
     mock.M.mode = "auth";
     await assert.rejects(api.state(), AuthError);
     api.pass = MOCK_PASS;

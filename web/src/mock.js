@@ -1,11 +1,13 @@
-// ?mock: a clock inside the page. It answers the whole v1.5 API from sample data (never the owner's) with a
+// ?mock: a clock inside the page. It answers the whole v1.6 API from sample data (never the owner's) with a
 // running clock, and draws /kaia/frame with the same renderer, so the page works from disk and in the shots.
 import { hash32, keyId, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, ledsHex } from "./api.js";
 import { A_WAKE, ANIM_NAMES, dimAll, useMatrix } from "./kaia.js";
 import { BallMatrix, gfx_font_3x5 } from "./matrix.js";
 import { duckAfter, playColor, renderFrame, resolvePlay } from "./frame.js";
 import { brightNow, isNight } from "./redraw.js";
-import { DEFAULTS, TEXT_KEYS } from "./settings.js";
+import { LOOK_COUNT } from "./looks.js";
+import { DEFAULTS, LOOK_KEYS, TEXT_KEYS } from "./settings.js";
+import { WAKE_COUNT } from "./wakes.js";
 
 export const MOCK_PASS = "kaia";
 
@@ -18,7 +20,7 @@ export function createMock() {
         kaia_anim: 1, kaia_wake: 0, kaia_wake_speed: 100, log_host: "192.168.1.20:9000", wifi_ssid: "HomeNet-2G",
     });
     const M = {
-        mode: "ok", update: false, text: false, version: "1.5.0", wifi: { ssid: "HomeNet-2G", ip: "192.168.1.47", rssi: -58 },
+        mode: "ok", update: false, text: false, version: "1.6.0", wifi: { ssid: "HomeNet-2G", ip: "192.168.1.47", rssi: -58 },
         pass: "", play: null, down: 0, settings: S,
     };
     const millis = () => boot + Math.floor(performance.now() - t0);
@@ -73,7 +75,10 @@ export function createMock() {
             light: light(ms), bright: brightNow(S, light(ms)), night: night(ms), overlay: M.text ? "text" : p ? "anim" : "none",
             anim: p ? ANIM_NAMES[p.anim] : null, uptime: (ms / 1000) | 0, reset: "Power On", heap: 23816, block: 17432, crash: null,
             ms, update: M.update,
-            play: p && !M.text ? { name: ANIM_NAMES[p.anim], style: p.style, wake: p.wake, speed: p.speed, t: p.t, color: playColor(S, p).toString(16).padStart(6, "0") } : null,
+            play: p && !M.text ? {
+                name: ANIM_NAMES[p.anim], style: p.style, look: p.look, wake: M.play.anim === A_WAKE ? M.play.look : S.kaia_wake, speed: p.speed, t: p.t,
+                color: playColor(S, p).toString(16).padStart(6, "0"),
+            } : null,
             settings: Object.fromEntries(Object.keys(DEFAULTS).filter((k) => !["wifi_ssid", "wifi_pass", "page_pass"].includes(k)).map((k) => [k, S[k]])),
         };
     }
@@ -95,12 +100,15 @@ export function createMock() {
                     M.play = null;
                     return { status: 200, json: { ok: true } };
                 }
+                // look= (wake= is its old name for the wake): this call's look, a try-out; absent = the saved one
+                const lq = q.has("look") ? q.get("look") : n === A_WAKE && q.has("wake") ? q.get("wake") : null;
+                if (lq != null && !(/^\d+$/.test(lq) && +lq < (n === A_WAKE ? WAKE_COUNT : LOOK_COUNT))) return { status: 400, json: { error: "look" } };
                 const style = q.has("style") ? +q.get("style") : S.kaia_anim;
                 if (!(style >= 1 && style <= 3)) return { status: 200, json: { ok: true } };
                 M.text = false;
                 M.play = {
                     anim: n, style, start: ms, ms: q.has("ms") ? +q.get("ms") : 30000,
-                    wake: n === A_WAKE && q.has("wake") ? +q.get("wake") : S.kaia_wake,
+                    look: lq != null ? +lq : S[LOOK_KEYS[n]], lk: S.kaia_listen,
                     speed: n === A_WAKE && q.has("speed") ? +q.get("speed") : S.kaia_wake_speed,
                     color: q.has("color") ? parseInt(q.get("color"), 16) : null,
                 };
@@ -112,7 +120,7 @@ export function createMock() {
                     if (id === ID_OTA_UPDATE) {
                         M.down = ms + 4000;
                         M.update = false;
-                        M.version = "1.5.1";
+                        M.version = "1.6.1";
                         return { status: 200, json: null };
                     }
                     const k = keyOf(id);
@@ -127,7 +135,7 @@ export function createMock() {
                     else if (id === ID_WIFI_SAVE) {
                         M.wifi.ssid = S.wifi_ssid;
                         if (M.mode === "ap") M.mode = "ok";
-                    } else if (id === ID_CHECK_UPDATES) M.update = M.update || M.version === "1.5.0";
+                    } else if (id === ID_CHECK_UPDATES) M.update = M.update || M.version === "1.6.0";
                 }
                 return { status: 200, json: null };
             }

@@ -225,6 +225,46 @@ export function dimAll(k) {
     for (let i = 0; i < MX_LED_AMOUNT; i++) matrix.setLED(i, dim(matrix.getLED(i), k));
 }
 
+// ================= the helpers of v1.6 (KAIA-173): positions, distances, hashes =================
+// p = 4·(x − 19), q = 7·(row − 3) (b_x, b_row of wakes.js): a ball from the middle in 1/8 balls, p to the right, q down
+
+// the ball at x half-balls across (0..38) in a row, or -1
+export function ballRX(x, row) {
+    if (row < 0 || row > 6) return -1;
+    return ledDiag((x - 2 + row) >> 1, row);
+}
+
+// the ball nearest to (p, q), 1/8 ball from the middle (p to the right, q down), or -1
+export function ballAt(p, q) {
+    if (p < -80 || p > 80 || q < -24 || q > 24) return -1;
+    return ballRX(((p + 76) * 2 + 4) / 8 | 0, ((q + 21) * 2 + 7) / 14 | 0);
+}
+
+// the length of (dx, dy) as max + 3/8 min: within 7 % of the true one, no square root
+export function oct(dx, dy) {
+    dx = abs(dx);
+    dy = abs(dy);
+    return dx > dy ? dx + (dy * 3 >> 3) : dy + (dx * 3 >> 3);
+}
+
+// the distance from (p, q) to the segment s = [x0, y0, x1, y1], drawn up to v / 256 of its length (v > 0)
+export function segDist(p, q, s, v) {
+    const dx = s[2] - s[0], dy = s[3] - s[1];
+    let u = ((p - s[0]) * dx + (q - s[1]) * dy) * 256 / (dx * dx + dy * dy) | 0;
+    u = u < 0 ? 0 : u > v ? v : u;
+    return oct(p - s[0] - (dx * u / 256 | 0), q - s[1] - (dy * u / 256 | 0));
+}
+
+// a hash of n, 0..255: h1 of the ball tables for any number
+export function hash8(n) {
+    return Math.imul(n + 1, 2654435761) >>> 24;  // (uint32_t)(n + 1) * 2654435761u >> 24
+}
+
+// put() for a ball that may be missing (-1)
+export function putb(i, color, a) {
+    if (i >= 0) put(i, color, a);
+}
+
 // ================= 1: ripple from the centre =================
 
 export function rippleState(n, t, col, k) {
