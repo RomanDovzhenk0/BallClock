@@ -1,4 +1,4 @@
-// firmware/src/palettes.cpp: the 31 palettes as FastLED 3.7.7 builds them into CRGBPalette16
+// firmware/src/palettes.cpp: the 61 palettes (0–30 of v1.5, 31–60 new in v1.6) as FastLED 3.7.7 builds them into CRGBPalette16
 // (colorpalettes.cpp for the built-in ones, CRGBPalette16 = TProgmemRGBGradientPalette for the gradients)
 // and getPaletteColor → ColorFromPalette16 (LINEARBLEND) → nscale8x3_video.
 import { qadd8, scale8, scale8Video } from "./lib8.js";
@@ -50,6 +50,38 @@ const gummy_gp = [0, 8, 47, 5, 31, 77, 122, 6, 63, 249, 237, 7, 95, 232, 51, 1, 
 const leo_gp = [0, 0, 0, 0, 16, 0, 0, 0, 32, 0, 0, 0, 18, 0, 0, 0, 64, 16, 8, 0, 80, 80, 40, 0, 96, 16, 8, 0, 112, 0, 0, 0, 128, 0, 0, 0,
     144, 0, 0, 0, 160, 0, 0, 0, 176, 0, 0, 0, 192, 0, 0, 0, 208, 0, 0, 0, 224, 0, 0, 0, 240, 0, 0, 0, 255, 0, 0, 0];
 const aurora_gp = [0, 17, 177, 13, 64, 121, 242, 5, 128, 25, 173, 121, 192, 250, 77, 127, 255, 171, 101, 221];
+// v1.6 (KAIA-172), back_pal 31–60; the old 31 never move. 38–40 come from FastLED's Pacifica.ino (pacifica_palette_1, _3)
+// and TwinkleFox.ino (Ice_p), the rest are KAIA-172's own. Each one loops: its last stop is its first.
+const Amber_gp = [0, 255, 140, 0, 64, 255, 190, 40, 128, 200, 80, 0, 192, 255, 170, 30, 255, 255, 140, 0];
+const Candle_gp = [0, 120, 40, 0, 70, 255, 150, 30, 130, 255, 210, 110, 190, 255, 150, 30, 255, 120, 40, 0];
+const Terracotta_gp = [0, 168, 72, 40, 85, 222, 128, 70, 170, 140, 50, 40, 255, 168, 72, 40];
+const PeachFizz_gp = [0, 255, 140, 110, 85, 255, 190, 140, 170, 240, 100, 100, 255, 255, 140, 110];
+const Coral_gp = [0, 255, 80, 70, 90, 255, 140, 90, 170, 230, 50, 100, 255, 255, 80, 70];
+const Honey_gp = [0, 255, 180, 20, 100, 255, 215, 90, 180, 200, 120, 10, 255, 255, 180, 20];
+const Embers_gp = [0, 40, 6, 0, 60, 180, 30, 0, 120, 255, 100, 10, 180, 180, 30, 0, 255, 40, 6, 0];
+const Pacifica_gp = [0, 0, 5, 7, 96, 0, 1, 20, 160, 0, 0, 38, 208, 0, 0, 70, 232, 20, 85, 75, 244, 40, 170, 80, 255, 0, 5, 7];
+const PacificaDeep_gp = [0, 0, 2, 8, 68, 0, 8, 32, 136, 0, 14, 57, 204, 0, 28, 112, 238, 16, 64, 191, 248, 32, 96, 255, 255, 0, 2, 8];
+const IceTwinkle_gp = [0, 12, 16, 64, 110, 24, 40, 110, 190, 24, 32, 128, 225, 80, 128, 192, 255, 12, 16, 64];
+const Glacier_gp = [0, 200, 240, 255, 85, 90, 180, 240, 170, 30, 90, 200, 255, 200, 240, 255];
+const Lagoon_gp = [0, 0, 180, 170, 85, 0, 120, 200, 170, 10, 60, 150, 255, 0, 180, 170];
+const Twilight_gp = [0, 40, 30, 110, 85, 90, 60, 170, 170, 30, 70, 160, 255, 40, 30, 110];
+const Moonlight_gp = [0, 200, 210, 235, 100, 110, 130, 200, 190, 40, 50, 120, 255, 200, 210, 235];
+const Meadow_gp = [0, 60, 160, 40, 85, 170, 210, 60, 170, 30, 130, 60, 255, 60, 160, 40];
+const Moss_gp = [0, 20, 70, 20, 100, 90, 140, 30, 180, 40, 110, 50, 255, 20, 70, 20];
+const Autumn_gp = [0, 200, 60, 10, 70, 240, 150, 20, 140, 150, 40, 20, 200, 100, 50, 10, 255, 200, 60, 10];
+const Sakura_gp = [0, 255, 190, 205, 100, 245, 130, 170, 180, 255, 225, 230, 255, 255, 190, 205];
+const Dunes_gp = [0, 230, 190, 120, 90, 200, 130, 70, 170, 150, 90, 60, 255, 230, 190, 120];
+const Tropics_gp = [0, 0, 120, 60, 80, 60, 200, 90, 160, 240, 200, 40, 210, 255, 90, 60, 255, 0, 120, 60];
+const Dawn_gp = [0, 80, 40, 140, 80, 230, 90, 120, 150, 255, 170, 60, 210, 255, 220, 140, 255, 80, 40, 140];
+const NeonNight_gp = [0, 255, 0, 140, 85, 120, 0, 255, 170, 0, 220, 255, 255, 255, 0, 140];
+const Synthwave_gp = [0, 255, 40, 160, 70, 160, 30, 255, 140, 30, 60, 255, 200, 0, 230, 230, 255, 255, 40, 160];
+const Toxic_gp = [0, 150, 255, 0, 90, 0, 200, 60, 170, 0, 60, 20, 220, 60, 230, 20, 255, 150, 255, 0];
+const Electric_gp = [0, 0, 60, 255, 80, 0, 220, 255, 140, 255, 255, 255, 200, 0, 150, 255, 255, 0, 60, 255];
+const Candy_gp = [0, 255, 60, 160, 64, 255, 200, 40, 128, 60, 230, 200, 192, 170, 90, 255, 255, 255, 60, 160];
+const Laser_gp = [0, 255, 20, 20, 64, 255, 20, 200, 128, 20, 60, 255, 192, 20, 255, 120, 255, 255, 20, 20];
+const Ultraviolet_gp = [0, 90, 0, 200, 100, 200, 30, 255, 170, 255, 120, 255, 255, 90, 0, 200];
+const Linen_gp = [0, 235, 215, 185, 100, 215, 175, 140, 190, 190, 200, 200, 255, 235, 215, 185];
+const DuskMist_gp = [0, 120, 110, 150, 100, 160, 140, 170, 190, 110, 130, 160, 255, 120, 110, 150];
 
 // colorutils.cpp fill_gradient_RGB: saccum87 deltas (int16), accum88 (uint16)
 function fillGradientRGB(e, startpos, sc, endpos, ec) {
@@ -101,13 +133,32 @@ export function gradientTo16(gp) {
 export const PAL_NAMES = ["HeatColors", "Fire", "WoodFireColors", "NormalFire", "LithiumFireColors", "SodiumFireColors", "CopperFireColors",
     "AlcoholFireColors", "LavaColors", "PartyColors", "RainbowColors", "RainbowStripeColors", "CloudColors", "OceanColors", "ForestColors",
     "Sunset_Real", "Dkbluered", "OptimusPrime", "WarmGrad", "ColdGrad", "HotGrad", "PinkGrad", "Comfy", "Cyperpunk", "Girl", "Xmas", "Acid",
-    "BlueSmoke", "Gummy", "Leo", "Aurora"];
+    "BlueSmoke", "Gummy", "Leo", "Aurora",
+    "Amber", "Candle", "Terracotta", "PeachFizz", "Coral", "Honey", "Embers", "Pacifica", "PacificaDeep", "IceTwinkle", "Glacier", "Lagoon",
+    "Twilight", "Moonlight", "Meadow", "Moss", "Autumn", "Sakura", "Dunes", "Tropics", "Dawn", "NeonNight", "Synthwave", "Toxic", "Electric",
+    "Candy", "Laser", "Ultraviolet", "Linen", "DuskMist"];
 
 // paletteArr[] in palettes.cpp order
 export const PALETTES = [HeatColors_p, Fire_gp, WoodFireColors_p, NormalFire_p, LithiumFireColors_p, SodiumFireColors_p, CopperFireColors_p,
     AlcoholFireColors_p, LavaColors_p, PartyColors_p, RainbowColors_p, RainbowStripeColors_p, CloudColors_p, OceanColors_p, ForestColors_p,
     Sunset_Real_gp, dkbluered_gp, Optimus_Prime_gp, warmGrad_gp, coldGrad_gp, hotGrad_gp, pinkGrad_gp, comfy_gp, cyperpunk_gp, girl_gp,
-    xmas_gp, acid_gp, blueSmoke_gp, gummy_gp, leo_gp, aurora_gp].map((p, i) => (i === 1 || i >= 15 ? gradientTo16(p) : p));  // the _gp ones
+    xmas_gp, acid_gp, blueSmoke_gp, gummy_gp, leo_gp, aurora_gp,
+    Amber_gp, Candle_gp, Terracotta_gp, PeachFizz_gp, Coral_gp, Honey_gp, Embers_gp, Pacifica_gp, PacificaDeep_gp, IceTwinkle_gp, Glacier_gp,
+    Lagoon_gp, Twilight_gp, Moonlight_gp, Meadow_gp, Moss_gp, Autumn_gp, Sakura_gp, Dunes_gp, Tropics_gp, Dawn_gp, NeonNight_gp, Synthwave_gp,
+    Toxic_gp, Electric_gp, Candy_gp, Laser_gp, Ultraviolet_gp, Linen_gp, DuskMist_gp].map((p, i) => (i === 1 || i >= 15 ? gradientTo16(p) : p));  // the _gp ones
+
+// the picker's Russian names and groups (KAIA-172), by back_pal
+export const PAL_RU = ["Жар", "Огонь", "Дрова", "Пламя", "Литий", "Натрий", "Медь", "Спирт", "Лава", "Вечеринка", "Радуга", "Радуга-полосы",
+    "Облака", "Океан", "Лес", "Закат", "Сине-красная", "Оптимус", "Тёплая", "Холодная", "Горячая", "Розовая", "Уют", "Киберпанк", "Девчачья",
+    "Новый год", "Кислота", "Синий дым", "Мармелад", "Лев", "Аврора",
+    "Янтарь", "Свеча", "Терракота", "Персик", "Коралл", "Мёд", "Угли", "Пасифика", "Тихий океан", "Лёд", "Ледник", "Лагуна", "Сумерки",
+    "Лунный свет", "Луг", "Мох", "Осень", "Сакура", "Дюны", "Тропики", "Заря", "Неон", "Синтвейв", "Токсик", "Электрик", "Леденец", "Лазер",
+    "Ультрафиолет", "Лён", "Дымка"];
+export const PAL_GROUPS = ["Огонь", "Тёплые", "Холодные", "Природа", "Неон", "Спокойные", "Разное"];
+export const PAL_GROUP = [0, 0, 0, 0, 1, 0, 3, 2, 0, 4, 4, 4, 2, 2, 3, 1, 6, 6, 1, 2, 0, 1, 6, 4, 1, 6, 4, 5, 4, 6, 3,
+    1, 1, 1, 1, 1, 1, 0, 2, 2, 2, 2, 2, 5, 5, 3, 3, 3, 3, 3, 3, 1, 4, 4, 4, 4, 4, 4, 4, 5, 5];
+// the picker's order: group by group, by index within each
+export const PAL_ORDER = PAL_GROUPS.flatMap((g, k) => PAL_GROUP.map((x, i) => (x === k ? i : -1)).filter((i) => i >= 0));
 
 // palettes.cpp ColorFromPalette16 (LINEARBLEND); index uint16, brightness uint8
 export function colorFromPalette16(pal, index, brightness) {

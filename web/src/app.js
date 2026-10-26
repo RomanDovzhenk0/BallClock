@@ -7,7 +7,7 @@ import { A_WAKE, ANIM_NAMES, shot_ms, useMatrix } from "./kaia.js";
 import { BallMatrix } from "./matrix.js";
 import { createMock, MOCK_PASS } from "./mock.js";
 import { fitCanvas, paint } from "./paint.js";
-import { PAL_NAMES, PALETTES } from "./palettes.js";
+import { PAL_GROUP, PAL_GROUPS, PAL_NAMES, PAL_ORDER, PAL_RU, PALETTES } from "./palettes.js";
 import { brightNow, isNight } from "./redraw.js";
 import { normalize, rawOf } from "./settings.js";
 import { WAKE_COUNT, WAKE_NAMES, wake_ms, wakeLength } from "./wakes.js";
@@ -89,13 +89,13 @@ const WDOC = {
 };
 
 const GROUPS = [
-    { id: "clock", tab: "look", title: "Часы", f: [
+    { id: "clock", tab: "look", wide: 1, cls: "three", title: "Часы", f: [
         { k: "clock_style", t: "sel", l: "Шрифт", o: ["Нет", "Тип 1", "Тип 2", "Тип 3"] },
         { k: "clock_style_zero", t: "sw", l: "Ведущий ноль", h: "09:05 вместо 9:05" },
         { k: "clock_color", t: "col", l: "Цвет" }] },
-    { id: "back", tab: "look", title: "Фон", f: [
+    { id: "back", tab: "look", wide: 1, cls: "two", title: "Фон", f: [
         { k: "back_mode", t: "sel", l: "Режим", o: ["Нет", "Градиент", "Перлин"] },
-        { k: "back_pal", t: "pal", l: "Палитра", w: 1, if: (s) => s.back_mode > 0 },
+        { k: "back_pal", t: "pal", l: "Палитра", if: (s) => s.back_mode > 0 },
         { k: "back_bright", t: "rng", l: "Яркость", min: 0, max: 255, w: 1, if: (s) => s.back_mode > 0 },
         { k: "back_speed", t: "rng", l: "Скорость", min: 0, max: 100, w: 1, if: (s) => s.back_mode > 0 },
         { k: "back_scale", t: "rng", l: "Масштаб", min: 0, max: 100, w: 1, if: (s) => s.back_mode > 0 },
@@ -162,7 +162,7 @@ function fmtAny(k, v) {
         case "sw": return v ? "вкл" : "выкл";
         case "col": return hexs(v);
         case "time": return hm(v);
-        case "pal": return PAL_NAMES[v];
+        case "pal": return PAL_RU[v];
         case "wake": return WAKE_NAMES[v];
         case "pwd": return v ? "••••" : "пусто";
         case "num": return (v > 0 ? "+" : "") + v;
@@ -180,7 +180,7 @@ function fieldHTML(f, s) {
     switch (f.t) {
         case "sw": return wrap('<label class="sw"><input type="checkbox" data-k="' + f.k + '"' + (v ? " checked" : "") + ' aria-label="' + lab + '"><i></i></label>');
         case "sel": return wrap('<select data-k="' + f.k + '" aria-label="' + lab + '">' + opts(f.o, v) + "</select>");
-        case "pal": return wrap('<div class="pal"><select data-k="' + f.k + '" aria-label="' + lab + '">' + opts(PAL_NAMES, v) + '</select><i class="palbar" style="background:' + palCss(v) + '"></i></div>');
+        case "pal": return pickerHTML(f);
         case "col": return wrap('<input type="color" data-k="' + f.k + '" value="' + hexs(v) + '" aria-label="' + lab + '">');
         case "rng": return wrap('<div class="rng"><input type="range" data-k="' + f.k + '" min="' + f.min + '" max="' + f.max + '" value="' + v + '" aria-label="' + lab + '"><output>' + fmtVal(f.k, v) + "</output></div>");
         case "txt": return wrap('<input type="text" data-k="' + f.k + '" value="' + esc(v) + '" autocomplete="off" aria-label="' + lab + '">');
@@ -212,6 +212,44 @@ function fieldHTML(f, s) {
     return "";
 }
 
+// ================= the palette picker (KAIA-172 b): the current one big with ‹ ›, then one strip per group =================
+
+function pickerHTML(f) {
+    const strips = PAL_GROUPS.map((g, k) => {
+        const items = PAL_ORDER.filter((i) => PAL_GROUP[i] === k);
+        return '<div class="brow"><h4>' + g + "<small>" + items.length + '</small></h4><div class="bscr">' +
+            items.map((i) => '<button class="pc" data-pick="' + i + '" title="' + PAL_NAMES[i] + '"><i class="pb" style="background:' + palCss(i) + '"></i><span>' + esc(PAL_RU[i]) + "</span></button>").join("") + "</div></div>";
+    });
+    return '<div class="fld stack" data-f="' + f.k + '"><div class="fl"><span>' + esc(f.l) + "<small>Нажмите образец или листайте ‹ ›: превью меняется сразу. Кружок ● — палитра, которая сейчас на часах.</small></span>" + RVB(f.k) + "</div>" +
+        '<div class="bk"><button class="ico" data-pstep="-1" aria-label="Предыдущая палитра">‹</button><div class="bkc"><div class="bkt"><b id="pcn"></b><small id="pcm"></small></div><i class="pb" id="pcb"></i><div class="pcs" id="pcs"></div></div><button class="ico" data-pstep="1" aria-label="Следующая палитра">›</button></div>' +
+        '<div class="brows">' + strips.join("") + "</div></div>";
+}
+
+function updPal() {
+    const cur = S().back_pal, sav = SAVED.back_pal;
+    if (!$("#pcn")) return;
+    $("#pcn").textContent = PAL_RU[cur];
+    $("#pcm").textContent = PAL_GROUPS[PAL_GROUP[cur]] + " · №" + cur;
+    $("#pcb").style.background = palCss(cur);
+    $("#pcs").innerHTML = cur === sav ? "<span>Эта палитра сейчас на часах</span>" : "<span>На часах: " + esc(PAL_RU[sav]) + '</span><i class="pb" style="background:' + palCss(sav) + '"></i>';
+    $$(".pc").forEach((b) => {
+        const i = +b.dataset.pick;
+        b.classList.toggle("sel", i === cur);
+        b.classList.toggle("sv", i === sav);
+    });
+}
+
+// ‹ ›: the next palette in the picker's order, and its swatch scrolled into its strip
+function stepPal(d) {
+    const j = PAL_ORDER.indexOf(S().back_pal);
+    setVal("back_pal", PAL_ORDER[(j + d + PAL_ORDER.length) % PAL_ORDER.length]);
+    const b = $(".pc.sel");
+    if (b) {
+        const sc = b.parentNode;
+        if (sc.scrollWidth > sc.clientWidth + 2) sc.scrollLeft = b.offsetLeft - sc.offsetLeft - sc.clientWidth / 2 + b.offsetWidth / 2;
+    }
+}
+
 function docHTML(id, s) {
     const eff = wakeId(s, id), d = WDOC[eff];
     return '<div class="doc"><h4>' + (id ? "№ " + id : "№ 0 → № " + eff) + " · " + WAKE_NAMES[eff] + "<span>" + fmtS(wake_ms[eff]) + " при 1× · " + fmtS(wakeLength(eff, s.kaia_wake_speed)) + " при " + s.kaia_wake_speed + " %</span></h4><p>" + d[0] + "</p><pre>" + esc(d[1]) + "</pre><p>Тайминг: " + d[2] + ". Таблицы: " + d[3] + ".</p></div>";
@@ -233,6 +271,7 @@ function renderGroup(g) {
     if (!el) return;
     el.querySelector(".gbody").innerHTML = g.f.filter((f) => !f.if || f.if(s)).map((f) => fieldHTML(f, s)).join("");
     if (g.id === "kaia") bindTiles();
+    if (g.id === "back") updPal();
     markDirty();
     refreshLive();
     filmSoon();
@@ -243,7 +282,7 @@ function renderAll() {
 }
 
 function buildGroups() {
-    $("#groups").innerHTML = GROUPS.map((g) => '<section class="card grp' + (g.wide ? " wide" : "") + '" id="g-' + g.id + '" data-tab="' + g.tab + '"><h2>' + g.title + '</h2><div class="gbody"></div></section>').join("") +
+    $("#groups").innerHTML = GROUPS.map((g) => '<section class="card grp' + (g.wide ? " wide" : "") + '" id="g-' + g.id + '" data-tab="' + g.tab + '"><h2>' + g.title + '</h2><div class="gbody' + (g.cls ? " " + g.cls : "") + '"></div></section>').join("") +
         '<section class="card film grp wide" id="film" data-tab="kaia"><h2>Пробуждения по кадрам</h2><p class="hint">Те же формулы, шесть моментов каждого пробуждения при 100 %, с вашими фоном, шрифтом и цветом Каи.</p><div id="filmbody"></div></section>';
     $("#tabs").innerHTML = TABS.map((t) => '<button class="tab" data-tab="' + t.id + '"><svg viewBox="0 0 24 24">' + t.i + "</svg><span>" + t.t + "</span></button>").join("");
 }
@@ -283,6 +322,7 @@ function setVal(k, v) {
     if (P.src === "now") setSrc("draft");
     markDirty();
     if (k === "kaia_wake_speed" || k === "kaia_wake") updWakeUI();
+    if (k === "back_pal") updPal();
     filmSoon();
 }
 
@@ -905,6 +945,8 @@ document.addEventListener("click", (e) => {
         renderGroup(groupOf(d.rv));
         return;
     }
+    if (d.pick != null) return setVal("back_pal", +d.pick);
+    if (d.pstep) return stepPal(+d.pstep);
     if (d.step) {
         const k = d.k2, f = FLD[k], v = Math.max(f.min, Math.min(f.max, S()[k] + +d.step));
         setVal(k, v);

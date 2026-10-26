@@ -10,7 +10,7 @@ import * as K from "../src/kaia.js";
 import { blend, sin8 } from "../src/lib8.js";
 import { diagToLed, font_3x5_diag, font_4x5, gfx_font_3x5, ledDiag, rgb565to888, rgb565to888full, rgb888to565, xyToLed } from "../src/matrix.js";
 import { inoise16 } from "../src/noise.js";
-import { colorFromPalette16, gradientTo16, PAL_NAMES, PALETTES } from "../src/palettes.js";
+import { colorFromPalette16, gradientTo16, PAL_GROUP, PAL_GROUPS, PAL_NAMES, PAL_ORDER, PAL_RU, PALETTES } from "../src/palettes.js";
 import { brightNow, isNight } from "../src/redraw.js";
 import { DEFAULTS } from "../src/settings.js";
 
@@ -63,8 +63,8 @@ test("palettes: a gradient palette as FastLED converts it, and ColorFromPalette1
     // Fire_gp: 0 black, 128 red, 224 yellow, 255 white → 16 slots with the slot rule for < 16 entries
     assert.deepEqual(PALETTES[1], [0x000000, 0x1f0000, 0x3f0000, 0x5f0000, 0x7f0000, 0x9f0000, 0xbf0000, 0xdf0000, 0xff0000,
         0xff0000, 0xff3300, 0xff6600, 0xff9900, 0xffcc00, 0xffff00, 0xffff00]);
-    assert.equal(PALETTES.length, 31);
-    assert.equal(PAL_NAMES.length, 31);
+    assert.equal(PALETTES.length, 61);
+    assert.equal(PAL_NAMES.length, 61);
     for (const p of PALETTES) assert.equal(p.length, 16);
     assert.equal(colorFromPalette16(PALETTES[0], 0x1080, 255), 0x340000);  // (51·248 >> 8) + (102·9 >> 8)
     assert.equal(colorFromPalette16(PALETTES[0], 0x1080, 128), 0x1b0000);  // nscale8x3_video: 26 + 1
@@ -72,15 +72,33 @@ test("palettes: a gradient palette as FastLED converts it, and ColorFromPalette1
 });
 
 test("the gradient palettes are the ones in palettes.cpp", () => {
-    const text = read("src/palettes.cpp");
+    const text = read("src/palettes.cpp").replace(/\r\n/g, "\n");
     const gp = {};
     for (const m of text.matchAll(/DEFINE_GRADIENT_PALETTE\((\w+)\)\s*\{([^}]*)\}/g)) gp[m[1]] = [...m[2].replace(/\/\/[^\n]*/g, "").matchAll(/\d+/g)].map((x) => +x);
-    const order = [...text.matchAll(/^\s+(\w+_(?:p|gp)),$/gm)].map((m) => m[1]);
-    assert.equal(order.length, 31);
+    const order = [...text.split("paletteArr[] = {")[1].split("};")[0].matchAll(/^\s+(\w+_(?:p|gp)),$/gm)].map((m) => m[1]);
+    assert.equal(order.length, 61);
     order.forEach((name, i) => {
         if (gp[name]) assert.deepEqual(PALETTES[i], gradientTo16(gp[name]), name);
     });
-    assert.equal(Object.keys(gp).length, 17);
+    // all 30 new ones (31–60) are gradients in palettes.cpp, and paletteList names them in the same order
+    assert.equal(Object.keys(gp).length, 47);
+    for (let i = 31; i < 61; i++) assert.ok(gp[order[i]], order[i] + " is a DEFINE_GRADIENT_PALETTE");
+    const list = text.split("paletteList[] =")[1].split(";\n")[0].match(/"[^"]*"/g).join("").replace(/"/g, "").split(";");
+    assert.deepEqual(list, PAL_NAMES);
+    assert.deepEqual(order.slice(31).map((n) => n.replace(/_gp$/, "")), PAL_NAMES.slice(31));
+    // each new one loops: its last stop is its first, so the moving gradient shows no seam
+    for (let i = 31; i < 61; i++) {
+        const b = gp[order[i]];
+        assert.deepEqual(b.slice(-3), b.slice(1, 4), order[i]);
+    }
+});
+
+test("the picker: a Russian name and a group for every palette, each palette once in its order", () => {
+    assert.equal(PAL_RU.length, 61);
+    assert.equal(PAL_GROUP.length, 61);
+    assert.ok(PAL_GROUP.every((g) => g >= 0 && g < PAL_GROUPS.length));
+    assert.deepEqual([...PAL_ORDER].sort((a, b) => a - b), [...Array(61).keys()]);
+    assert.equal(new Set(PAL_RU).size, 61);
 });
 
 test("the layout and the fonts are the firmware's tables", () => {

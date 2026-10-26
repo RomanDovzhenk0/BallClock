@@ -283,6 +283,264 @@ DEFINE_GRADIENT_PALETTE(aurora_gp){
     255, 171, 101, 221  // Purple
 };
 
+// 31 Янтарь (Тёплые)
+DEFINE_GRADIENT_PALETTE(Amber_gp){
+    0, 255, 140, 0,
+    64, 255, 190, 40,
+    128, 200, 80, 0,
+    192, 255, 170, 30,
+    255, 255, 140, 0
+};
+
+// 32 Свеча (Тёплые)
+DEFINE_GRADIENT_PALETTE(Candle_gp){
+    0, 120, 40, 0,
+    70, 255, 150, 30,
+    130, 255, 210, 110,
+    190, 255, 150, 30,
+    255, 120, 40, 0
+};
+
+// 33 Терракота (Тёплые)
+DEFINE_GRADIENT_PALETTE(Terracotta_gp){
+    0, 168, 72, 40,
+    85, 222, 128, 70,
+    170, 140, 50, 40,
+    255, 168, 72, 40
+};
+
+// 34 Персик (Тёплые)
+DEFINE_GRADIENT_PALETTE(PeachFizz_gp){
+    0, 255, 140, 110,
+    85, 255, 190, 140,
+    170, 240, 100, 100,
+    255, 255, 140, 110
+};
+
+// 35 Коралл (Тёплые)
+DEFINE_GRADIENT_PALETTE(Coral_gp){
+    0, 255, 80, 70,
+    90, 255, 140, 90,
+    170, 230, 50, 100,
+    255, 255, 80, 70
+};
+
+// 36 Мёд (Тёплые)
+DEFINE_GRADIENT_PALETTE(Honey_gp){
+    0, 255, 180, 20,
+    100, 255, 215, 90,
+    180, 200, 120, 10,
+    255, 255, 180, 20
+};
+
+// 37 Угли (Огонь)
+DEFINE_GRADIENT_PALETTE(Embers_gp){
+    0, 40, 6, 0,
+    60, 180, 30, 0,
+    120, 255, 100, 10,
+    180, 180, 30, 0,
+    255, 40, 6, 0
+};
+
+// 38 Пасифика (Холодные, FastLED Pacifica.ino pacifica_palette_1)
+DEFINE_GRADIENT_PALETTE(Pacifica_gp){
+    0, 0, 5, 7,
+    96, 0, 1, 20,
+    160, 0, 0, 38,
+    208, 0, 0, 70,
+    232, 20, 85, 75,
+    244, 40, 170, 80,
+    255, 0, 5, 7
+};
+
+// 39 Тихий океан (Холодные, FastLED Pacifica.ino pacifica_palette_3)
+DEFINE_GRADIENT_PALETTE(PacificaDeep_gp){
+    0, 0, 2, 8,
+    68, 0, 8, 32,
+    136, 0, 14, 57,
+    204, 0, 28, 112,
+    238, 16, 64, 191,
+    248, 32, 96, 255,
+    255, 0, 2, 8
+};
+
+// 40 Лёд (Холодные, FastLED TwinkleFox.ino Ice_p)
+DEFINE_GRADIENT_PALETTE(IceTwinkle_gp){
+    0, 12, 16, 64,
+    110, 24, 40, 110,
+    190, 24, 32, 128,
+    225, 80, 128, 192,
+    255, 12, 16, 64
+};
+
+// 41 Ледник (Холодные)
+DEFINE_GRADIENT_PALETTE(Glacier_gp){
+    0, 200, 240, 255,
+    85, 90, 180, 240,
+    170, 30, 90, 200,
+    255, 200, 240, 255
+};
+
+// 42 Лагуна (Холодные)
+DEFINE_GRADIENT_PALETTE(Lagoon_gp){
+    0, 0, 180, 170,
+    85, 0, 120, 200,
+    170, 10, 60, 150,
+    255, 0, 180, 170
+};
+
+// 43 Сумерки (Спокойные)
+DEFINE_GRADIENT_PALETTE(Twilight_gp){
+    0, 40, 30, 110,
+    85, 90, 60, 170,
+    170, 30, 70, 160,
+    255, 40, 30, 110
+};
+
+// 44 Лунный свет (Спокойные)
+DEFINE_GRADIENT_PALETTE(Moonlight_gp){
+    0, 200, 210, 235,
+    100, 110, 130, 200,
+    190, 40, 50, 120,
+    255, 200, 210, 235
+};
+
+// 45 Луг (Природа)
+DEFINE_GRADIENT_PALETTE(Meadow_gp){
+    0, 60, 160, 40,
+    85, 170, 210, 60,
+    170, 30, 130, 60,
+    255, 60, 160, 40
+};
+
+// 46 Мох (Природа)
+DEFINE_GRADIENT_PALETTE(Moss_gp){
+    0, 20, 70, 20,
+    100, 90, 140, 30,
+    180, 40, 110, 50,
+    255, 20, 70, 20
+};
+
+// 47 Осень (Природа)
+DEFINE_GRADIENT_PALETTE(Autumn_gp){
+    0, 200, 60, 10,
+    70, 240, 150, 20,
+    140, 150, 40, 20,
+    200, 100, 50, 10,
+    255, 200, 60, 10
+};
+
+// 48 Сакура (Природа)
+DEFINE_GRADIENT_PALETTE(Sakura_gp){
+    0, 255, 190, 205,
+    100, 245, 130, 170,
+    180, 255, 225, 230,
+    255, 255, 190, 205
+};
+
+// 49 Дюны (Природа)
+DEFINE_GRADIENT_PALETTE(Dunes_gp){
+    0, 230, 190, 120,
+    90, 200, 130, 70,
+    170, 150, 90, 60,
+    255, 230, 190, 120
+};
+
+// 50 Тропики (Природа)
+DEFINE_GRADIENT_PALETTE(Tropics_gp){
+    0, 0, 120, 60,
+    80, 60, 200, 90,
+    160, 240, 200, 40,
+    210, 255, 90, 60,
+    255, 0, 120, 60
+};
+
+// 51 Заря (Тёплые)
+DEFINE_GRADIENT_PALETTE(Dawn_gp){
+    0, 80, 40, 140,
+    80, 230, 90, 120,
+    150, 255, 170, 60,
+    210, 255, 220, 140,
+    255, 80, 40, 140
+};
+
+// 52 Неон (Неон)
+DEFINE_GRADIENT_PALETTE(NeonNight_gp){
+    0, 255, 0, 140,
+    85, 120, 0, 255,
+    170, 0, 220, 255,
+    255, 255, 0, 140
+};
+
+// 53 Синтвейв (Неон)
+DEFINE_GRADIENT_PALETTE(Synthwave_gp){
+    0, 255, 40, 160,
+    70, 160, 30, 255,
+    140, 30, 60, 255,
+    200, 0, 230, 230,
+    255, 255, 40, 160
+};
+
+// 54 Токсик (Неон)
+DEFINE_GRADIENT_PALETTE(Toxic_gp){
+    0, 150, 255, 0,
+    90, 0, 200, 60,
+    170, 0, 60, 20,
+    220, 60, 230, 20,
+    255, 150, 255, 0
+};
+
+// 55 Электрик (Неон)
+DEFINE_GRADIENT_PALETTE(Electric_gp){
+    0, 0, 60, 255,
+    80, 0, 220, 255,
+    140, 255, 255, 255,
+    200, 0, 150, 255,
+    255, 0, 60, 255
+};
+
+// 56 Леденец (Неон)
+DEFINE_GRADIENT_PALETTE(Candy_gp){
+    0, 255, 60, 160,
+    64, 255, 200, 40,
+    128, 60, 230, 200,
+    192, 170, 90, 255,
+    255, 255, 60, 160
+};
+
+// 57 Лазер (Неон)
+DEFINE_GRADIENT_PALETTE(Laser_gp){
+    0, 255, 20, 20,
+    64, 255, 20, 200,
+    128, 20, 60, 255,
+    192, 20, 255, 120,
+    255, 255, 20, 20
+};
+
+// 58 Ультрафиолет (Неон)
+DEFINE_GRADIENT_PALETTE(Ultraviolet_gp){
+    0, 90, 0, 200,
+    100, 200, 30, 255,
+    170, 255, 120, 255,
+    255, 90, 0, 200
+};
+
+// 59 Лён (Спокойные)
+DEFINE_GRADIENT_PALETTE(Linen_gp){
+    0, 235, 215, 185,
+    100, 215, 175, 140,
+    190, 190, 200, 200,
+    255, 235, 215, 185
+};
+
+// 60 Дымка (Спокойные)
+DEFINE_GRADIENT_PALETTE(DuskMist_gp){
+    0, 120, 110, 150,
+    100, 160, 140, 170,
+    190, 110, 130, 160,
+    255, 120, 110, 150
+};
+
 static const TProgmemRGBPalette16 WoodFireColors_p PROGMEM = {CRGB::Black, 0x330e00, 0x661c00, 0x992900, 0xcc3700, CRGB::OrangeRed, 0xff5800, 0xff6b00, 0xff7f00, 0xff9200, CRGB::Orange, 0xffaf00, 0xffb900, 0xffc300, 0xffcd00, CRGB::Gold};             //* рыжий
 static const TProgmemRGBPalette16 NormalFire_p PROGMEM = {CRGB::Black, 0x330000, 0x660000, 0x990000, 0xcc0000, CRGB::Red, 0xff0c00, 0xff1800, 0xff2400, 0xff3000, 0xff3c00, 0xff4800, 0xff5400, 0xff6000, 0xff6c00, 0xff7800};                             // красный
 static const TProgmemRGBPalette16 LithiumFireColors_p PROGMEM = {CRGB::Black, 0x240707, 0x470e0e, 0x6b1414, 0x8e1b1b, CRGB::FireBrick, 0xc14244, 0xd16166, 0xe08187, 0xf0a0a9, CRGB::Pink, 0xff9ec0, 0xff7bb5, 0xff59a9, 0xff369e, CRGB::DeepPink};        //* пастель
@@ -324,6 +582,36 @@ CRGBPalette16 paletteArr[] = {
     gummy_gp,
     leo_gp,
     aurora_gp,
+    Amber_gp,
+    Candle_gp,
+    Terracotta_gp,
+    PeachFizz_gp,
+    Coral_gp,
+    Honey_gp,
+    Embers_gp,
+    Pacifica_gp,
+    PacificaDeep_gp,
+    IceTwinkle_gp,
+    Glacier_gp,
+    Lagoon_gp,
+    Twilight_gp,
+    Moonlight_gp,
+    Meadow_gp,
+    Moss_gp,
+    Autumn_gp,
+    Sakura_gp,
+    Dunes_gp,
+    Tropics_gp,
+    Dawn_gp,
+    NeonNight_gp,
+    Synthwave_gp,
+    Toxic_gp,
+    Electric_gp,
+    Candy_gp,
+    Laser_gp,
+    Ultraviolet_gp,
+    Linen_gp,
+    DuskMist_gp,
 };
 
 static const char paletteList[] =
@@ -357,7 +645,37 @@ static const char paletteList[] =
     "BlueSmoke;"
     "Gummy;"
     "Leo;"
-    "Aurora";
+    "Aurora;"
+    "Amber;"
+    "Candle;"
+    "Terracotta;"
+    "PeachFizz;"
+    "Coral;"
+    "Honey;"
+    "Embers;"
+    "Pacifica;"
+    "PacificaDeep;"
+    "IceTwinkle;"
+    "Glacier;"
+    "Lagoon;"
+    "Twilight;"
+    "Moonlight;"
+    "Meadow;"
+    "Moss;"
+    "Autumn;"
+    "Sakura;"
+    "Dunes;"
+    "Tropics;"
+    "Dawn;"
+    "NeonNight;"
+    "Synthwave;"
+    "Toxic;"
+    "Electric;"
+    "Candy;"
+    "Laser;"
+    "Ultraviolet;"
+    "Linen;"
+    "DuskMist";
 
 String getPaletteList() {
     return FPSTR(paletteList);

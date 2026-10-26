@@ -83,7 +83,26 @@ input[type=range]{accent-color:var(--acc);width:100%;min-height:28px}
 .sw i{position:absolute;inset:0;border-radius:99px;background:var(--tab);border:1px solid var(--line2)}
 .sw i::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:.15s}
 .sw input:checked+i{background:var(--acc);border-color:transparent}.sw input:checked+i::after{left:22px;background:var(--on)}
-.pal{display:flex;flex-direction:column;gap:6px}.palbar{display:block;height:10px;border-radius:6px;border:1px solid var(--line)}
+.ico{width:40px;height:40px;flex:none;border-radius:10px;border:1px solid var(--line2);background:var(--tab);color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:20px;line-height:1;padding:0;position:relative}
+.ico svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ico:hover{color:var(--text)}.ico.on{border-color:var(--acc);color:var(--acc)}
+.ico.chg::after{content:"";position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:var(--acc)}
+.gbody.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 28px}.gbody.three .fld{border-top:0}
+.gbody.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 32px;align-items:start}.gbody.two .fld:first-child{border-top:0}
+.gbody.two .fld[data-f=back_pal]{grid-column:1/-1;order:-1;border-top:0;border-bottom:1px solid var(--line);padding-top:4px}
+.bk{display:flex;align-items:center;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:8px}
+.bkc{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.bkt{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.bkt b{font-size:16px}.bkt small{color:var(--muted);font-size:12.5px}
+.bkc .pb{height:34px}
+.pcs{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px}.pcs .pb{flex:1;height:10px;min-width:50px}
+.pb{display:block;position:relative;height:30px;border-radius:6px;border:1px solid var(--line)}
+.brows{display:flex;flex-direction:column;margin-top:6px}
+.brow h4{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:10px 0 6px;display:flex;gap:8px;align-items:baseline}.brow h4 small{font-size:12px;text-transform:none;letter-spacing:0;font-weight:400}
+.bscr{position:relative;display:flex;flex-wrap:wrap;gap:8px}
+.pc{flex:0 0 auto;width:116px;display:flex;flex-direction:column;gap:5px;padding:6px;border-radius:10px;border:1px solid var(--line);background:var(--field);cursor:pointer;text-align:left;color:inherit;font:inherit}
+.pc:hover{border-color:var(--line2)}.pc.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+.pc .pb{height:34px}.pc span{font-size:12.5px;line-height:1.25;overflow-wrap:anywhere}
+.pc.sv .pb::after{content:"";position:absolute;right:5px;top:50%;margin-top:-5px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #0b0d10;box-shadow:0 0 0 1px rgba(255,255,255,.5)}
 .step{display:inline-flex;align-items:center;gap:4px}.step button{width:40px;height:40px;border-radius:10px;border:1px solid var(--line2);background:var(--tab);cursor:pointer;font-size:18px}.step output{min-width:46px;text-align:center}
 .val{color:var(--muted);font-variant-numeric:tabular-nums;text-align:right;overflow-wrap:anywhere}
 .led{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}.led i{width:10px;height:10px;border-radius:50%;background:var(--err)}.led.on i{background:var(--ok);box-shadow:0 0 8px var(--ok)}
@@ -135,6 +154,9 @@ footer{max-width:1280px;margin:0 auto;padding:0 16px 140px;color:var(--muted);fo
 .fld.is-chg::before{left:-12px}
 .wg{grid-template-columns:repeat(3,minmax(0,1fr))}
 body.minion .mini{display:none}
+.gbody.three,.gbody.two{display:block}
+.pc{width:104px;scroll-snap-align:start}
+.bscr{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;scroll-snap-type:x proximity;padding:2px}.bscr::-webkit-scrollbar{display:none}
 }
 @media(min-width:521px) and (max-width:900px){.hl{max-width:560px;width:100%;margin:0 auto}.ksg{justify-content:center}}
 @media(max-width:520px){.wg{grid-template-columns:repeat(2,minmax(0,1fr))}.seg button{padding:5px 8px}.card{padding:12px}.frames{grid-template-columns:repeat(3,minmax(0,1fr))}}
@@ -149,7 +171,7 @@ code{font:12px Consolas,monospace;color:var(--acc);overflow-wrap:anywhere}
 select,input[type=text],input[type=password],input[type=time]{min-height:44px}
 input[type=color]{height:44px;width:52px}
 input[type=range]{min-height:44px}
-.step button{width:44px;height:44px}
+.step button,.ico{width:44px;height:44px}
 .rv{min-width:44px;min-height:44px;justify-content:center;align-items:center}
 .fld.is-chg .rv{display:inline-flex}
 .sw{height:44px;width:52px}.sw i{inset:9px 3px}
@@ -1081,6 +1103,36 @@ const gummy_gp = [0, 8, 47, 5, 31, 77, 122, 6, 63, 249, 237, 7, 95, 232, 51, 1, 
 const leo_gp = [0, 0, 0, 0, 16, 0, 0, 0, 32, 0, 0, 0, 18, 0, 0, 0, 64, 16, 8, 0, 80, 80, 40, 0, 96, 16, 8, 0, 112, 0, 0, 0, 128, 0, 0, 0,
 144, 0, 0, 0, 160, 0, 0, 0, 176, 0, 0, 0, 192, 0, 0, 0, 208, 0, 0, 0, 224, 0, 0, 0, 240, 0, 0, 0, 255, 0, 0, 0];
 const aurora_gp = [0, 17, 177, 13, 64, 121, 242, 5, 128, 25, 173, 121, 192, 250, 77, 127, 255, 171, 101, 221];
+const Amber_gp = [0, 255, 140, 0, 64, 255, 190, 40, 128, 200, 80, 0, 192, 255, 170, 30, 255, 255, 140, 0];
+const Candle_gp = [0, 120, 40, 0, 70, 255, 150, 30, 130, 255, 210, 110, 190, 255, 150, 30, 255, 120, 40, 0];
+const Terracotta_gp = [0, 168, 72, 40, 85, 222, 128, 70, 170, 140, 50, 40, 255, 168, 72, 40];
+const PeachFizz_gp = [0, 255, 140, 110, 85, 255, 190, 140, 170, 240, 100, 100, 255, 255, 140, 110];
+const Coral_gp = [0, 255, 80, 70, 90, 255, 140, 90, 170, 230, 50, 100, 255, 255, 80, 70];
+const Honey_gp = [0, 255, 180, 20, 100, 255, 215, 90, 180, 200, 120, 10, 255, 255, 180, 20];
+const Embers_gp = [0, 40, 6, 0, 60, 180, 30, 0, 120, 255, 100, 10, 180, 180, 30, 0, 255, 40, 6, 0];
+const Pacifica_gp = [0, 0, 5, 7, 96, 0, 1, 20, 160, 0, 0, 38, 208, 0, 0, 70, 232, 20, 85, 75, 244, 40, 170, 80, 255, 0, 5, 7];
+const PacificaDeep_gp = [0, 0, 2, 8, 68, 0, 8, 32, 136, 0, 14, 57, 204, 0, 28, 112, 238, 16, 64, 191, 248, 32, 96, 255, 255, 0, 2, 8];
+const IceTwinkle_gp = [0, 12, 16, 64, 110, 24, 40, 110, 190, 24, 32, 128, 225, 80, 128, 192, 255, 12, 16, 64];
+const Glacier_gp = [0, 200, 240, 255, 85, 90, 180, 240, 170, 30, 90, 200, 255, 200, 240, 255];
+const Lagoon_gp = [0, 0, 180, 170, 85, 0, 120, 200, 170, 10, 60, 150, 255, 0, 180, 170];
+const Twilight_gp = [0, 40, 30, 110, 85, 90, 60, 170, 170, 30, 70, 160, 255, 40, 30, 110];
+const Moonlight_gp = [0, 200, 210, 235, 100, 110, 130, 200, 190, 40, 50, 120, 255, 200, 210, 235];
+const Meadow_gp = [0, 60, 160, 40, 85, 170, 210, 60, 170, 30, 130, 60, 255, 60, 160, 40];
+const Moss_gp = [0, 20, 70, 20, 100, 90, 140, 30, 180, 40, 110, 50, 255, 20, 70, 20];
+const Autumn_gp = [0, 200, 60, 10, 70, 240, 150, 20, 140, 150, 40, 20, 200, 100, 50, 10, 255, 200, 60, 10];
+const Sakura_gp = [0, 255, 190, 205, 100, 245, 130, 170, 180, 255, 225, 230, 255, 255, 190, 205];
+const Dunes_gp = [0, 230, 190, 120, 90, 200, 130, 70, 170, 150, 90, 60, 255, 230, 190, 120];
+const Tropics_gp = [0, 0, 120, 60, 80, 60, 200, 90, 160, 240, 200, 40, 210, 255, 90, 60, 255, 0, 120, 60];
+const Dawn_gp = [0, 80, 40, 140, 80, 230, 90, 120, 150, 255, 170, 60, 210, 255, 220, 140, 255, 80, 40, 140];
+const NeonNight_gp = [0, 255, 0, 140, 85, 120, 0, 255, 170, 0, 220, 255, 255, 255, 0, 140];
+const Synthwave_gp = [0, 255, 40, 160, 70, 160, 30, 255, 140, 30, 60, 255, 200, 0, 230, 230, 255, 255, 40, 160];
+const Toxic_gp = [0, 150, 255, 0, 90, 0, 200, 60, 170, 0, 60, 20, 220, 60, 230, 20, 255, 150, 255, 0];
+const Electric_gp = [0, 0, 60, 255, 80, 0, 220, 255, 140, 255, 255, 255, 200, 0, 150, 255, 255, 0, 60, 255];
+const Candy_gp = [0, 255, 60, 160, 64, 255, 200, 40, 128, 60, 230, 200, 192, 170, 90, 255, 255, 255, 60, 160];
+const Laser_gp = [0, 255, 20, 20, 64, 255, 20, 200, 128, 20, 60, 255, 192, 20, 255, 120, 255, 255, 20, 20];
+const Ultraviolet_gp = [0, 90, 0, 200, 100, 200, 30, 255, 170, 255, 120, 255, 255, 90, 0, 200];
+const Linen_gp = [0, 235, 215, 185, 100, 215, 175, 140, 190, 190, 200, 200, 255, 235, 215, 185];
+const DuskMist_gp = [0, 120, 110, 150, 100, 160, 140, 170, 190, 110, 130, 160, 255, 120, 110, 150];
 function fillGradientRGB(e, startpos, sc, endpos, ec) {
 if (endpos < startpos) {
 const t = endpos, tc = ec;
@@ -1127,11 +1179,27 @@ return e;
 const PAL_NAMES = ["HeatColors", "Fire", "WoodFireColors", "NormalFire", "LithiumFireColors", "SodiumFireColors", "CopperFireColors",
 "AlcoholFireColors", "LavaColors", "PartyColors", "RainbowColors", "RainbowStripeColors", "CloudColors", "OceanColors", "ForestColors",
 "Sunset_Real", "Dkbluered", "OptimusPrime", "WarmGrad", "ColdGrad", "HotGrad", "PinkGrad", "Comfy", "Cyperpunk", "Girl", "Xmas", "Acid",
-"BlueSmoke", "Gummy", "Leo", "Aurora"];
+"BlueSmoke", "Gummy", "Leo", "Aurora",
+"Amber", "Candle", "Terracotta", "PeachFizz", "Coral", "Honey", "Embers", "Pacifica", "PacificaDeep", "IceTwinkle", "Glacier", "Lagoon",
+"Twilight", "Moonlight", "Meadow", "Moss", "Autumn", "Sakura", "Dunes", "Tropics", "Dawn", "NeonNight", "Synthwave", "Toxic", "Electric",
+"Candy", "Laser", "Ultraviolet", "Linen", "DuskMist"];
 const PALETTES = [HeatColors_p, Fire_gp, WoodFireColors_p, NormalFire_p, LithiumFireColors_p, SodiumFireColors_p, CopperFireColors_p,
 AlcoholFireColors_p, LavaColors_p, PartyColors_p, RainbowColors_p, RainbowStripeColors_p, CloudColors_p, OceanColors_p, ForestColors_p,
 Sunset_Real_gp, dkbluered_gp, Optimus_Prime_gp, warmGrad_gp, coldGrad_gp, hotGrad_gp, pinkGrad_gp, comfy_gp, cyperpunk_gp, girl_gp,
-xmas_gp, acid_gp, blueSmoke_gp, gummy_gp, leo_gp, aurora_gp].map((p, i) => (i === 1 || i >= 15 ? gradientTo16(p) : p));  // the _gp ones
+xmas_gp, acid_gp, blueSmoke_gp, gummy_gp, leo_gp, aurora_gp,
+Amber_gp, Candle_gp, Terracotta_gp, PeachFizz_gp, Coral_gp, Honey_gp, Embers_gp, Pacifica_gp, PacificaDeep_gp, IceTwinkle_gp, Glacier_gp,
+Lagoon_gp, Twilight_gp, Moonlight_gp, Meadow_gp, Moss_gp, Autumn_gp, Sakura_gp, Dunes_gp, Tropics_gp, Dawn_gp, NeonNight_gp, Synthwave_gp,
+Toxic_gp, Electric_gp, Candy_gp, Laser_gp, Ultraviolet_gp, Linen_gp, DuskMist_gp].map((p, i) => (i === 1 || i >= 15 ? gradientTo16(p) : p));  // the _gp ones
+const PAL_RU = ["Жар", "Огонь", "Дрова", "Пламя", "Литий", "Натрий", "Медь", "Спирт", "Лава", "Вечеринка", "Радуга", "Радуга-полосы",
+"Облака", "Океан", "Лес", "Закат", "Сине-красная", "Оптимус", "Тёплая", "Холодная", "Горячая", "Розовая", "Уют", "Киберпанк", "Девчачья",
+"Новый год", "Кислота", "Синий дым", "Мармелад", "Лев", "Аврора",
+"Янтарь", "Свеча", "Терракота", "Персик", "Коралл", "Мёд", "Угли", "Пасифика", "Тихий океан", "Лёд", "Ледник", "Лагуна", "Сумерки",
+"Лунный свет", "Луг", "Мох", "Осень", "Сакура", "Дюны", "Тропики", "Заря", "Неон", "Синтвейв", "Токсик", "Электрик", "Леденец", "Лазер",
+"Ультрафиолет", "Лён", "Дымка"];
+const PAL_GROUPS = ["Огонь", "Тёплые", "Холодные", "Природа", "Неон", "Спокойные", "Разное"];
+const PAL_GROUP = [0, 0, 0, 0, 1, 0, 3, 2, 0, 4, 4, 4, 2, 2, 3, 1, 6, 6, 1, 2, 0, 1, 6, 4, 1, 6, 4, 5, 4, 6, 3,
+1, 1, 1, 1, 1, 1, 0, 2, 2, 2, 2, 2, 5, 5, 3, 3, 3, 3, 3, 3, 1, 4, 4, 4, 4, 4, 4, 4, 5, 5];
+const PAL_ORDER = PAL_GROUPS.flatMap((g, k) => PAL_GROUP.map((x, i) => (x === k ? i : -1)).filter((i) => i >= 0));
 function colorFromPalette16(pal, index, brightness) {
 index &= 0xffff;
 const index_4bit = index >> 12, offset = (index >> 4) & 255;
@@ -1956,13 +2024,13 @@ const WDOC = {
 "поток A: key = col;  поток B: key = col - row + 6\nhead = (u - delay(key))*128/1000 - 16        // 8 рядов/с\ndelay_A = ((37key+11)&31)*26;  delay_B = ((29key+5)&31)*26 + 110\ndf = head - 16*row;  0<=df<96: ((96-df)/96)²;  df>=96: 26 (след)", "капли 0–1,7 с, след до 2,0 с", "col, row"],
 };
 const GROUPS = [
-{ id: "clock", tab: "look", title: "Часы", f: [
+{ id: "clock", tab: "look", wide: 1, cls: "three", title: "Часы", f: [
 { k: "clock_style", t: "sel", l: "Шрифт", o: ["Нет", "Тип 1", "Тип 2", "Тип 3"] },
 { k: "clock_style_zero", t: "sw", l: "Ведущий ноль", h: "09:05 вместо 9:05" },
 { k: "clock_color", t: "col", l: "Цвет" }] },
-{ id: "back", tab: "look", title: "Фон", f: [
+{ id: "back", tab: "look", wide: 1, cls: "two", title: "Фон", f: [
 { k: "back_mode", t: "sel", l: "Режим", o: ["Нет", "Градиент", "Перлин"] },
-{ k: "back_pal", t: "pal", l: "Палитра", w: 1, if: (s) => s.back_mode > 0 },
+{ k: "back_pal", t: "pal", l: "Палитра", if: (s) => s.back_mode > 0 },
 { k: "back_bright", t: "rng", l: "Яркость", min: 0, max: 255, w: 1, if: (s) => s.back_mode > 0 },
 { k: "back_speed", t: "rng", l: "Скорость", min: 0, max: 100, w: 1, if: (s) => s.back_mode > 0 },
 { k: "back_scale", t: "rng", l: "Масштаб", min: 0, max: 100, w: 1, if: (s) => s.back_mode > 0 },
@@ -2025,7 +2093,7 @@ case "sel": return f.o[v];
 case "sw": return v ? "вкл" : "выкл";
 case "col": return hexs(v);
 case "time": return hm(v);
-case "pal": return PAL_NAMES[v];
+case "pal": return PAL_RU[v];
 case "wake": return WAKE_NAMES[v];
 case "pwd": return v ? "••••" : "пусто";
 case "num": return (v > 0 ? "+" : "") + v;
@@ -2041,7 +2109,7 @@ const wrap = (c, rv = true) => '<div class="fld' + stack + '" data-f="' + f.k + 
 switch (f.t) {
 case "sw": return wrap('<label class="sw"><input type="checkbox" data-k="' + f.k + '"' + (v ? " checked" : "") + ' aria-label="' + lab + '"><i></i></label>');
 case "sel": return wrap('<select data-k="' + f.k + '" aria-label="' + lab + '">' + opts(f.o, v) + "</select>");
-case "pal": return wrap('<div class="pal"><select data-k="' + f.k + '" aria-label="' + lab + '">' + opts(PAL_NAMES, v) + '</select><i class="palbar" style="background:' + palCss(v) + '"></i></div>');
+case "pal": return pickerHTML(f);
 case "col": return wrap('<input type="color" data-k="' + f.k + '" value="' + hexs(v) + '" aria-label="' + lab + '">');
 case "rng": return wrap('<div class="rng"><input type="range" data-k="' + f.k + '" min="' + f.min + '" max="' + f.max + '" value="' + v + '" aria-label="' + lab + '"><output>' + fmtVal(f.k, v) + "</output></div>");
 case "txt": return wrap('<input type="text" data-k="' + f.k + '" value="' + esc(v) + '" autocomplete="off" aria-label="' + lab + '">');
@@ -2072,6 +2140,38 @@ return '<div class="fld stack spd" data-f="' + f.k + '"><div class="fl"><span>' 
 }
 return "";
 }
+function pickerHTML(f) {
+const strips = PAL_GROUPS.map((g, k) => {
+const items = PAL_ORDER.filter((i) => PAL_GROUP[i] === k);
+return '<div class="brow"><h4>' + g + "<small>" + items.length + '</small></h4><div class="bscr">' +
+items.map((i) => '<button class="pc" data-pick="' + i + '" title="' + PAL_NAMES[i] + '"><i class="pb" style="background:' + palCss(i) + '"></i><span>' + esc(PAL_RU[i]) + "</span></button>").join("") + "</div></div>";
+});
+return '<div class="fld stack" data-f="' + f.k + '"><div class="fl"><span>' + esc(f.l) + "<small>Нажмите образец или листайте ‹ ›: превью меняется сразу. Кружок ● — палитра, которая сейчас на часах.</small></span>" + RVB(f.k) + "</div>" +
+'<div class="bk"><button class="ico" data-pstep="-1" aria-label="Предыдущая палитра">‹</button><div class="bkc"><div class="bkt"><b id="pcn"></b><small id="pcm"></small></div><i class="pb" id="pcb"></i><div class="pcs" id="pcs"></div></div><button class="ico" data-pstep="1" aria-label="Следующая палитра">›</button></div>' +
+'<div class="brows">' + strips.join("") + "</div></div>";
+}
+function updPal() {
+const cur = S().back_pal, sav = SAVED.back_pal;
+if (!$("#pcn")) return;
+$("#pcn").textContent = PAL_RU[cur];
+$("#pcm").textContent = PAL_GROUPS[PAL_GROUP[cur]] + " · №" + cur;
+$("#pcb").style.background = palCss(cur);
+$("#pcs").innerHTML = cur === sav ? "<span>Эта палитра сейчас на часах</span>" : "<span>На часах: " + esc(PAL_RU[sav]) + '</span><i class="pb" style="background:' + palCss(sav) + '"></i>';
+$$(".pc").forEach((b) => {
+const i = +b.dataset.pick;
+b.classList.toggle("sel", i === cur);
+b.classList.toggle("sv", i === sav);
+});
+}
+function stepPal(d) {
+const j = PAL_ORDER.indexOf(S().back_pal);
+setVal("back_pal", PAL_ORDER[(j + d + PAL_ORDER.length) % PAL_ORDER.length]);
+const b = $(".pc.sel");
+if (b) {
+const sc = b.parentNode;
+if (sc.scrollWidth > sc.clientWidth + 2) sc.scrollLeft = b.offsetLeft - sc.offsetLeft - sc.clientWidth / 2 + b.offsetWidth / 2;
+}
+}
 function docHTML(id, s) {
 const eff = wakeId(s, id), d = WDOC[eff];
 return '<div class="doc"><h4>' + (id ? "№ " + id : "№ 0 → № " + eff) + " · " + WAKE_NAMES[eff] + "<span>" + fmtS(wake_ms[eff]) + " при 1× · " + fmtS(wakeLength(eff, s.kaia_wake_speed)) + " при " + s.kaia_wake_speed + " %</span></h4><p>" + d[0] + "</p><pre>" + esc(d[1]) + "</pre><p>Тайминг: " + d[2] + ". Таблицы: " + d[3] + ".</p></div>";
@@ -2088,6 +2188,7 @@ const el = document.getElementById("g-" + g.id), s = S();
 if (!el) return;
 el.querySelector(".gbody").innerHTML = g.f.filter((f) => !f.if || f.if(s)).map((f) => fieldHTML(f, s)).join("");
 if (g.id === "kaia") bindTiles();
+if (g.id === "back") updPal();
 markDirty();
 refreshLive();
 filmSoon();
@@ -2096,7 +2197,7 @@ function renderAll() {
 GROUPS.forEach(renderGroup);
 }
 function buildGroups() {
-$("#groups").innerHTML = GROUPS.map((g) => '<section class="card grp' + (g.wide ? " wide" : "") + '" id="g-' + g.id + '" data-tab="' + g.tab + '"><h2>' + g.title + '</h2><div class="gbody"></div></section>').join("") +
+$("#groups").innerHTML = GROUPS.map((g) => '<section class="card grp' + (g.wide ? " wide" : "") + '" id="g-' + g.id + '" data-tab="' + g.tab + '"><h2>' + g.title + '</h2><div class="gbody' + (g.cls ? " " + g.cls : "") + '"></div></section>').join("") +
 '<section class="card film grp wide" id="film" data-tab="kaia"><h2>Пробуждения по кадрам</h2><p class="hint">Те же формулы, шесть моментов каждого пробуждения при 100 %, с вашими фоном, шрифтом и цветом Каи.</p><div id="filmbody"></div></section>';
 $("#tabs").innerHTML = TABS.map((t) => '<button class="tab" data-tab="' + t.id + '"><svg viewBox="0 0 24 24">' + t.i + "</svg><span>" + t.t + "</span></button>").join("");
 }
@@ -2131,6 +2232,7 @@ if (k === "page_pass" && v === "") delete DRAFT[k];
 if (P.src === "now") setSrc("draft");
 markDirty();
 if (k === "kaia_wake_speed" || k === "kaia_wake") updWakeUI();
+if (k === "back_pal") updPal();
 filmSoon();
 }
 function updWakeUI() {
@@ -2679,6 +2781,8 @@ delete DRAFT[d.rv];
 renderGroup(groupOf(d.rv));
 return;
 }
+if (d.pick != null) return setVal("back_pal", +d.pick);
+if (d.pstep) return stepPal(+d.pstep);
 if (d.step) {
 const k = d.k2, f = FLD[k], v = Math.max(f.min, Math.min(f.max, S()[k] + +d.step));
 setVal(k, v);
