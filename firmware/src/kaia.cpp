@@ -1171,7 +1171,13 @@ static void handleState() {
     s += F(",\"ms\":");
     s += now;
     s += F(",\"update\":");
-    s += ota.hasUpdate() ? F("true") : F("false");
+    s += ota.updateAvailable() ? F("true") : F("false");  // a poll must not use it up (hasUpdate() would)
+    s += F(",\"update_last\":");
+    {
+        String last = db[kk::ota_last].toString();
+        if (last.length()) addString(s, last);
+        else s += F("null");
+    }
     s += F(",\"reset\":\"");
     s += crashResetReason();
     s += F("\",\"heap\":");

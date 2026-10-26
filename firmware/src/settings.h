@@ -9,6 +9,9 @@ extern AutoOTA ota;
 // ota.checkUpdate() with a line in the log
 void otaCheck();
 
+// ota.getError() as the word of the log lines: ok, connect, timeout, http, … size
+const char* otaError();
+
 DB_KEYS(
     kk,
     wifi_ssid,
@@ -50,6 +53,7 @@ DB_KEYS(
     kaia_wake,        // 0 the style's own wake, 1.. the wakes of kaia.cpp
     kaia_wake_speed,  // 50..200 %
     page_pass,
-    log_host      // "IP:port" the log goes to, empty = nowhere
+    log_host,     // "IP:port" the log goes to, empty = nowhere
+    ota_last      // the result of the last update over the air: "result=ok from=…", "result=connect try=3 stage=…", …
 
 );

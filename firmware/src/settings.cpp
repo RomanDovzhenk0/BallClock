@@ -9,6 +9,7 @@
 #include "config.h"
 #include "kaia.h"
 #include "log.h"
+#include "otaboot.h"
 #include "palettes.h"
 #include "redraw.h"
 #include "site.h"
@@ -135,8 +136,8 @@ static void build(sets::Builder& b) {
     if (b.Confirm("ota_update"_h)) {
         if (b.build.value.toBool()) {
             Serial.println("OTA update!");
-            LOGF(LG_INFO, "ota", "update result=start");
-            ota.update();
+            // not here: a running clock has no heap for the download. It restarts and updates first thing
+            otaBootRequest(db[kk::wifi_ssid].toString(), db[kk::wifi_pass].toString());
         }
     }
 
@@ -165,7 +166,7 @@ LP_LISTENER_("wifi_connect", []() {
     WiFiConnector.connect(db[kk::wifi_ssid], db[kk::wifi_pass]);
 });
 
-static const char* otaError() {
+const char* otaError() {
     switch (ota.getError()) {
         case AutoOTA::Error::None: return "ok";
         case AutoOTA::Error::Connect: return "connect";
@@ -178,6 +179,7 @@ static const char* otaError() {
         case AutoOTA::Error::NoFile: return "nofile";
         case AutoOTA::Error::OtaStart: return "otastart";
         case AutoOTA::Error::OtaEnd: return "otaend";
+        case AutoOTA::Error::Size: return "size";
     }
     return "unknown";
 }
@@ -237,9 +239,11 @@ LP_TICKER([]() {
         db.init(kk::kaia_wake_speed, 100);
         db.init(kk::page_pass, "");
         db.init(kk::log_host, "");
+        db.init(kk::ota_last, "");
 
         logBegin(db[kk::log_host].toString().c_str());
         if (!fs) LOGF(LG_ERROR, "error", "what=\"LittleFS\"");
+        otaBootStore();
 
         WiFiConnector.connect(db[kk::wifi_ssid], db[kk::wifi_pass]);
         kaiaBegin(sett.server);  // first: its check of /settings set and click goes before the library's handler
@@ -257,9 +261,7 @@ LP_TICKER([]() {
     WiFiConnector.tick();
     sett.tick();
     logHttpEnd();
-    if (ota.tick()) {  // it only comes back when the update failed
-        LOGF(LG_ERROR, "ota", "update result=%s", otaError());
-    }
+    otaBootTick();
     NTP.tick();
 });
 
