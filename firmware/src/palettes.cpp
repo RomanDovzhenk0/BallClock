@@ -2,6 +2,12 @@
 
 #include <FastLED.h>
 
+// Every palette stays in flash: on the ESP8266 FastLED leaves its PROGMEM data in RAM (FASTLED_USE_PROGMEM 0), so
+// the gradients below go to flash here, 4-byte aligned as CRGBPalette16 reads them a dword at a time. Only the chosen
+// one becomes a CRGBPalette16 in RAM (getPaletteColor).
+#undef DEFINE_GRADIENT_PALETTE
+#define DEFINE_GRADIENT_PALETTE(X) static const TProgmemRGBGradientPalette_byte X[] PROGMEM __attribute__((aligned(4))) =
+
 DEFINE_GRADIENT_PALETTE(Fire_gp){
     0, 0, 0, 0,
     128, 255, 0, 0,
@@ -548,9 +554,28 @@ static const TProgmemRGBPalette16 SodiumFireColors_p PROGMEM = {CRGB::Black, 0x3
 static const TProgmemRGBPalette16 CopperFireColors_p PROGMEM = {CRGB::Black, 0x001a00, 0x003300, 0x004d00, 0x006600, CRGB::Green, 0x239909, 0x45b313, 0x68cc1c, 0x8ae626, CRGB::GreenYellow, 0x94f530, 0x7ceb30, 0x63e131, 0x4bd731, CRGB::LimeGreen};     //* Green
 static const TProgmemRGBPalette16 AlcoholFireColors_p PROGMEM = {CRGB::Black, 0x000033, 0x000066, 0x000099, 0x0000cc, CRGB::Blue, 0x0026ff, 0x004cff, 0x0073ff, 0x0099ff, CRGB::DeepSkyBlue, 0x1bc2fe, 0x36c5fd, 0x51c8fc, 0x6ccbfb, CRGB::LightSkyBlue};  //* Blue
 
-#define PAL_AMOUNT 31
+// a palette in flash: 16 colours or a gradient
+struct PalRef {
+    const void* p;
+    bool grad;
+    constexpr PalRef() : p(nullptr), grad(false) {}
+    constexpr PalRef(const TProgmemRGBPalette16& c) : p(c), grad(false) {}
+    constexpr PalRef(TProgmemRGBGradientPalette_bytes g) : p(g), grad(true) {}
+};
 
-CRGBPalette16 paletteArr[] = {
+// FastLED's own palettes (colorpalettes.cpp, the same colours), copied into flash: its copies would sit in RAM.
+// In a namespace of their own, so paletteArr below takes these and not FastLED's
+namespace pal {
+static const TProgmemRGBPalette16 CloudColors_p PROGMEM = {CRGB::Blue, CRGB::DarkBlue, CRGB::DarkBlue, CRGB::DarkBlue, CRGB::DarkBlue, CRGB::DarkBlue, CRGB::DarkBlue, CRGB::DarkBlue, CRGB::Blue, CRGB::DarkBlue, CRGB::SkyBlue, CRGB::SkyBlue, CRGB::LightBlue, CRGB::White, CRGB::LightBlue, CRGB::SkyBlue};
+static const TProgmemRGBPalette16 LavaColors_p PROGMEM = {CRGB::Black, CRGB::Maroon, CRGB::Black, CRGB::Maroon, CRGB::DarkRed, CRGB::DarkRed, CRGB::Maroon, CRGB::DarkRed, CRGB::DarkRed, CRGB::DarkRed, CRGB::Red, CRGB::Orange, CRGB::White, CRGB::Orange, CRGB::Red, CRGB::DarkRed};
+static const TProgmemRGBPalette16 OceanColors_p PROGMEM = {CRGB::MidnightBlue, CRGB::DarkBlue, CRGB::MidnightBlue, CRGB::Navy, CRGB::DarkBlue, CRGB::MediumBlue, CRGB::SeaGreen, CRGB::Teal, CRGB::CadetBlue, CRGB::Blue, CRGB::DarkCyan, CRGB::CornflowerBlue, CRGB::Aquamarine, CRGB::SeaGreen, CRGB::Aqua, CRGB::LightSkyBlue};
+static const TProgmemRGBPalette16 ForestColors_p PROGMEM = {CRGB::DarkGreen, CRGB::DarkGreen, CRGB::DarkOliveGreen, CRGB::DarkGreen, CRGB::Green, CRGB::ForestGreen, CRGB::OliveDrab, CRGB::Green, CRGB::SeaGreen, CRGB::MediumAquamarine, CRGB::LimeGreen, CRGB::YellowGreen, CRGB::LightGreen, CRGB::LawnGreen, CRGB::MediumAquamarine, CRGB::ForestGreen};
+static const TProgmemRGBPalette16 RainbowColors_p PROGMEM = {0xFF0000, 0xD52A00, 0xAB5500, 0xAB7F00, 0xABAB00, 0x56D500, 0x00FF00, 0x00D52A, 0x00AB55, 0x0056AA, 0x0000FF, 0x2A00D5, 0x5500AB, 0x7F0081, 0xAB0055, 0xD5002B};
+static const TProgmemRGBPalette16 RainbowStripeColors_p PROGMEM = {0xFF0000, 0x000000, 0xAB5500, 0x000000, 0xABAB00, 0x000000, 0x00FF00, 0x000000, 0x00AB55, 0x000000, 0x0000FF, 0x000000, 0x5500AB, 0x000000, 0xAB0055, 0x000000};
+static const TProgmemRGBPalette16 PartyColors_p PROGMEM = {0x5500AB, 0x84007C, 0xB5004B, 0xE5001B, 0xE81700, 0xB84700, 0xAB7700, 0xABAB00, 0xAB5500, 0xDD2200, 0xF2000E, 0xC2003E, 0x8F0071, 0x5F00A1, 0x2F00D0, 0x0007F9};
+static const TProgmemRGBPalette16 HeatColors_p PROGMEM = {0x000000, 0x330000, 0x660000, 0x990000, 0xCC0000, 0xFF0000, 0xFF3300, 0xFF6600, 0xFF9900, 0xFFCC00, 0xFFFF00, 0xFFFF33, 0xFFFF66, 0xFFFF99, 0xFFFFCC, 0xFFFFFF};
+
+static const PalRef PROGMEM paletteArr[] = {
     HeatColors_p,
     Fire_gp,
     WoodFireColors_p,
@@ -613,8 +638,11 @@ CRGBPalette16 paletteArr[] = {
     Linen_gp,
     DuskMist_gp,
 };
+}  // namespace pal
 
-static const char paletteList[] =
+#define PAL_COUNT (sizeof(pal::paletteArr) / sizeof(pal::paletteArr[0]))
+
+static const char PROGMEM paletteList[] =
     "HeatColors;"
     "Fire;"
     "WoodFireColors;"
@@ -738,6 +766,22 @@ static CRGB ColorFromPalette16(const CRGBPalette16 &pal, uint16_t index, uint8_t
     return CRGB(red1, green1, blue1);
 }
 
+// the chosen palette in RAM: made when back_pal changes, and at the first frame after boot
+static CRGBPalette16 pal_ram;
+static uint8_t pal_cur = 255;
+
+static const CRGBPalette16& usePalette(uint8_t pal) {
+    if (pal >= PAL_COUNT) pal = 0;  // out of range reads as the first
+    if (pal != pal_cur) {
+        PalRef r;
+        memcpy_P(&r, &pal::paletteArr[pal], sizeof(r));
+        if (r.grad) pal_ram = (TProgmemRGBGradientPalette_bytes)r.p;
+        else pal_ram = *(const TProgmemRGBPalette16*)r.p;
+        pal_cur = pal;
+    }
+    return pal_ram;
+}
+
 uint32_t getPaletteColor(uint8_t pal, uint16_t idx, uint8_t bright) {
-    return uint32_t(ColorFromPalette16(paletteArr[pal], idx, bright, LINEARBLEND));
+    return uint32_t(ColorFromPalette16(usePalette(pal), idx, bright, LINEARBLEND));
 }

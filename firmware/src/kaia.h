@@ -12,8 +12,18 @@ typedef WebServer KaiaServer;
 // K.A.I.A.'s display: a RAM-only overlay over the clock (nothing of it goes to the DB)
 
 // the wakes (kaia_wake): 0 the style's own, 1..WAKE_COUNT - 1 the others; their names for a Select, in PROGMEM
-#define WAKE_COUNT 12
+#define WAKE_COUNT 15
 extern const char kaia_wake_names[] PROGMEM;
+
+// the looks of the other events (kaia_listen, kaia_think, kaia_speak, kaia_done, kaia_error, kaia_notify):
+// 0 as the style (kaia_anim), 1–3 the ripple, orbit or sparks version with any style, 4..LOOK_COUNT - 1 the new ones
+#define LOOK_COUNT 9
+extern const char kaia_listen_names[] PROGMEM;
+extern const char kaia_think_names[] PROGMEM;
+extern const char kaia_speak_names[] PROGMEM;
+extern const char kaia_done_names[] PROGMEM;
+extern const char kaia_error_names[] PROGMEM;
+extern const char kaia_notify_names[] PROGMEM;
 
 // build the ball tables and add /kaia/state, /kaia/show, /kaia/anim, /kaia/log, /kaia/frame, /kaia/wifi to the
 // settings server, and the auth check of /settings set and click: before the Settings library's begin()

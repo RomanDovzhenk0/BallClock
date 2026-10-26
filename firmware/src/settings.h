@@ -52,6 +52,12 @@ DB_KEYS(
     kaia_night,   // 0 as usual, 1 dimmer, 2 none
     kaia_wake,        // 0 the style's own wake, 1.. the wakes of kaia.cpp
     kaia_wake_speed,  // 50..200 %
+    kaia_listen,      // the look of each event: 0 as the style, 1.. the looks of kaia.cpp
+    kaia_think,
+    kaia_speak,
+    kaia_done,
+    kaia_error,
+    kaia_notify,
     page_pass,
     log_host,     // "IP:port" the log goes to, empty = nowhere
     ota_last      // the result of the last update over the air: "result=ok from=…", "result=connect try=3 stage=…", …

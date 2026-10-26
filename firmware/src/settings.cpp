@@ -120,6 +120,13 @@ static void build(sets::Builder& b) {
         b.Slider(kk::kaia_bright, "Яркость", 0, 255);
         b.Select(kk::kaia_wake, "Пробуждение", FPSTR(kaia_wake_names));
         b.Slider(kk::kaia_wake_speed, "Скорость пробуждения", 50, 200, 1, "%");
+        // Kaya's look per event (v1.6), the labels in flash too: every byte of RAM counts for the update boot
+        b.Select(kk::kaia_listen, F("Слушает"), FPSTR(kaia_listen_names));
+        b.Select(kk::kaia_think, F("Думает"), FPSTR(kaia_think_names));
+        b.Select(kk::kaia_speak, F("Говорит"), FPSTR(kaia_speak_names));
+        b.Select(kk::kaia_done, F("Готово"), FPSTR(kaia_done_names));
+        b.Select(kk::kaia_error, F("Ошибка"), FPSTR(kaia_error_names));
+        b.Select(kk::kaia_notify, F("Уведомление"), FPSTR(kaia_notify_names));
         b.Select(kk::kaia_night, "Ночью", "Как обычно;Тусклее;Не показывать");
         b.Pass(kk::page_pass, "Пароль страницы", "");
         b.Input(kk::log_host, "Сервер логов");
@@ -237,6 +244,12 @@ LP_TICKER([]() {
         db.init(kk::kaia_night, 1);
         db.init(kk::kaia_wake, 0);
         db.init(kk::kaia_wake_speed, 100);
+        db.init(kk::kaia_listen, 0);
+        db.init(kk::kaia_think, 0);
+        db.init(kk::kaia_speak, 0);
+        db.init(kk::kaia_done, 0);
+        db.init(kk::kaia_error, 0);
+        db.init(kk::kaia_notify, 0);
         db.init(kk::page_pass, "");
         db.init(kk::log_host, "");
         db.init(kk::ota_last, "");
