@@ -9,11 +9,23 @@
 #include "config.h"
 #include "font_3x5_diag.h"
 #include "font_4x5.h"
+#include "kaia.h"
 #include "matrix.h"
 #include "palettes.h"
 #include "settings.h"
 
 ADCFilt photo(PHOTO_PIN, 14);
+
+static uint8_t bright_now = 0;
+static bool night_now = false;
+
+uint8_t redrawBright() {
+    return bright_now;
+}
+
+bool redrawNight() {
+    return night_now;
+}
 
 struct GradData {
     GradData(int x0, int y0, int w, int h, int angle) {
@@ -40,14 +52,15 @@ static void applyBright() {
         int adc_max = db[kk::adc_max];
 
         if (adc_min == adc_max) {  // div 0
-            matrix.setBright(((int)db[kk::bright_min] + (int)db[kk::bright_max]) / 2);
+            bright_now = ((int)db[kk::bright_min] + (int)db[kk::bright_max]) / 2;
         } else {
             int bright = map(photo.getFilt(), adc_min, adc_max, db[kk::bright_min], db[kk::bright_max]);
-            matrix.setBright(constrain(bright, 0, 255));
+            bright_now = constrain(bright, 0, 255);
         }
     } else {
-        matrix.setBright(db[kk::bright]);
+        bright_now = db[kk::bright];
     }
+    matrix.setBright(bright_now);
 }
 
 #define DOT_FADE_PRD 100
@@ -147,7 +160,7 @@ static void drawBack() {
     uint32_t count = (millis() / 64) * db[kk::back_speed].toInt();
     uint8_t pal = db[kk::back_pal];
     uint8_t scale = db[kk::back_scale];
-    uint8_t bright = db[kk::back_bright];
+    uint8_t bright = (int)db[kk::back_bright] * kaiaBackScale() / 255;  // steps back while the overlay plays
 
     matrix.setModeXY();
 
@@ -205,46 +218,46 @@ bool isTimeBetween(int currentHour, int currentMinute, int startHour, int startM
     }
 }
 
+static bool isNight() {
+    if (!db[kk::night_mode] || photo.getFilt() >= db[kk::night_trsh].toInt()) return false;
+    if (!db[kk::night_mode_auto]) return true;
+
+    Datime dt(NTP);
+
+    // Получаем время начала и конца авто ночного режима в секундах
+    long startTimeSeconds = db[kk::night_mode_auto_since].toInt();
+    long endTimeSeconds = db[kk::night_mode_auto_to].toInt();
+
+    // Преобразуем время в секунды в часы и минуты
+    int startHour = (startTimeSeconds / 3600) % 24; // 3600 секунд в часе
+    int startMinute = (startTimeSeconds % 3600) / 60; // остаток от часов делим на 60
+    int endHour = (endTimeSeconds / 3600) % 24;
+    int endMinute = (endTimeSeconds % 3600) / 60;
+
+    // Время в диапазоне - ночной режим, вне диапазона - обычный
+    return isTimeBetween(dt.hour, dt.minute, startHour, startMinute, endHour, endMinute);
+}
+
 LP_TIMER_("redraw", 50, []() {
     Looper.thisTimer()->restart(50);
-    
+
     applyBright();
 
-    if (db[kk::night_mode] && photo.getFilt() < db[kk::night_trsh].toInt()) {
-        if (db[kk::night_mode_auto]) {
-            Datime dt(NTP);
-
-            // Получаем время начала и конца авто ночного режима в секундах
-            long startTimeSeconds = db[kk::night_mode_auto_since].toInt();
-            long endTimeSeconds = db[kk::night_mode_auto_to].toInt();
-
-            // Преобразуем время в секунды в часы и минуты
-            int startHour = (startTimeSeconds / 3600) % 24; // 3600 секунд в часе
-            int startMinute = (startTimeSeconds % 3600) / 60; // остаток от часов делим на 60
-            int endHour = (endTimeSeconds / 3600) % 24;
-            int endMinute = (endTimeSeconds % 3600) / 60;
-
-            if (isTimeBetween(dt.hour, dt.minute, startHour, startMinute, endHour, endMinute)) {
-                // Время находится в диапазоне, включаем ночной режим
-                matrix.clear();
-                matrix.setColor24(db[kk::night_color]);
-                drawClock();
-            } else {
-                // Время вне диапазона, обычный режим
-                drawBack();
-                matrix.setColor24(db[kk::clock_color]);
-                drawClock();
-            }
-        } else {
-            matrix.clear();
-            matrix.setColor24(db[kk::night_color]);
-            drawClock();    
-        }
+    night_now = isNight();
+    if (night_now) {
+        matrix.clear();
+        matrix.setColor24(db[kk::night_color]);
     } else {
         drawBack();
         matrix.setColor24(db[kk::clock_color]);
-        drawClock();
     }
+
+    // the overlay keeps the time readable on the balls the clock marks
+    matrix.beginMarks();
+    drawClock();
+    matrix.endMarks();
+
+    kaiaDraw(night_now);
 
     matrix.update();
 });
