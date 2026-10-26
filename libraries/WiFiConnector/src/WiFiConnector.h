@@ -75,8 +75,11 @@ class WiFiConnectorClass {
         if (_tryConnect) {
             if (WiFi.status() == WL_CONNECTED) {
                 _tryConnect = false;
+                // BallClock: wifioff = true switches the AP off for real (mode WIFI_STA). softAPdisconnect() alone only
+                // empties its SSID, the mode stays AP_STA and the SDK keeps the AP's heap and answers probe requests.
+                // Before the callback, so that what it does (the update check) runs without the AP
+                if (_closeAP) WiFi.softAPdisconnect(true);
                 if (_conn_cb) _conn_cb();
-                if (_closeAP) WiFi.softAPdisconnect();
                 return 1;
 
             } else if (millis() - _tmr >= _tout) {

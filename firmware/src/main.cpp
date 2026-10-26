@@ -34,6 +34,9 @@ void setup() {
 
     matrix.begin();
 
+    // the clock keeps its network in the DB: the mode changes (AP on while connecting, off once connected) and
+    // WiFi.begin need not write the SDK's config to flash every time
+    WiFi.persistent(false);
     WiFiConnector.setName(PROJECT_NAME);
 
     WiFiConnector.onConnect([]() {
