@@ -614,11 +614,19 @@ static void shotDraw(uint8_t style, Anim n, int t, int du, uint32_t col) {
 // du·100/speed; the listening of the style that fades in under it, and that takes over after it, keeps real time.
 
 // ids in the site's order (the names: kaia_wake_names); base lengths at 100 %, ms (1–3 = shot_ms[style - 1][0])
-static const uint16_t wake_ms[WAKE_COUNT] = {0, 1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000};
+static const uint16_t wake_ms[WAKE_COUNT] PROGMEM = {0, 1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000, 1800, 2000, 2200};
 // when the listening starts to fade in under wakes 1–3 (the new ones: du - 800)
 static const uint16_t wake_from[4] = {0, 1100, 1500, 1600};
 
-const char kaia_wake_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Рассвет;Радар;Спираль;Сердцебиение;Глаз;Звёзды;Салют;Дождь";
+const char kaia_wake_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Рассвет;Радар;Спираль;Сердцебиение;Глаз;Звёзды;Салют;Дождь;Включение;Зайчик;«КАЯ»";
+
+// the looks per event of v1.6 (web/src/looks.js LOOK_NAMES), 0..LOOK_COUNT - 1
+const char kaia_listen_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Эхо;Прилив;Сияние;Взгляд;Пузырьки";
+const char kaia_think_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Змейка;Нейроны;Песочные часы;Три точки;Атом";
+const char kaia_speak_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Эквалайзер;Осциллограф;Лучи;Динамики;Губы";
+const char kaia_done_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Галочка;Шкала;Конфетти;Кольцо;«ОК»";
+const char kaia_error_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Нет-нет;Крест;Сбой;Сирена;Отключение";
+const char kaia_notify_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;«!»;Тук-тук;Маяк;Конверт;Значок";
 
 // the ball in the diagonal grid, one byte: the column (bits 0-4, 0..19) and the row (bits 5-7, 0 at the top .. 6)
 static uint8_t b_cr[MX_LED_AMOUNT];
@@ -878,13 +886,13 @@ static void rainShot(Anim, int t, int du, uint32_t col) {
 
 // the wake's real length at the speed, ms
 static int wakeLength(int id, int speed) {
-    return wake_ms[id] * 100 / speed;
+    return (int)pgm_read_word(&wake_ms[id]) * 100 / speed;
 }
 
 // t: ms since the wake started (real time); style: the listening's style (1–3); wake: kaia_wake (0 = the style's)
 static void wakeDraw(uint8_t style, uint8_t wake, int speed, int t, uint32_t col) {
     int id = wake ? wake : style;
-    int du = wake_ms[id];
+    int du = pgm_read_word(&wake_ms[id]);
     int u = t * speed / 100;  // the wake's own time
     if (u > du) u = du;
     fr.lt = t - wakeLength(id, speed);  // the listening's time: it goes on at its own pace after the wake
@@ -913,10 +921,21 @@ static void wakeDraw(uint8_t style, uint8_t wake, int speed, int t, uint32_t col
     }
 }
 
-// the saved wake and speed; a value out of range reads as the default
-static uint8_t savedWake() {
-    int w = db[kk::kaia_wake].toInt();
-    return w >= 0 && w < WAKE_COUNT ? w : 0;
+// the setting that holds each event's look, by anim (A_WAKE … A_NOTIFY)
+static const uint32_t look_keys[A_OFF] PROGMEM = {kk::kaia_wake, kk::kaia_listen, kk::kaia_think, kk::kaia_speak, kk::kaia_done, kk::kaia_error, kk::kaia_notify};
+
+// the event whose look the key holds, or A_OFF
+static Anim lookEvent(size_t key) {
+    for (uint8_t n = 0; n < A_OFF; n++) {
+        if (pgm_read_dword(&look_keys[n]) == key) return (Anim)n;
+    }
+    return A_OFF;
+}
+
+// the saved look of an event, the saved speed of the wake; a value out of range reads as the default
+static uint8_t savedLook(Anim n) {
+    int v = db[(size_t)pgm_read_dword(&look_keys[n])].toInt();
+    return v >= 0 && v < (n == A_WAKE ? WAKE_COUNT : LOOK_COUNT) ? v : 0;
 }
 
 static uint8_t savedWakeSpeed() {
@@ -1061,7 +1080,8 @@ static const char state_keys[] PROGMEM =
     "show_ip,ntp_gmt,ntp_host,bright,auto_bright,bright_min,bright_max,adc_min,adc_max,"
     "night_mode,night_mode_auto,night_mode_auto_since,night_mode_auto_to,night_color,night_trsh,"
     "clock_style,clock_style_zero,clock_color,back_mode,back_pal,back_speed,back_angle,back_scale,back_bright,"
-    "kaia_anim,kaia_wake,kaia_wake_speed,kaia_color,kaia_bright,kaia_night,log_host";
+    "kaia_anim,kaia_wake,kaia_wake_speed,kaia_listen,kaia_think,kaia_speak,kaia_done,kaia_error,kaia_notify,"
+    "kaia_color,kaia_bright,kaia_night,log_host";
 
 // as the settings page answers
 static void corsHeaders() {
@@ -1153,7 +1173,7 @@ static void handleState() {
     bool playing = ov.mode != M_TEXT && playNow(now, pn, pt);
 
     String s;
-    s.reserve(1300);
+    s.reserve(1400);
     s += F("{\"name\":\"" PROJECT_NAME "\",\"version\":\"" PROJECT_VER "\",\"time\":\"");
     s += NTP.timeToString();
     s += F("\",\"synced\":");
@@ -1228,8 +1248,9 @@ static void handleState() {
         s += F("\":");
 
         size_t h = su::hash(key) & DB_HASH_MASK;
-        if (h == kk::kaia_wake) {
-            s += savedWake();
+        Anim ev = lookEvent(h);
+        if (ev != A_OFF) {
+            s += savedLook(ev);
         } else if (h == kk::kaia_wake_speed) {
             s += savedWakeSpeed();
         } else {
@@ -1325,7 +1346,7 @@ static void handleAnim() {
     if (style < 1 || style > 3) return replyOk();  // animations are off in the settings
 
     // wake and speed matter only for a wake; Kaya's own calls play the saved ones
-    ov.wake = n == A_WAKE && wake >= 0 ? wake : savedWake();
+    ov.wake = n == A_WAKE && wake >= 0 ? wake : savedLook(A_WAKE);
     ov.speed = n == A_WAKE && speed ? speed : savedWakeSpeed();
 
     char shown[sizeof(anim_names[0])];
