@@ -1142,12 +1142,12 @@ return { hour: (s / 3600) | 0, minute: ((s % 3600) / 60) | 0, second: s % 60, ms
 }
 const WAKE_NAMES = ["Как у стиля", "Рябь", "Орбита", "Искры", "Рассвет", "Радар", "Спираль", "Сердцебиение", "Глаз", "Звёзды", "Салют", "Дождь",
 "Включение", "Зайчик", "«КАЯ»", "Пинг-понг", "Калейдоскоп", "Лава-лампа", "Мордашка", "Галактика", "Сканер",
-"Снежинка", "Светлячки", "Пламя"];
+"Снежинка", "Светлячки", "Пламя", "Аркада", "Тетрис", "Механизм", "Неон", "Маятник", "Гирлянда"];
 const wake_ms = [0, 1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000, 1800, 2000, 2200, 1800, 2000, 2000, 1900, 2000, 2000,
-2000, 2000, 2000];
-const WAKE_COUNT = 24;
-const wake_style = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-const style_wake = [0, 1, 2, 3, 15, 16, 17, 18, 19, 20, 21, 22, 23];
+2000, 2000, 2000, 1800, 2000, 2000, 2000, 2000, 2000];
+const WAKE_COUNT = 30;
+const wake_style = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+const style_wake = [0, 1, 2, 3, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
 const wake_from = [0, 1100, 1500, 1600];
 const b_col = new Uint8Array(MX_LED_AMOUNT);  // x in the diagonal grid, 0..19
 const b_row = new Uint8Array(MX_LED_AMOUNT);  // y, 0 (top) .. 6
@@ -1429,6 +1429,707 @@ function wakeLength(id, speed) {
 return wake_ms[id] * 100 / speed | 0;
 }
 buildWakeTables();
+function psin(a) { return sin8(a & 255) - 128; }
+function pcos(a) { return sin8((a + 64) & 255) - 128; }
+function pang(dx, dy) {
+const s = abs(dx) + abs(dy);
+if (!s) return 0;
+return (dx >= 0 ? 64 + (dy * 64 / s | 0) : 192 - (dy * 64 / s | 0)) & 255;
+}
+function chomp(dp, dq, r, dir, m) {
+const d = oct(dp, dq);
+if (d >= r + 7) return 0;
+const a = d <= r ? 255 : (r + 7 - d) * 255 / 7 | 0;
+const fw = dir ? dp * dir : -dq, sd = dir ? abs(dq) : abs(dp);  // ahead of the centre, and to the side
+if (fw <= 0 || m <= 0) return a;
+const e = (fw * m >> 8) - sd;  // > 0 inside the mouth
+return e <= -4 ? a : e >= 4 ? 0 : a * (4 - e) >> 3;
+}
+function ghost(dp, dq, t) {
+const d = oct(dp, dq);
+if (d >= 16) return 0;
+const a = d <= 9 ? 255 : (16 - d) * 255 / 7 | 0;
+return dq > 3 ? a * (170 + ((dp < 0 ? 85 : -85) * wave(t, 768) / 128 | 0)) / 255 | 0 : a;
+}
+function arcDot(i, p, t) {
+if (b_row[i] !== 3 || (b_x[i] & 3)) return 0;
+return p === -76 ? 150 + (wave(t, 160) * 80 / 128 | 0) : 80;
+}
+function arcWake(n, t, du, col) {
+const fo = smooth(du, du - 400, t), g = smooth(0, 250, t), dc = mix(col, C_WHITE, 170);
+const x = -100 + (t * 31 / 1000 | 0) + ((t * (3600 - t) / 3600 | 0) * 491 / 10000 | 0), m = abs(wave(t, 512)) * 3;
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = p > x ? arcDot(i, p, t) * g / 255 | 0 : 0, c = dc;
+const v = chomp(p - x, q, 12, 1, m);
+if (v > a) { a = v; c = col; }
+put(i, c, a * fo / 255 | 0);
+}
+}
+function arcListen(n, t, col, k) {
+if (k <= 0) return;
+const s = posMod(t + 2200, 8800), dir = s < 4400 ? 1 : -1, x = s < 4400 ? -68 + (s * 136 / 4400 | 0) : 68 - ((s - 4400) * 136 / 4400 | 0);
+const m = abs(wave(t, 384)) * 3 * smooth(68, 52, abs(x)) / 255 | 0, dc = mix(col, C_WHITE, 170);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = arcDot(i, p, t), c = dc;
+if (a && p > -76) {
+const sr = (p + 68) * 4400 / 136 | 0, sl = 8800 - sr;  // when it passes the dot: going right, going left
+a = a * smooth(700, 1700, imin(posMod(s - sr, 8800), posMod(s - sl, 8800))) / 255 | 0;
+}
+const v = chomp(p - x, q, 12, dir, m);
+if (v > a) { a = v; c = col; }
+put(i, c, a * k / 255 | 0);
+}
+}
+function arcThink(n, t, col, k) {
+if (k <= 0) return;
+const h = t * 80 / 1000 | 0, xc = -104 + posMod(h, 208), xg = -104 + posMod(h - 40 - (wave(t, 98) * 14 / 128 | 0), 208), gy = wave(t, 300) * 3 / 128 | 0;
+const cc = mix(col, C_VIOLET, 64), gc = mix(C_VIOLET, C_WHITE, 50), ec = mix(gc, C_WHITE, 170), dc = mix(col, C_WHITE, 170), m = abs(wave(posMod(t, 400), 640)) * 3;
+const tg = posMod(t, 1000);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = b_row[i] === 3 && !(b_x[i] & 3) ? 80 * smooth(900, 1700, posMod(t - ((p + 104) * 25 / 2 | 0), 2600)) / 255 | 0 : 0, c = dc;
+let v = chomp(p - xc, q, 12, 1, m);
+if (v > a) { a = v; c = cc; }
+v = ghost(p - xg, q - gy, tg);
+if (v > a) { a = v; c = q - gy < -3 ? ec : gc; }
+put(i, c, a * k / 255 | 0);
+}
+}
+function arcSpeak(n, t, col, k) {
+if (k <= 0) return;
+const v = voice(t), x = -16 + (wave(t, 30) * 8 / 128 | 0), m = 40 + (v * 420 / 255 | 0), off = t * 40 / 1000 | 0, dc = mix(col, C_WHITE, 170);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = b_row[i] === 3 && p > x + 10 ? tent(posMod(p + off, 16) - 8, 8) * 90 / 255 | 0 : 0, c = dc;  // the dots, two balls apart, sliding left
+const w = chomp(p - x, q, 12, 1, m);
+if (w > a) { a = w; c = col; }
+put(i, c, a * k / 255 | 0);
+}
+}
+function arcDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t), e = t - 520, x = e < 0 ? -84 + (t * 104 / 520 | 0) : 20 + (e * 50 / 1000 | 0);
+const m = abs(wave(t, 640)) * 3, gl = e > 0 ? smooth(0, 300, e) : 0, cc = mix(col, C_WHITE, 110 * gl / 255 | 0), wc = mix(col, C_WHITE, 150);
+const pd = e < 0 ? 170 + (wave(t, 700) * 85 / 128 | 0) : 0, fl = tent(e - 60, 220) * 235 / 255 | 0, rr = e * 120 / 1000 | 0, rf = e > 0 ? 255 - smooth(0, 700, e) : 0;
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = fl, c = wc;
+if (pd) a = imax(a, tent(oct(p - 20, q), 11) * pd / 255 | 0);
+if (rf) a = imax(a, tent(oct(p - 20, q) - rr, 8) * rf / 255 | 0);
+const v = chomp(p - x, q, 12 + (3 * gl / 255 | 0), 1, m);
+if (v > a) { a = v; c = cc; }
+put(i, c, a * fo / 255 | 0);
+}
+}
+function arcError(n, t, du, col) {
+const fo = smooth(du, du - 300, t), tc = imin(t, 560), xc = -40 + (tc * 40 / 1000 | 0), xg = 70 - (tc * 120 / 1000 | 0);
+const e = smooth(800, 1400, t), r = 12 - (12 * e / 255 | 0), m = t < 560 ? abs(wave(t, 512)) * 3 : t < 800 ? 0 : 256 + e * 9, dir = t < 800 ? 1 : 0;
+const g = 255 - smooth(1380, 1460, t), gf = 255 - smooth(700, 1000, t), pop = tent(t - 1450, 180), pr = imax(0, t - 1400) * 60 / 1000 | 0;
+const gc = mix(C_VIOLET, C_WHITE, 50), ec = mix(gc, C_WHITE, 170), pc = mix(col, C_WHITE, 120);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = pop ? tent(oct(p - xc, q) - pr, 6) * pop / 255 | 0 : 0, c = pc;
+let v = chomp(p - xc, q, r, dir, m) * g / 255 | 0;
+if (v > a) { a = v; c = col; }
+if (gf) {
+v = ghost(p - xg, q, t) * gf / 255 | 0;
+if (v > a) { a = v; c = q < -3 ? ec : gc; }
+}
+put(i, c, a * fo / 255 | 0);
+}
+}
+const arc_ch = [-8, 7, 8, 7, 4, -14];  // the two cherries and where their stems meet, (p, q)
+const C_STEM = 0x5fd05a;
+function arcNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t), g = smooth(0, 150, t), b = imax(imax(tent(t - 250, 200), tent(t - 650, 200)), tent(t - 1050, 200));
+const a0 = (110 + (145 * b / 255 | 0)) * g / 255 | 0, cc = mix(col, C_WHITE, 120 * b / 255 | 0);
+const s1 = [arc_ch[0], arc_ch[1], arc_ch[4], arc_ch[5]], s2 = [arc_ch[2], arc_ch[3], arc_ch[4], arc_ch[5]];
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = tent(imin(oct(p - arc_ch[0], q - arc_ch[1]), oct(p - arc_ch[2], q - arc_ch[3])), 11) * a0 / 255 | 0, c = cc;
+const v = tent(imin(segDist(p, q, s1, 256), segDist(p, q, s2, 256)), 5) * (g * 3 >> 2) / 255 | 0;  // the stems
+if (v > a) { a = v; c = C_STEM; }
+put(i, c, a * fo / 255 | 0);
+}
+}
+const tet_st = [0x18007, 0x3e0cf, 0x1f7ff], tet_sh = [205, 165, 130];
+function tetStack(r, p) {
+if (r < 4 || r > 6) return 0;
+const k = (p + 76 - 4 * (r - 3)) >> 3;
+return k >= 0 && k < 20 ? (tet_st[r - 4] >> k) & 1 : 0;
+}
+function tetQ(r, p, j) {
+if (!tetStack(r, p)) return 0;
+return (p < -36 ? 0 : p < 0 ? 1 : p < 36 ? 2 : 3) === j ? tet_sh[r - 4] : 0;
+}
+const tet_pc = [-8, 0, 0, 0, 8, 0, 4, -7];
+function tetPlace(xs, ys, j0, x, y, ang) {
+const cs = pcos(ang), sn = psin(ang);
+for (let j = 0; j < 4; j++) {
+const ox = tet_pc[2 * j], oy = tet_pc[2 * j + 1];
+xs[j0 + j] = x + ((ox * cs - oy * sn + 64) >> 7);
+ys[j0 + j] = y + ((ox * sn + oy * cs + 64) >> 7);
+}
+}
+function tetAt(p, q, xs, ys, n) {
+let a = 0;
+for (let j = 0; j < n; j++) {
+const dx = p - xs[j];
+if (dx > -8 && dx < 8) a = imax(a, tent(oct(dx, q - ys[j]), 8));
+}
+return a;
+}
+const tet_dt = [380, 0, 570, 190];  // when each quarter (from the left) starts to fall, ms
+function tetWake(n, t, du, col) {
+const fo = smooth(du, du - 400, t), sc = mix(col, C_WHITE, 40), off = [0, 0, 0, 0], fl = [0, 0, 0, 0];
+for (let j = 0; j < 4; j++) {
+const u = imin(imax(0, t - tet_dt[j]), 480), lt = t - tet_dt[j] - 480;
+off[j] = 1792 - (1792 * u * u / 230400 | 0);  // 7 rows above, in 1/256 row, falling with gravity
+fl[j] = lt >= 0 ? tent(lt, 200) : 0;
+}
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), r = b_row[i];
+let a = 0, c = sc;
+for (let j = 0; j < 4; j++) {
+if (t < tet_dt[j]) continue;
+const R = off[j] >> 8, w = off[j] & 255;
+const v = (tetQ(r + R, p - 4 * (R & 1), j) * (256 - w) + tetQ(r + R + 1, p - 4 * ((R + 1) & 1), j) * w) >> 8;
+if (v > a) { a = v; c = fl[j] ? mix(sc, C_WHITE, fl[j] * 150 / 255 | 0) : sc; }
+}
+put(i, c, a * fo / 255 | 0);
+}
+}
+const tet_cx = [-28, 20, -4, 28];
+function tetListen(n, t, col, k) {
+if (k <= 0) return;
+const u = posMod(t, 6000), x = tet_cx[((t - u) / 6000 | 0) & 3], y = -34 + (34 * smooth(0, 5000, u) / 255 | 0);
+const g = smooth(0, 700, u) * smooth(6000, 5100, u) / 255 | 0, ang = (43 * smooth(1000, 1700, u) + 43 * smooth(2800, 3500, u)) / 255 | 0;
+const xs = [0, 0, 0, 0], ys = [0, 0, 0, 0], sc = mix(col, C_WHITE, 40), pc = mix(col, C_WHITE, 110), glow = tent(u - 5600, 500) * 40 / 255 | 0;
+tetPlace(xs, ys, 0, x, y, ang);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3), r = b_row[i];
+let a = tetStack(r, p) ? tet_sh[r - 4] + glow : 0, c = sc;
+const v = tetAt(p, q, xs, ys, 4) * g / 255 | 0;
+if (v > a) { a = v; c = pc; }
+put(i, c, a * k / 255 | 0);
+}
+}
+const tet_lx = [-44, 4, 44], tet_la = [0, 43, 128];
+function tetThink(n, t, col, k) {
+if (k <= 0) return;
+const pc = mix(col, C_VIOLET, 140), sc = mix(col, C_WHITE, 40), xs = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], ys = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], fl = [0, 0, 0];
+for (let m = 0; m < 3; m++) {
+const u = posMod(t - m * 300, 900);
+tetPlace(xs, ys, 4 * m, tet_lx[m], u < 600 ? -42 + (42 * u * u / 360000 | 0) : -99, tet_la[m]);
+fl[m] = tent(u - 650, 150);
+}
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3), r = b_row[i];
+let a = 0, c = sc;
+if (tetStack(r, p)) {
+const m = p < -20 ? 0 : p < 24 ? 1 : 2, fv = fl[m] * tent(p - tet_lx[m], 24) / 255 | 0;
+a = imax(tet_sh[r - 4], fv);
+if (fv) c = mix(sc, C_WHITE, fv * 150 / 255 | 0);
+}
+const v = tetAt(p, q, xs, ys, 12);
+if (v > a) { a = v; c = pc; }
+put(i, c, a * k / 255 | 0);
+}
+}
+function tetSpeak(n, t, col, k) {
+if (k <= 0) return;
+const v = [voice(t), voice(t - 90), voice(t - 180)], sc = mix(col, C_WHITE, 40);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), r = b_row[i], e = v[abs(p) < 28 ? 0 : abs(p) < 56 ? 1 : 2];
+let a = 0, c = sc;
+if (tetStack(r, p)) {
+a = tet_sh[r - 4] * 3 >> 2;
+if (!tetStack(r - 1, p - 4) && !tetStack(r - 1, p + 4)) {  // a top block: nothing over it
+a = 90 + (165 * e / 255 | 0);
+c = mix(col, C_WHITE, 60 + (120 * e / 255 | 0));
+}
+} else if (r >= 3 && (tetStack(r + 1, p - 4) || tetStack(r + 1, p + 4))) {
+a = imax(0, e - 150) * 110 / 105 | 0;  // just over the top, only when loud
+c = col;
+}
+put(i, c, a * k / 255 | 0);
+}
+}
+function tetDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t), y = t < 450 ? -28 + (49 * t * t / 202500 | 0) : 21, x = 24 + (abs(posMod(y, 14) - 7) * 4 / 7 | 0);
+const fl = smooth(430, 520, t) * (255 - smooth(700, 1000, t)) / 255 | 0, e = smooth(1000, 1250, t), sc = mix(col, C_WHITE, 40), bc = mix(col, C_WHITE, 90);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3), r = b_row[i];
+let a = 0, c = sc;
+if (r === 6 && (tetStack(6, p) || t >= 450)) {  // the bottom row, full once the block is in: white, then gone from the gap out
+const g = 255 - smooth(700 + abs(p - 24) * 3, 820 + abs(p - 24) * 3, t);
+a = imax(tet_sh[2], fl) * g / 255 | 0;
+if (fl) c = mix(sc, C_WHITE, fl * 200 / 255 | 0);
+}
+if (r >= 4) {  // rows 4–5 as they are, and one row lower (down-left) as e goes to 255
+const here = r < 6 && tetStack(r, p) ? tet_sh[r - 4] : 0, up = r > 4 && tetStack(r - 1, p + 4) ? tet_sh[r - 5] : 0;
+const s = (here * (255 - e) + up * e) / 255 | 0;
+if (s > a) { a = s; c = sc; }
+}
+if (t < 450) {
+const v = tent(oct(p - x, q - y), 8);
+if (v > a) { a = v; c = bc; }
+}
+put(i, c, a * fo / 255 | 0);
+}
+}
+function tetError(n, t, du, col) {
+const fo = smooth(du, du - 300, t), fl = tent(t - 900, 160), sc = mix(col, C_WHITE, 40), wc = mix(sc, C_WHITE, 170 * fl / 255 | 0);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), r = b_row[i], up = (6 - r) * 120;
+let a = imax(tetStack(r, p) ? tet_sh[r - 4] : 0, (210 - r * 10) * smooth(up, up + 140, t) / 255 | 0);
+a = imax(a, fl * 230 / 255 | 0) * (255 - smooth(1050 + r * 70, 1250 + r * 70, t)) / 255 | 0;
+put(i, wc, a * fo / 255 | 0);
+}
+}
+function tetNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t), b = imax(imax(tent(t - 200, 200), tent(t - 600, 200)), tent(t - 1000, 200)), g = smooth(0, 120, t);
+const xs = [0, 0, 0, 0], ys = [0, 0, 0, 0], pc = mix(col, C_WHITE, 150 * b / 255 | 0), a0 = (90 + (165 * b / 255 | 0)) * g / 255 | 0;
+tetPlace(xs, ys, 0, 0, -21, 128);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3), r = b_row[i];
+let a = tetStack(r, p) ? tet_sh[r - 4] >> 2 : 0, c = col;
+const v = tetAt(p, q, xs, ys, 4) * a0 / 255 | 0;
+if (v > a) { a = v; c = pc; }
+put(i, c, a * fo / 255 | 0);
+}
+}
+function gear(i, x0, r0, R, N, th) {
+const dr = b_row[i] - r0, dx = b_x[i] - x0, ar = abs(dr), ax = abs(dx), h = ar >= ax ? ar : (ax + ar) >> 1;  // the hex distance, balls
+if (h > R) return 0;
+if (!h) return 255;  // the axle
+const a = pang(4 * dx, 7 * dr) + th;
+if (h === R) {  // the ring: a tooth, or the rim between two
+const v = (a * N) & 255, w = v < 128 ? v : 256 - v;
+return 50 + (smooth(80, 36, w) * 190 / 255 | 0);
+}
+if (h > 1) return 0;
+const s = (a * 2) & 255, ws = s < 128 ? s : 256 - s;  // the bar: two spokes
+return smooth(48, 16, ws) * 160 / 255 | 0;
+}
+function gears(i, th) {
+const x = b_x[i];
+if (x < 5) return gear(i, 2, 3, 1, 2, 64 - 3 * th) * 190 / 255 | 0;
+if (x < 19) return gear(i, 12, 3, 3, 6, th);
+if (x < 34) return gear(i, 26, 3, 3, 6, 21 - th);
+return gear(i, 36, 3, 1, 2, 1 + 3 * th) * 190 / 255 | 0;
+}
+function gearWake(n, t, du, col) {
+const fo = smooth(du, du - 400, t), al = (21 * t * t / 4000000 | 0) - 21, g0 = smooth(0, 450, t), g1 = smooth(350, 850, t), wc = mix(col, C_WHITE, 140);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const x = b_x[i], a = gears(i, al) * (x < 5 || x >= 34 ? g1 : g0) / 255 | 0;
+put(i, a > 240 ? wc : col, a * fo / 255 | 0);
+}
+}
+function gearListen(n, t, col, k) {
+if (k <= 0) return;
+const th = t * 256 / 12000 | 0, br = 215 + (wave(t, 45) * 40 / 128 | 0), wc = mix(col, C_WHITE, 140);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const a = gears(i, th);
+put(i, a > 240 ? wc : col, (a * br / 255 | 0) * k / 255 | 0);
+}
+}
+function gearThink(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(col, C_VIOLET, 128), wc = mix(c, C_WHITE, 140), th = t * 256 / 1500 | 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const a = gears(i, th);
+put(i, a > 240 ? wc : c, a * k / 255 | 0);
+}
+}
+function gearSpeak(n, t, col, k) {
+if (k <= 0) return;
+const v = voice(t), th = (t * 256 / 12000 | 0) + (v * 14 / 255 | 0);
+const br = 140 + (v * 115 / 255 | 0), c = mix(col, C_WHITE, v * 60 / 255 | 0), wc = mix(col, C_WHITE, 80 + (v * 120 / 255 | 0));
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const a = gears(i, th);
+put(i, a > 240 ? wc : c, (a * br / 255 | 0) * k / 255 | 0);
+}
+}
+function gearDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t), g = smooth(0, 150, t), th = (70 * smooth(0, 520, t) - 6 * smooth(520, 640, t)) / 255 | 0;
+const fl = tent(t - 600, 220), e = t - 600, rr = e * 110 / 1000 | 0, rf = e > 0 ? 255 - smooth(0, 800, e) : 0;
+const c = mix(col, C_WHITE, 150 * fl / 255 | 0), wc = mix(col, C_WHITE, 180);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = (gears(i, th) * (170 + (85 * fl / 255 | 0)) / 255 | 0) * g / 255 | 0, cc = a > 240 ? wc : c;
+if (rf) {
+const v = tent(oct(p, q) - rr, 7) * rf / 255 | 0;
+if (v > a) { a = v; cc = wc; }
+}
+put(i, cc, a * fo / 255 | 0);
+}
+}
+function gearError(n, t, du, col) {
+const fo = smooth(du, du - 300, t), sh = (wave(t, 2000) * 5 / 128 | 0) * (255 - smooth(350, 1100, t)) / 255 | 0;
+const th = (imin(t, 350) * 256 / 2000 | 0) + (t > 350 ? sh : 0), sp = tent(t - 380, 250), wc = mix(col, C_WHITE, 170), g = 255 - (110 * smooth(500, 1200, t) / 255 | 0);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = gears(i, th) * g / 255 | 0, c = a > 240 ? wc : col;
+const v = tent(imin(oct(p, q), oct(abs(p) - 56, q)), 12) * sp / 255 | 0;  // the sparks where the teeth jam
+if (v > a) { a = v; c = wc; }
+put(i, c, a * fo / 255 | 0);
+}
+}
+function gearNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t), u = t < 650 ? t - 100 : t - 750;  // the two pops, 500 ms each
+const y = -34 + ((22 * smooth(0, 130, u) + 5 * tent(u - 170, 90) - 22 * smooth(330, 480, u)) / 255 | 0);
+const rr = imax(0, u - 150) * 80 / 1000 | 0, rf = u > 150 ? 255 - smooth(150, 500, u) : 0, wc = mix(col, C_WHITE, 170), dr = 40 + (100 * smooth(-34, -24, y) / 255 | 0);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = gears(i, 0) * 50 / 255 | 0, c = col;
+if (q === -21 && abs(p) <= 12) a = imax(a, dr);  // the door
+if (rf) a = imax(a, tent(oct(p, q - y) - 14 - rr, 6) * rf / 400 | 0);
+const v = tent(oct(p, q - y), 12);
+if (v > a) { a = v; c = tent(oct(p - 7, q - y + 3), 7) > 150 ? wc : col; }  // the beak whiter
+put(i, c, a * fo / 255 | 0);
+}
+}
+const C_PINK = 0xff3fa8;
+function neon(d) {
+return d < 3 ? 255 : d < 11 ? (11 - d) * 70 / 8 | 0 : 0;
+}
+const neon_pt = [-44, -14, 44, -14, 56, 7, 16, 7, 12, 0, -20, 0, -28, 14, -60, 14], neon_len = [88, 24, 40, 8, 32, 16, 32, 32];
+function neonTrace(p, q, h) {
+let best = 0, at = 0;
+for (let j = 0; j < 8; j++) {
+const x0 = neon_pt[2 * j], y0 = neon_pt[2 * j + 1], x1 = neon_pt[(2 * j + 2) & 15], y1 = neon_pt[(2 * j + 3) & 15];
+if (p >= imin(x0, x1) - 10 && p <= imax(x0, x1) + 10) {
+const dx = x1 - x0, dy = y1 - y0;
+let u = ((p - x0) * dx + (q - y0) * dy) * 256 / (dx * dx + dy * dy) | 0;
+u = u < 0 ? 0 : u > 256 ? 256 : u;
+const d = oct(p - x0 - (dx * u / 256 | 0), q - y0 - (dy * u / 256 | 0));
+if (d < 11) {
+const e = posMod(h - at - (neon_len[j] * u >> 8), 272), w = e < 150 ? (150 - e) * 255 / 150 | 0 : 0;
+best = imax(best, neon(d) * (w * w / 255 | 0) / 255 | 0);
+}
+}
+at += neon_len[j];
+}
+return best;
+}
+function neonWake(n, t, du, col) {
+const fo = smooth(du, du - 400, t), fc = mix(col, C_WHITE, 110), hc = mix(col, C_WHITE, 220), pc = mix(C_PINK, C_WHITE, 90);
+const st = imax(tent(t - 130, 60) * 150 / 255 | 0, tent(t - 300, 50) * 200 / 255 | 0), fs = smooth(430, 800, t), n0 = ring_len[0];
+const g2 = imax(imax(tent(t - 920, 60) * 150 / 255 | 0, tent(t - 1060, 50) * 200 / 255 | 0), 120 * smooth(1150, 1300, t) / 255 | 0);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const r = ringOf(i);
+if (r === 0) {
+const m = imin(b_pos[i], n0 - b_pos[i]), F = (n0 / 2 + 3) * fs / 255 | 0;
+put(i, fs < 255 && m >= F - 3 && m < F ? hc : fc, imax(st, m < F ? 185 : 0) * fo / 255 | 0);
+} else if (r === 2) put(i, pc, g2 * fo / 255 | 0);
+}
+}
+function neonListen(n, t, col, k) {
+if (k <= 0) return;
+const n0 = ring_len[0], fc = mix(col, C_WHITE, 110), pc = mix(C_PINK, C_WHITE, 90), g2 = 120 + (wave(t, 37) * 30 / 128 | 0);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const r = ringOf(i);
+if (r === 0) put(i, fc, (185 + (psin((b_pos[i] * 512 / n0 | 0) - (t * 40 / 1000 | 0)) * 30 / 128 | 0)) * k / 255 | 0);
+else if (r === 2) put(i, pc, g2 * k / 255 | 0);
+}
+}
+function neonThink(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(col, C_VIOLET, 128), wc = mix(c, C_WHITE, 150), h = t * 120 / 1000 | 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const v = neonTrace(4 * (b_x[i] - 19), 7 * (b_row[i] - 3), h);
+put(i, v > 200 ? wc : c, v * k / 255 | 0);
+}
+}
+function neonSpeak(n, t, col, k) {
+if (k <= 0) return;
+const v = voice(t), v2 = voice(t - 120), fc = mix(col, C_WHITE, 60 + (v * 120 / 255 | 0)), pc = mix(C_PINK, C_WHITE, 40 + (v2 * 120 / 255 | 0));
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const r = ringOf(i);
+if (r === 0) put(i, fc, (70 + (v * 185 / 255 | 0)) * k / 255 | 0);
+else if (r === 2) put(i, pc, (50 + (v2 * 205 / 255 | 0)) * k / 255 | 0);
+}
+}
+const neon_ck = [-16, -7, -4, 14, 16, -21];
+function neonDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t), s = imax(imax(tent(t - 110, 50) * 160 / 255 | 0, tent(t - 250, 50) * 210 / 255 | 0), smooth(360, 440, t)), fl = tent(t - 700, 250);
+const s1 = [neon_ck[0], neon_ck[1], neon_ck[2], neon_ck[3]], s2 = [neon_ck[2], neon_ck[3], neon_ck[4], neon_ck[5]], cc = mix(col, C_WHITE, 90 + (120 * fl / 255 | 0));
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3), d = imin(segDist(p, q, s1, 256), segDist(p, q, s2, 256));
+put(i, d < 3 ? cc : col, (neon(d) * s / 255 | 0) * fo / 255 | 0);
+}
+}
+function neonError(n, t, du, col) {
+const fo = smooth(du, du - 300, t), D = 140 * smooth(650, 1250, t) / 255 | 0, sk = imax(imax(tent(t - 220, 60), tent(t - 390, 50)), tent(t - 560, 70));
+const fc = mix(col, C_WHITE, 110), pc = mix(C_PINK, C_WHITE, 90), g2 = 120 - (120 * smooth(750, 950, t) / 255 | 0) + (tent(t - 1000, 50) * 90 / 255 | 0), dip = 255 - (sk >> 1);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3), r = ringOf(i), da = abs(((b_ang[i] - 44 + 128) & 255) - 128);
+let a = 0, c = col;
+if (r === 0) {
+a = 185 * (da < D ? 0 : da < D + 12 ? (da - D) * 255 / 12 | 0 : 255) / 255 | 0;
+if (da < 24) a = a * dip / 255 | 0;
+c = fc;
+} else if (r === 2) { a = g2; c = pc; }
+const v = tent(oct(p - 44, q + 21), 12) * sk / 255 | 0;
+if (v > a) { a = v; c = C_WHITE; }
+put(i, c, a * fo / 255 | 0);
+}
+}
+const neon_ar = [-36, 0, 20, 0, 12, -14, 20, 0, 12, 14, 20, 0];
+function neonNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t), j = t < 380 ? 0 : t < 760 ? 1 : 2, u = t - j * 380, dx = j * 8;
+const g = smooth(0, 50, u) * (j < 2 ? smooth(300, 250, u) : 255) / 255 | 0, cc = mix(col, C_WHITE, 120), s = [0, 0, 0, 0];
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let d = 99;
+for (let m = 0; m < 3; m++) {
+s[0] = neon_ar[4 * m] + dx; s[1] = neon_ar[4 * m + 1]; s[2] = neon_ar[4 * m + 2] + dx; s[3] = neon_ar[4 * m + 3];
+d = imin(d, segDist(p, q, s, 256));
+}
+put(i, d < 3 ? cc : col, (neon(d) * g / 255 | 0) * fo / 255 | 0);
+}
+}
+function pendX(px, th) { return px + (53 * psin(th) / 128 | 0); }
+function pendY(th) { return -45 + (53 * pcos(th) / 128 | 0); }
+function pendWake(n, t, du, col) {
+const fo = smooth(du, du - 400, t), g = smooth(0, 300, t), e = smooth(350, 1700, t), fl = tent(t - 380, 160);
+const th = (wave(t - du, 91) * 28 / 128 | 0) * e / 255 | 0, bx = pendX(0, th), by = pendY(th), s = [0, -45, bx, by];
+const rr = imax(0, t - 350) * 70 / 1000 | 0, rf = t > 350 ? 255 - smooth(350, 900, t) : 0, hc = mix(col, C_WHITE, 90 + (fl * 150 / 255 | 0));
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = tent(segDist(p, q, s, 256), 5) * 40 / 255 | 0, c = col;
+const d = oct(p - bx, q - by), v = tent(d, 10);
+if (rf) a = imax(a, tent(d - 10 - rr, 6) * rf / 300 | 0);
+if (v > a) { a = v; c = d < 4 ? hc : col; }
+put(i, c, (a * g / 255 | 0) * fo / 255 | 0);
+}
+}
+function pendListen(n, t, col, k) {
+if (k <= 0) return;
+const bx = [0, 0, 0], by = [0, 0, 0], wc = mix(col, C_WHITE, 150), s = [0, -45, 0, 0];
+for (let m = 0; m < 3; m++) {
+const th = wave(t - m * 70, 91) * 28 / 128 | 0;
+bx[m] = pendX(0, th);
+by[m] = pendY(th);
+}
+s[2] = bx[0]; s[3] = by[0];
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = tent(segDist(p, q, s, 256), 5) * 40 / 255 | 0, c = col;
+for (let m = 0; m < 3; m++) {
+const d = oct(p - bx[m], q - by[m]), v = tent(d, m ? 8 : 10) * (m ? 120 - m * 40 : 255) / 255 | 0;
+if (v > a) { a = v; c = !m && d < 4 ? wc : col; }
+}
+put(i, c, a * k / 255 | 0);
+}
+}
+function pendThink(n, t, col, k) {
+if (k <= 0) return;
+const c = mix(col, C_VIOLET, 128), s = posMod(t, 1200), ln = [0, -45, 0, 0];
+const thR = s < 600 ? psin(s * 128 / 600 | 0) * 24 / 128 | 0 : 0, thL = s >= 600 ? -(psin((s - 600) * 128 / 600 | 0) * 24 / 128 | 0) : 0;
+const ck = imax(imax(tent(s, 90), tent(s - 600, 90)), tent(s - 1200, 90)), wc = mix(c, C_WHITE, 200 * ck / 255 | 0), hc = mix(c, C_WHITE, 90);
+const j = s < 600 ? 4 : 0, th = j ? thR : thL, mx = pendX(-32 + 16 * j, th), my = pendY(th);  // the ball that swings now
+ln[0] = -32 + 16 * j; ln[2] = mx; ln[3] = my;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = th ? tent(segDist(p, q, ln, 256), 4) * 36 / 255 | 0 : 0, cc = c;  // its string
+for (let b = 0; b < 5; b++) {
+const x = b === j ? mx : -32 + 16 * b, y = b === j ? my : 7, d = oct(p - x, q - y);
+if (d < 8) {
+const v = tent(d, 8);
+if (v > a) { a = v; cc = d < 4 ? (b && b < 4 ? wc : hc) : c; }
+}
+}
+put(i, cc, a * k / 255 | 0);
+}
+}
+function pendSpeak(n, t, col, k) {
+if (k <= 0) return;
+const v = [voice(t - 140), voice(t - 70), voice(t)], wc = mix(col, C_WHITE, 160);
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = 0, c = col;
+for (let j = 0; j < 5; j++) {
+const e = v[j < 2 ? j : 4 - j], x = -32 + 16 * j, y = 7 - (e * 16 / 255 | 0);
+if (q < y - 4 && p === x) a = imax(a, 24);  // the string, straight up
+const d = oct(p - x, q - y), w = tent(d, 8) * (150 + (e * 105 / 255 | 0)) / 255 | 0;
+if (w > a) { a = w; c = d < 4 && e > 150 ? wc : col; }
+}
+put(i, c, a * k / 255 | 0);
+}
+}
+function pendDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t), g = smooth(0, 150, t), th = t < 900 ? psin(t * 128 / 900 | 0) * 26 / 128 | 0 : 0, fl = tent(t - 920, 240);
+const ox = pendX(0, th), y = pendY(th), rr = imax(0, t - 900) * 90 / 1000 | 0, rf = t > 900 ? 255 - smooth(900, 1500, t) : 0;
+const wc = mix(col, C_WHITE, 170), hc = mix(col, C_WHITE, 60 + (150 * fl / 255 | 0)), s = [0, -45, 0, y];
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = 0, c = col;
+for (let j = 0; j < 5; j++) {
+const x0 = -32 + 16 * j, x = x0 + ox;
+if (th) { s[0] = x0; s[2] = x; a = imax(a, tent(segDist(p, q, s, 256), 4) * 30 / 255 | 0); }
+const d = oct(p - x, q - y), v = tent(d, 8) * (170 + (85 * fl / 255 | 0)) / 255 | 0;
+if (v > a) { a = v; c = d < 4 || fl > 120 ? hc : col; }
+}
+if (rf) {
+const v = tent(oct(p, q - 7) - rr, 7) * rf / 255 | 0;
+if (v > a) { a = v; c = wc; }
+}
+put(i, c, (a * g / 255 | 0) * fo / 255 | 0);
+}
+}
+function pendError(n, t, du, col) {
+const fo = smooth(du, du - 300, t), g = smooth(0, 100, t), th = -(28 * pcos(imin(t, 600) * 128 / 1400 | 0) / 128 | 0), sx = pendX(0, th), sy = pendY(th), w = t - 600;
+const bx = w > 0 ? sx + (w * 82 / 1000 | 0) : sx, by = w > 0 ? sy + (w * 12 / 1000 | 0) + (w * w * 64 / 1000000 | 0) : sy;
+const sg = w > 0 ? 40 * (255 - smooth(0, 500, w)) / 255 | 0 : 40, s = [0, -45, w > 0 ? sx >> 1 : sx, w > 0 ? (sy - 45) >> 1 : sy], fl = w >= 0 ? tent(w, 160) : 0, wc = mix(col, C_WHITE, 170), hc = mix(col, C_WHITE, 90);
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = sg ? tent(segDist(p, q, s, 256), 5) * sg / 255 | 0 : 0, c = col;
+if (fl) {
+const v = tent(oct(p - s[2], q - s[3]), 10) * fl / 255 | 0;
+if (v > a) { a = v; c = wc; }
+}
+const d = oct(p - bx, q - by), v = tent(d, 10);
+if (v > a) { a = v; c = d < 4 ? hc : col; }
+put(i, c, (a * g / 255 | 0) * fo / 255 | 0);
+}
+}
+function pendNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t), g = smooth(0, 120, t);
+const th = t < 300 ? psin(t * 128 / 300 | 0) * 18 / 128 | 0 : t >= 350 && t < 650 ? -(psin((t - 350) * 128 / 300 | 0) * 18 / 128 | 0) : 0;
+const tk = imax(tent(t - 150, 110), tent(t - 500, 110)), bx = pendX(0, th), by = pendY(th), s = [0, -45, bx, by], hc = mix(col, C_WHITE, 60 + (tk * 150 / 255 | 0));
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+let a = tent(segDist(p, q, s, 256), 5) * 40 / 255 | 0, c = col;
+const d = oct(p - bx, q - by), v = tent(d, 10);
+a = imax(a, tent(d - 14, 5) * tk / 400 | 0);
+if (v > a) { a = v; c = d < 4 ? hc : col; }
+put(i, c, (a * g / 255 | 0) * fo / 255 | 0);
+}
+}
+const gar_b = [-64, -21, -52, -14, -40, -7, -28, 0, -16, 7, 0, 7, 16, 7, 28, 0, 40, -7, 52, -14, 64, -21];  // the bulbs, (p, q), each on a ball
+const gar_pal = [0, 0xffa83a, 0xff4f6e, 0x7fe05a];  // by k & 3: 0 = Kaya's colour, warm amber, rose, green
+const gar_ph = [0, 140, 60, 200, 100, 30, 170, 90, 220, 120, 45], gar_sp = [57, 43, 64, 50, 39, 61, 47, 55, 41, 66, 52];  // each bulb's phase and pace
+const C_WIRE = 0xffe2b0, C_WARM = 0xfff0d8;
+function garCol(k, c0) { const j = k & 3; return j ? gar_pal[j] : c0; }
+function garPut(i, p, q, g, cb, w, k) {
+const s = [0, 0, 0, 0];
+let j = 0, a = 0, c = C_WIRE;
+while (j < 9 && p >= gar_b[2 * j + 2]) j++;
+if (w && p >= -64 && p <= 64) {
+s[0] = gar_b[2 * j]; s[1] = gar_b[2 * j + 1]; s[2] = gar_b[2 * j + 2]; s[3] = gar_b[2 * j + 3];
+a = tent(segDist(p, q, s, 256), 5) * w / 255 | 0;
+}
+for (let m = j; m <= j + 1; m++) {  // the two bulbs round it
+if (oct(p - gar_b[2 * m], q - gar_b[2 * m + 1]) < 4 && g[m] > a) { a = g[m]; c = cb[m]; }
+}
+put(i, c, a * k / 255 | 0);
+}
+function garWake(n, t, du, col) {
+const fo = smooth(du, du - 400, t), g = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], cb = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+for (let m = 0; m < 11; m++) {
+const u = t - 200 - m * 100;
+g[m] = u < 0 ? 0 : smooth(0, 80, u) * (255 - (70 * smooth(100, 450, u) / 255 | 0)) / 255 | 0;
+cb[m] = mix(garCol(m, col), C_WHITE, 60 + (160 * tent(u - 80, 150) / 255 | 0));
+}
+fr.dg = 128;
+const w = 18 * smooth(0, 250, t) / 255 | 0;
+for (let i = 0; i < MX_LED_AMOUNT; i++) garPut(i, 4 * (b_x[i] - 19), 7 * (b_row[i] - 3), g, cb, w, fo);
+}
+function garListen(n, t, col, k) {
+if (k <= 0) return;
+const g = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], cb = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+for (let m = 0; m < 11; m++) {
+const s = sin8((gar_ph[m] + (t * gar_sp[m] / 1000 | 0)) & 255);
+g[m] = 120 + ((s * s / 255 | 0) * 135 / 255 | 0);
+cb[m] = mix(garCol(m, col), C_WHITE, 60);
+}
+for (let i = 0; i < MX_LED_AMOUNT; i++) garPut(i, 4 * (b_x[i] - 19), 7 * (b_row[i] - 3), g, cb, 18, k);
+}
+function garThink(n, t, col, k) {
+if (k <= 0) return;
+const h = posMod(t, 500) * 1536 / 1000 | 0, g = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], cb = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+for (let m = 0; m < 11; m++) {
+const ph = posMod(m * 256 - h, 768), w = imin(ph, 768 - ph);
+g[m] = 20 + (235 * smooth(256, 0, w) / 255 | 0);
+cb[m] = mix(garCol(m, col), C_WHITE, 40 + (110 * smooth(160, 0, w) / 255 | 0));
+}
+for (let i = 0; i < MX_LED_AMOUNT; i++) garPut(i, 4 * (b_x[i] - 19), 7 * (b_row[i] - 3), g, cb, 18, k);
+}
+function garSpeak(n, t, col, k) {
+if (k <= 0) return;
+const v = [voice(t), voice(t - 80), voice(t - 160)], g = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], cb = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+for (let m = 0; m < 11; m++) {
+const e = v[abs(m - 5) >> 1];
+g[m] = 70 + (e * 185 / 255 | 0);
+cb[m] = mix(garCol(m, col), C_WHITE, 40 + (e * 140 / 255 | 0));
+}
+for (let i = 0; i < MX_LED_AMOUNT; i++) garPut(i, 4 * (b_x[i] - 19), 7 * (b_row[i] - 3), g, cb, 18, k);
+}
+function garDone(n, t, du, col) {
+const fo = smooth(du, du - 300, t), fl = 255 - smooth(150, 450, t), on = smooth(0, 60, t), g = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], cb = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+for (let m = 0; m < 11; m++) {
+const s = sin8((gar_ph[m] + (t * gar_sp[m] * 5 / 1000 | 0)) & 255), tw = s * s / 255 | 0;
+g[m] = imax(fl, 100 + (tw * 155 / 255 | 0)) * on / 255 | 0;
+cb[m] = mix(col, C_WHITE, imax(fl * 200 / 255 | 0, tw * 170 / 255 | 0));
+}
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) garPut(i, 4 * (b_x[i] - 19), 7 * (b_row[i] - 3), g, cb, 30, fo);
+}
+function garError(n, t, du, col) {
+const fo = smooth(du, du - 300, t), on = smooth(0, 80, t), pop = tent(t - 300, 120), rr = imax(0, t - 300) * 70 / 1000 | 0, rf = t > 300 ? 255 - smooth(300, 750, t) : 0;
+const g = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], cb = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], pc = mix(col, C_WHITE, 120), wl = 18 * (255 - smooth(900, 1400, t)) / 255 | 0;
+for (let m = 0; m < 11; m++) {
+if (m === 5) {
+g[m] = imax(pop, t < 300 ? 185 : 90 * (255 - smooth(400, 1000, t)) / 255 | 0);
+cb[m] = mix(t < 300 ? garCol(5, C_WARM) : col, C_WHITE, imax(60, 230 * pop / 255 | 0));
+} else {
+const T = 450 + abs(m - 5) * 110;
+g[m] = 185 * (255 - smooth(T + 80, T + 260, t)) / 255 | 0;
+cb[m] = mix(mix(garCol(m, C_WARM), col, smooth(T - 80, T + 60, t)), C_WHITE, 50);
+}
+g[m] = g[m] * on / 255 | 0;
+}
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) {
+const p = 4 * (b_x[i] - 19), q = 7 * (b_row[i] - 3);
+garPut(i, p, q, g, cb, wl, fo);
+if (rf) put(i, pc, (tent(oct(p, q - 7) - rr, 6) * rf / 255 | 0) * fo / 255 | 0);
+}
+}
+function garNotify(n, t, du, col) {
+const fo = smooth(du, du - 300, t), j = t < 550 ? 0 : 1, u = t - j * 550, h = u < 480 ? u * 3072 / 450 | 0 : 99999, all = tent(t - 1150, 220), on = smooth(0, 80, t);
+const g = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], cb = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+for (let m = 0; m < 11; m++) {
+const d = h - m * 256, v = d >= -128 && d < 768 ? tent(d, d < 0 ? 128 : 768) : 0, e = imax(v, all);
+g[m] = imax(45, e) * on / 255 | 0;
+cb[m] = mix(mix(garCol(m, C_WARM), col, e), C_WHITE, 40 + (e * 150 / 255 | 0));
+}
+fr.dg = 128;
+for (let i = 0; i < MX_LED_AMOUNT; i++) garPut(i, 4 * (b_x[i] - 19), 7 * (b_row[i] - 3), g, cb, 16, fo);
+}
 function bell(x, w) {
 const u = tent(x, w);
 if (!u) return 0;
@@ -1854,8 +2555,8 @@ if (a) put(i, wc, a * fo / 255 | 0);
 }
 }
 const STYLE_NAMES = ["Выкл", "Рябь", "Орбита", "Искры", "Пинг-понг", "Калейдоскоп", "Лава-лампа", "Мордашка", "Галактика", "Сканер",
-"Снежинка", "Светлячки", "Пламя"];
-const STYLE_COUNT = 12;  // the last style id
+"Снежинка", "Светлячки", "Пламя", "Аркада", "Тетрис", "Механизм", "Неон", "Маятник", "Гирлянда"];
+const STYLE_COUNT = 18;  // the last style id
 const fam_ms = [
 [1500, 1600, 1600],
 [1600, 1600, 1700],
@@ -1866,6 +2567,12 @@ const fam_ms = [
 [1800, 1800, 1600],  // 10 Снежинка
 [1700, 1500, 1400],  // 11 Светлячки
 [1800, 2000, 1500],  // 12 Пламя
+[1700, 1700, 1500],  // 13 Аркада
+[1600, 1800, 1500],  // 14 Тетрис
+[1600, 1600, 1600],  // 15 Механизм
+[1600, 1700, 1500],  // 16 Неон
+[1600, 1700, 1400],  // 17 Маятник
+[1700, 1700, 1500],  // 18 Гирлянда
 ];
 function kfold(a) {
 const s = (a * 6) & 255;
@@ -2618,7 +3325,13 @@ case 8: galListen(n, t, col, k); break;
 case 9: scanListen(n, t, col, k); break;
 case 10: snowListen(n, t, col, k); break;
 case 11: flyListen(n, t, col, k); break;
-default: flameListen(n, t, col, k); break;
+case 12: flameListen(n, t, col, k); break;
+case 13: arcListen(n, t, col, k); break;
+case 14: tetListen(n, t, col, k); break;
+case 15: gearListen(n, t, col, k); break;
+case 16: neonListen(n, t, col, k); break;
+case 17: pendListen(n, t, col, k); break;
+default: garListen(n, t, col, k); break;
 }
 } else if (n === A_THINKING) {
 switch (style) {
@@ -2630,7 +3343,13 @@ case 8: galThink(n, t, col, k); break;
 case 9: scanThink(n, t, col, k); break;
 case 10: snowThink(n, t, col, k); break;
 case 11: flyThink(n, t, col, k); break;
-default: flameThink(n, t, col, k); break;
+case 12: flameThink(n, t, col, k); break;
+case 13: arcThink(n, t, col, k); break;
+case 14: tetThink(n, t, col, k); break;
+case 15: gearThink(n, t, col, k); break;
+case 16: neonThink(n, t, col, k); break;
+case 17: pendThink(n, t, col, k); break;
+default: garThink(n, t, col, k); break;
 }
 } else {
 switch (style) {
@@ -2642,7 +3361,13 @@ case 8: galSpeak(n, t, col, k); break;
 case 9: scanSpeak(n, t, col, k); break;
 case 10: snowSpeak(n, t, col, k); break;
 case 11: flySpeak(n, t, col, k); break;
-default: flameSpeak(n, t, col, k); break;
+case 12: flameSpeak(n, t, col, k); break;
+case 13: arcSpeak(n, t, col, k); break;
+case 14: tetSpeak(n, t, col, k); break;
+case 15: gearSpeak(n, t, col, k); break;
+case 16: neonSpeak(n, t, col, k); break;
+case 17: pendSpeak(n, t, col, k); break;
+default: garSpeak(n, t, col, k); break;
 }
 }
 }
@@ -2657,7 +3382,13 @@ case 8: galWake(n, t, du, col); break;
 case 9: scanWake(n, t, du, col); break;
 case 10: snowWake(n, t, du, col); break;
 case 11: flyWake(n, t, du, col); break;
-default: flameWake(n, t, du, col); break;
+case 12: flameWake(n, t, du, col); break;
+case 13: arcWake(n, t, du, col); break;
+case 14: tetWake(n, t, du, col); break;
+case 15: gearWake(n, t, du, col); break;
+case 16: neonWake(n, t, du, col); break;
+case 17: pendWake(n, t, du, col); break;
+default: garWake(n, t, du, col); break;
 }
 } else if (n === A_DONE) {
 switch (style) {
@@ -2669,7 +3400,13 @@ case 8: galDone(n, t, du, col); break;
 case 9: scanDone(n, t, du, col); break;
 case 10: snowDone(n, t, du, col); break;
 case 11: flyDone(n, t, du, col); break;
-default: flameDone(n, t, du, col); break;
+case 12: flameDone(n, t, du, col); break;
+case 13: arcDone(n, t, du, col); break;
+case 14: tetDone(n, t, du, col); break;
+case 15: gearDone(n, t, du, col); break;
+case 16: neonDone(n, t, du, col); break;
+case 17: pendDone(n, t, du, col); break;
+default: garDone(n, t, du, col); break;
 }
 } else if (n === A_ERROR) {
 switch (style) {
@@ -2681,7 +3418,13 @@ case 8: galError(n, t, du, col); break;
 case 9: scanError(n, t, du, col); break;
 case 10: snowError(n, t, du, col); break;
 case 11: flyError(n, t, du, col); break;
-default: flameError(n, t, du, col); break;
+case 12: flameError(n, t, du, col); break;
+case 13: arcError(n, t, du, col); break;
+case 14: tetError(n, t, du, col); break;
+case 15: gearError(n, t, du, col); break;
+case 16: neonError(n, t, du, col); break;
+case 17: pendError(n, t, du, col); break;
+default: garError(n, t, du, col); break;
 }
 } else {
 switch (style) {
@@ -2693,7 +3436,13 @@ case 8: galNotify(n, t, du, col); break;
 case 9: scanNotify(n, t, du, col); break;
 case 10: snowNotify(n, t, du, col); break;
 case 11: flyNotify(n, t, du, col); break;
-default: flameNotify(n, t, du, col); break;
+case 12: flameNotify(n, t, du, col); break;
+case 13: arcNotify(n, t, du, col); break;
+case 14: tetNotify(n, t, du, col); break;
+case 15: gearNotify(n, t, du, col); break;
+case 16: neonNotify(n, t, du, col); break;
+case 17: pendNotify(n, t, du, col); break;
+default: garNotify(n, t, du, col); break;
 }
 }
 }
@@ -2707,9 +3456,9 @@ WAKE_NAMES,
 ["Как у стиля", "Рябь", "Орбита", "Искры", "Нет-нет", "Крест", "Сбой", "Сирена", "Отключение", ...SN],
 ["Как у стиля", "Рябь", "Орбита", "Искры", "«!»", "Тук-тук", "Маяк", "Конверт", "Значок", ...SN],
 ];
-const LOOK_COUNT = 18;
-const look_style = [0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-const style_look = [0, 0, 0, 0, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+const LOOK_COUNT = 24;
+const look_style = [0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+const style_look = [0, 0, 0, 0, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
 function lookOf(style, look) {
 return look || style <= 3 ? look : style_look[style];
 }
@@ -4093,7 +4842,8 @@ const rgb = (c) => ((c >> 16) & 255) + "," + ((c >> 8) & 255) + "," + (c & 255);
 const palCss = (p) => "linear-gradient(90deg," + PALETTES[p].map((c) => "rgb(" + rgb(c) + ")").join(",") + ")";
 const STY = STYLE_NAMES;
 const STY_SUB = ["анимаций нет", "кольца из центра", "кометы по ободу", "знак в середине", "розыгрыш через сетку", "шестикратный узор", "мягкие капли", "лицо: глаза и рот", "спираль и звёзды", "бегущий луч",
-"иней на решётке", "мягкие огоньки", "холодный огонь"];
+"иней на решётке", "мягкие огоньки", "холодный огонь", "игра · 8 бит", "игра · блоки", "механика · шестерни", "вывеска · две трубки",
+"физика · нить и шар", "праздник · лампочки"];
 const STY_IDEA = ["", "Кольца расходятся из центра и сходятся к нему.", "Кометы бегут по ободу шестиугольника.", "Искры собираются в знак посередине.",
 "Часы сами из мячиков для пинг-понга, значит — розыгрыш: мяч, сетка в середине нижних рядов, ракетки по краям, стол — нижний ряд.",
 "Шестикратная симметрия самого шестиугольника: узор из шести зеркальных секторов.",
@@ -4103,7 +4853,13 @@ const STY_IDEA = ["", "Кольца расходятся из центра и с
 "Свет «Рыцаря дорожного»: полоса через все ряды, ярче в среднем, со следом.",
 "Снежинка на самой решётке шаров: шесть лучей по три шара идут по линиям сетки, вокруг кончиков нарастает иней. По бокам падает редкий снег, по краю кое-где искрится иней.",
 "Мягкие огоньки: у каждого своё место, вокруг которого он плавает, и свой темп — разгорается и гаснет; где двое встречаются, свет складывается.",
-"Холодное пламя цвета Каи с белеющими кончиками: языки на нижнем ряду лижут вверх, сквозь пламя поднимается свет, над ним летят угольки."];
+"Холодное пламя цвета Каи с белеющими кончиками: языки на нижнем ряду лижут вверх, сквозь пламя поднимается свет, над ним летят угольки.",
+"Восьмибитный едок цвета Каи, привидения и точки. Едок — круг в два шара с ртом-клином, привидение — купол из семи шаров с белыми глазами, точки — каждый второй шар среднего ряда; у левого края мигает энерджайзер.",
+"Блоки на диагональной сетке: блок — шар, фигура — четыре, стопка — три нижних ряда. Фигуры падают по шагу сетки, мягко между шарами, и поворачиваются на 60°.",
+"Это же часы — значит, шестерни. Два больших колеса сцеплены посередине и крутятся навстречу; у краёв — шестерёнки, втрое быстрее.",
+"Неоновые трубки в темноте: белое горячее ядро и едва заметное свечение вокруг. Рамка вывески — обод цвета Каи, вторая трубка внутри — розовая.",
+"Физика: маятник на нити подвешен над верхним краем, шарик висит посреди ряда 4. Быстро внизу, замирает у края — как настоящий.",
+"Шары — лампочки гирлянды: 11 лампочек на провисшем проводе, каждая своего цвета — цвет Каи, янтарь, роза, зелень; соседние цвета не смешиваются."];
 const STY_EV = [
 ["Подача", "Розыгрыш", "Быстрый розыгрыш", "Подскоки", "Смэш", "В сетку", "Мячик"],
 ["Мандала", "Вращение", "Узоры", "Дыхание лепестков", "Цветок", "Осколки", "Лепестки по кругу"],
@@ -4114,14 +4870,20 @@ const STY_EV = [
 ["Иней", "Блеск", "Иней на кончиках", "Рост голосом", "Идеальная снежинка", "Оттепель", "Блик по кругу"],
 ["Слетаются", "Огоньки", "Хоровод", "Хор", "Рой", "Разлетелись", "Вспышка"],
 ["Розжиг", "Тихий огонь", "Пляска", "Голос огня", "Костёр", "Угасание", "Треск"],
+["Забег", "Патруль", "Погоня", "Ам-ам", "Энерджайзер", "Пойман", "Бонус"],
+["Стопка", "Фигура", "Ливень", "Верхний ряд", "Линия", "Конец игры", "Новая фигура"],
+["Завод", "Ход", "Быстрый ход", "Тик", "Щелчок", "Заклинило", "Кукушка"],
+["Зажигание", "Гул", "Схема", "Пульс трубок", "Неоновая галочка", "Искрит", "Стрелка"],
+["Толчок", "Качание", "Колыбель Ньютона", "Прыжки", "В такт", "Обрыв", "Тик-так"],
+["По цепочке", "Мерцание", "Бегущие огни", "Вспышки", "Праздник", "Перегорела", "Двойной бег"],
 ];
 const STY_NEW = 10;
 const STY_GROUPS = [
 ["Классика", "кольца, кометы, знак, луч, лицо", [0, 1, 2, 3, 9, 7]],
 ["Природа", "капли, снег, огоньки, огонь", [6, 10, 11, 12]],
 ["Космос", "спираль и звёзды", [8]],
-["Игры", "мяч", [4]],
-["Узоры и свет", "симметрия", [5]],
+["Игры", "мяч, едок, блоки, шестерни, маятник", [4, 13, 14, 15, 17]],
+["Узоры и свет", "симметрия и огни", [5, 16, 18]],
 ];
 const styGroupOf = (id) => STY_GROUPS.findIndex((g) => g[2].includes(id));
 const styGroupShown = (s) => (P.grp != null ? P.grp : matchMedia("(max-width:520px)").matches ? styGroupOf(s.kaia_anim) : -1);

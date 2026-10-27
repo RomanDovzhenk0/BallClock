@@ -7,8 +7,8 @@ Kaya's 7 events with live thumbnails and a gallery per event, a try-out on the c
 balls' look. v1.7 adds the Digit fade: the time fades out while Kaya's animation plays and back in after it. v1.8 adds
 six Kaya styles (KAIA-195), a «Стиль» picker by sight and the new styles' versions in every event's gallery. v1.9
 (the owner's picks from three catalogs, in three parts): part 1 fixes the ids of all of them, puts the «Стиль» picker
-into groups (KAIA-201's design) and adds catalog A's Снежинка, Светлячки and Пламя. The classic Settings page stays at
-`/old`.
+into groups (KAIA-201's design) and adds catalog A's Снежинка, Светлячки and Пламя; part 2 adds catalog B's Аркада,
+Тетрис, Механизм, Неон, Маятник and Гирлянда (KAIA-202). The classic Settings page stays at `/old`.
 
 One self-contained page: inline CSS and JS, no external requests, only relative URLs (it runs from the clock's
 own access point and behind the Kernel's gateway alike), Russian UI. No npm dependencies: Node built-ins only.
@@ -19,8 +19,8 @@ own access point and behind the Kernel's gateway alike), Russian UI. No npm depe
 |---|---|
 | `dist/site.html?mock` | open from disk in a browser: a mock clock inside the page answers the whole API from sample data with a running clock. The dashed «Макет» bar switches what it does: password (401, the mock's password is `kaia`), no answer, access point, update available, running text. |
 | `npm run build` | `src/` → `dist/site.html` (committed) → `../firmware/src/site_page.h` (`site_page_gz[] PROGMEM`, `site_page_gz_len`, `SITE_PAGE_ETAG`); prints the raw and gzip sizes and fails over 96 KB gzipped (64 KB until v1.8; v1.9's 91 new animations add about 22 KB, `send_P` takes any `size_t` and the v1.8.0 bin is 743,472 B of the ~1 MB a sketch may take). The gzip is deterministic: the same input gives the same bytes. |
-| `npm test` | `node --test`: the renderer against hand-computed values and the firmware's own tables (the 61 palettes read back from `palettes.cpp`), the wakes, the looks per event (lengths, seamless loops, determinism, ids, C++ portability), the API client, the try-out queries, the unlit-ball storage and the mock, the Digit fade (`hide.test.mjs`: the level against hand-computed values, the frames of v1.6.2 bit for bit when it is off, C++ portability), the styles of v1.8 (`styles.test.mjs`: every old id's frames bit for bit, the new ids through «Как у стиля» and the galleries, seamless loops, fade-outs, the cost per frame, the long-state check, C++ portability), catalog A's styles of v1.9 (`nature.test.mjs`: the id tables, every v1.8 id's frames bit for bit, the same checks for styles 10–12, the cost as the divisions a frame really runs). |
-| `npm run test:render` | headless Edge over CDP: `dist/site.html?mock` at 390×844 and 1280×800 in 48 states (the tabs, the palette picker, the Digit fade block on and off, the draft half way through the fade, the way back, a clock without it, each event's gallery, the «Стиль» picker (its listening and all-7 thumbnails, a new style's events in the draft, its try-out; v1.9: its groups on both widths, a chip showing «Природа» with Пламя picked, a catalog A version in a gallery), the try-outs of a wake, a state and a one-shot, the unlit balls at 0, 50 and 100 % transparency, the phone with the preview in view, …); shots in `shots/` (git-ignored). In-page check: nothing wider than the viewport, no overlapping controls, no cut text, touch targets ≥ 44 px on the phone, no request off the page; the save, login and try-out flows; ≥ 18 frames a second with the CPU 4× slower. `node test/render.mjs <state>…` runs some states only. Run `npm run build` first. |
+| `npm test` | `node --test`: the renderer against hand-computed values and the firmware's own tables (the 61 palettes read back from `palettes.cpp`), the wakes, the looks per event (lengths, seamless loops, determinism, ids, C++ portability), the API client, the try-out queries, the unlit-ball storage and the mock, the Digit fade (`hide.test.mjs`: the level against hand-computed values, the frames of v1.6.2 bit for bit when it is off, C++ portability), the styles of v1.8 (`styles.test.mjs`: every old id's frames bit for bit, the new ids through «Как у стиля» and the galleries, seamless loops, fade-outs, the cost per frame, the long-state check, C++ portability), catalog A's styles of v1.9 (`nature.test.mjs`: the id tables, every v1.8 id's frames bit for bit, the same checks for styles 10–12, the cost as the divisions a frame really runs), catalog B's (`games.test.mjs`: the same for styles 13–18, every id of part 1 bit for bit, the long-state check to 70 minutes, the arithmetic right shifts). |
+| `npm run test:render` | headless Edge over CDP: `dist/site.html?mock` at 390×844 and 1280×800 in 52 states (the tabs, the palette picker, the Digit fade block on and off, the draft half way through the fade, the way back, a clock without it, each event's gallery, the «Стиль» picker (its listening and all-7 thumbnails, a new style's events in the draft, its try-out; v1.9: its groups on both widths, a chip showing «Природа» with Пламя picked, a catalog A version in a gallery; part 2: «Все» with all 18 styles and «Выкл», «Игры» with Маятник picked, «Узоры и свет» with Гирлянда, catalog B's wakes in the wake's gallery, a try-out with style 16), the try-outs of a wake, a state and a one-shot, the unlit balls at 0, 50 and 100 % transparency, the phone with the preview in view, …); shots in `shots/` (git-ignored). In-page check: nothing wider than the viewport, no overlapping controls, no cut text, touch targets ≥ 44 px on the phone, no request off the page; the save, login and try-out flows; ≥ 18 frames a second with the CPU 4× slower. `node test/render.mjs <state>…` runs some states only. Run `npm run build` first. |
 
 The build joins the ES modules of `src/` in import order into one strict scope: top-level names must be unique
 across modules (the build checks), and strings never span lines (it drops whole-line comments and indentation).
@@ -37,8 +37,9 @@ across modules (the build checks), and strings never span lines (it drops whole-
 | `src/kaia.js` | Kaya: the ball tables, the helpers (with v1.6's `ballRX`, `ballAt`, `oct`, `segDist`, `hash8`, `putb`), the 3 styles |
 | `src/wakes.js` | the wakes (ids, names, base lengths, the 11 themed ones of v1.5 and v1.6, the speed) |
 | `src/looks.js` | v1.6: the looks per event (ids, names, one-shot lengths, the 30 new ones), `stateLook`, `shotLook`, `wakeDraw`; v1.8: `lookOf`, looks 9–14 |
-| `src/styles.js` | v1.8: Kaya's styles 4–9 (KAIA-195): their 42 animations, helpers and tables, `styleState`, `styleShot` (v1.9: also 10–12), `STYLE_NAMES`, `fam_ms` |
+| `src/styles.js` | v1.8: Kaya's styles 4–9 (KAIA-195): their 42 animations, helpers and tables, `styleState`, `styleShot` (v1.9: also 10–18), `STYLE_NAMES`, `fam_ms` |
 | `src/nature.js` | v1.9 part 1: catalog A's styles 10–12 (KAIA-201): Снежинка, Светлячки, Пламя, their 21 animations, helpers and tables |
+| `src/games.js` | v1.9 part 2: catalog B's styles 13–18 (KAIA-202): Аркада, Тетрис, Механизм, Неон, Маятник, Гирлянда, their 42 animations, helpers and tables |
 | `src/frame.js` | one 50 ms frame: `renderFrame(matrix, settings, clock)`; what plays at t (`resolvePlay`); the duck; v1.7: the Digit fade (`hideStep`, `digitHide`, `hideTrack`, `isPlaying`) |
 | `src/paint.js` | the canvas layer (the only DOM part of the drawing) and the unlit balls' setting |
 | `src/api.js` | the API client: one request at a time, 5 s, auth; `hash32`, `keyId`; `tryOut` (the try-out query) |
@@ -46,7 +47,7 @@ across modules (the build checks), and strings never span lines (it drops whole-
 | `src/mock.js` | the mock clock of `?mock` |
 | `src/settings.js` | the keys, their defaults (db.init) and raw values; `LOOK_KEYS`; `HIDE_RANGES` (v1.7) |
 | `src/app.js`, `page.html`, `style.css` | the page |
-| `test/frames.mjs`, `test/cost.mjs` | test helpers: the frame digests (v1.6.2, every v1.6 id, every v1.8 id), the cost of a frame read from the source and (v1.9) the divisions a frame really runs |
+| `test/frames.mjs`, `test/cost.mjs` | test helpers: the frame digests (v1.6.2, every v1.6 id, every v1.8 id, every id of v1.9 part 1), the cost of a frame read from the source and (v1.9) the divisions a frame really runs |
 
 ## The renderer: the firmware's drawing in JS
 
@@ -74,6 +75,7 @@ where the C++ types do, and the float steps of the boot tables and the old wakes
 | `looks.js`, the v1.6 helpers of `kaia.js`, wakes 12–14 | for `src/kaia.cpp` v1.6 (the firmware task) | see «Changes the firmware task copies into kaia.cpp (v1.6)» |
 | `styles.js`, `lookOf`, `wakeOf` | for `src/kaia.cpp` v1.8 (the firmware task) | see «Changes the firmware task copies into kaia.cpp (v1.8)» |
 | `nature.js`, `look_style`, `style_look`, `wake_style`, `style_wake` | for `src/kaia.cpp` v1.9 (the firmware task) | see «Changes the firmware task copies (v1.9, part 1)» |
+| `games.js` | for `src/kaia.cpp` v1.9 (the firmware task) | see «Changes the firmware task copies (v1.9, part 2)» |
 
 Not modelled: NeoPixel's `setBrightness` pre-multiplies the strip and `getPixelColor` scales back, so on the clock a
 read-modify-write (the dots, `put`, `dimAll`) at brightness < 255 loses low bits. The brightness belongs to the
@@ -295,7 +297,7 @@ tasks, each followed by its firmware port, then one release (v1.9.0). The ids ar
 appended and the old ones never move. An id becomes valid (in `STYLE_COUNT`, `LOOK_COUNT`, `WAKE_COUNT`, the play's and
 the API's ranges) only in the part that brings its drawing.
 
-| setting | v1.8 | v1.9 part 1 (this) | part 2 | part 3 |
+| setting | v1.8 | v1.9 part 1 | part 2 | part 3 |
 |---|---|---|---|---|
 | `kaia_anim` («Стиль») | 0 Выкл, 1–9 | 10 Снежинка, 11 Светлячки, 12 Пламя | 13 Аркада, 14 Тетрис, 15 Механизм, 16 Неон, 17 Маятник, 18 Гирлянда | — |
 | `kaia_listen` … `kaia_notify` | 0–14 | 15–17: the versions of styles 10–12 | 18–23: styles 13–18 | 24–27: catalog C's singles, per event |
@@ -390,6 +392,127 @@ like `styles.js`, copied line by line (`test/nature.test.mjs` holds it). The cod
   fireflies have flown past the edges by 0.73 s, so the rest of its 1.5 s is the empty display (the time stays hidden
   under it); that is how the catalog plays it.
 - **Size**: the page is 69,821 B gzipped (v1.8: 64,345 B), the three styles, their names and the grouped picker.
+
+## Changes the firmware task copies (v1.9, part 2): catalog B's styles
+
+KAIA-202's catalog as the owner accepted it (all six families, each whole), in `src/games.js`: integer-only like
+`nature.js`, copied line by line (`test/games.test.mjs` holds it). The code is the catalog's own, re-indented; the
+42 functions draw the catalog's frames bit for bit (checked against the catalog page's own script over every 37 ms of
+every animation, and to 72 minutes of the two states changed below).
+
+- **Ids**: `kaia_anim` 13–18 (`STYLE_COUNT` 18), looks 18–23 (`LOOK_COUNT` 24), wakes 24–29 (`WAKE_COUNT` 30).
+  Every id of v1.8 and of part 1 draws its frames bit for bit (`test/frames.mjs` `v18DigestOf` and `v19aDigestOf`:
+  4896 frames of styles 1–12, looks 0–17, wakes 0–23, one SHA-256 taken on the sources of part 1, main at 2924f2c).
+- **Dispatch**: the tables of part 1 grow, nothing else changes. `look_style` appends `13, 14, 15, 16, 17, 18` (looks
+  18–23), `style_look` appends `18, …, 23`; `wake_style` appends `13, …, 18` (wakes 24–29), `style_wake` appends
+  `24, …, 29`. `styleState` / `styleShot` (`styles.js`): each switch gains `case 12` (flame…, was the default),
+  `case 13` arc…, `case 14` tet…, `case 15` gear…, `case 16` neon…, `case 17` pend…, `default` gar….
+- **Lengths** (wake, done, error, notify), as the catalog gives them: Аркада 1800, 1700, 1700, 1500; Тетрис 2000, 1600,
+  1800, 1500; Механизм 2000, 1600, 1600, 1600; Неон 2000, 1600, 1700, 1500; Маятник 2000, 1600, 1700, 1400; Гирлянда
+  2000, 1700, 1700, 1500. So `fam_ms` gains six rows (done, error, notify) and `wake_ms[24..29]` = 1800, 2000, 2000,
+  2000, 2000, 2000. The listening fades in over the wake's last 800 ms, as in v1.8.
+- **Names**: `STYLE_NAMES` appends Аркада, Тетрис, Механизм, Неон, Маятник, Гирлянда; every event's `LOOK_NAMES` appends
+  them as 18–23, the wake's as 24–29. The classic page's «Стиль» Select lists 19, each event's Select 24, «Пробуждение»
+  30. settings.cpp's ranges: `kaia_anim` 0–18, the six looks 0–23, `kaia_wake` 0–29. Home's profile appends them by
+  index (its own task).
+- **Helpers** (`games.js`, no tables of their own unless named): `psin(a)`, `pcos(a)` (sin8 − 128), `pang(dx, dy)`
+  (an angle without atan, one division); Аркада: `chomp(dp, dq, r, dir, m)`, `ghost(dp, dq, t)`, `arcDot(i, p, t)`;
+  Тетрис: `tetStack(r, p)`, `tetQ(r, p, j)`, `tetPlace(xs, ys, j0, x, y, ang)`, `tetAt(p, q, xs, ys, n)`; Механизм:
+  `gear(i, x0, r0, R, N, th)`, `gears(i, th)`; Неон: `neon(d)`, `neonTrace(p, q, h)`; Маятник: `pendX(px, th)`,
+  `pendY(th)`; Гирлянда: `garCol(k, c0)`, `garPut(i, p, q, g, cb, w, k)`. From v1.6/v1.8: `oct`, `segDist`, `tent`,
+  `smooth`, `wave`, `voice`, `posMod`, `mix`, `put`, `ringOf`, `b_pos`, `ring_len`, `b_ang`. No `h1`–`h3`, no
+  `hash8`, no `inoise16`; at most 3 `voice()` a frame.
+- **Small const tables** (PROGMEM, 149 bytes at the narrowest types; the catalog's «about 230 B» counts int16s):
+  `arc_ch[6]`, `tet_pc[8]`, `tet_cx[4]`, `tet_lx[3]`, `neon_pt[16]`, `neon_ck[6]`, `neon_ar[12]`, `gar_b[22]` (int8);
+  `tet_sh[3]`, `tet_la[3]`, `neon_len[8]`, `gar_ph[11]`, `gar_sp[11]` (uint8); `tet_dt[4]` (int16); `tet_st[3]` (the
+  stack's three 20-bit rows) and `gar_pal[4]` (colours) (uint32). No per-ball tables.
+- **Colours**: `C_STEM` 0x5fd05a (the cherries' stems), `C_PINK` 0xff3fa8 (Неон's second tube), `C_WIRE` 0xffe2b0
+  (the garland's wire), `C_WARM` 0xfff0d8 (every fourth bulb, in place of Kaya's colour, in Ошибка and Уведомление).
+- **Stack arrays a frame** (`[]` in the JS; the C++ gives them the size the loop fills): `int[12]` ×2 and `int[3]`
+  (Тетрис · Ливень), `int[4]` ×2 (a piece; Тетрис · Стопка's falls), `int[3]` ×2 and `int[4]` (Маятник · Качание),
+  `int[11]` and `uint32_t[11]` (every Гирлянда: brightness and colour per bulb), `int[4]` (a segment for `segDist`),
+  `int[3]` (three voices).
+- **Arithmetic right shifts.** `>>` on a negative int rounds down in JS (−4 >> 3 is −1), and GCC's `>>` on `int` does
+  the same (implementation-defined before C++20, arithmetic in GCC and required from C++20). Four places rely on it:
+  `tetPlace`'s `(ox * cs - oy * sn + 64) >> 7` and `(ox * sn + oy * cs + 64) >> 7` (a piece's block left or above
+  its centre), `tetStack`'s `(p + 76 - 4 * (r - 3)) >> 3` (a ball left of the stack's row gives k < 0, so nothing),
+  and Маятник · Обрыв's `sx >> 1` and `(sy - 45) >> 1` (the half string left after the snap). Keep them `>>`: `/ 2`
+  or `/ 8` round towards 0 and move those balls by one (`games.test.mjs` holds the shifts).
+- **Long states.** The firmware's `wave(int t, int w)` computes `t * w` in a 32-bit `int`, and `GET /kaia/test` draws
+  every state at 70 minutes. The catalog's Аркада · Погоня had `wave(t, 640)` and the ghost's `wave(t, 768)`, and
+  Гирлянда · Бегущие огни `t * 1536 / 1000`: those overflow after 56, 47 and 23 minutes of one state. Each term repeats
+  exactly (every 400, 1000 and 500 ms), so here they take `posMod(t, 400)`, `tg = posMod(t, 1000)` (passed to `ghost`)
+  and `posMod(t, 500)`: the same frames bit for bit, and the largest factor of t in a state is again `voice`'s 469
+  (exact for 76 minutes). These are the only differences from the catalog's code.
+- **Cost per frame.** The divisions a frame really runs (`cost.mjs` `styleDivs`, as in part 1). v1.8's heaviest frame is
+  Пинг-понг · Смэш, 2010; KAIA-202 was held to about 3× v1.8's heaviest. Two of the 42 go over 2010: **Маятник · В
+  такт, 4317** (five balls, each with its string's `segDist` and `tent` on every ball) and Маятник · Прыжки, 2185. The
+  catalog measured its frames in the browser against Мордашка's wake (3.2 ms on the clock by `GET /kaia/test`, 961
+  divisions); its report gave the heaviest as Маятник · В такт ≈ 4.9 ms, then Неон · Схема ≈ 4.4 and Гирлянда ·
+  Перегорела ≈ 4.2. A re-run of the catalog page here gave the column below (В такт 7.4 ms): browser timings drift from
+  run to run, the division counts do not. Both put В такт first. `GET /kaia/test` will give the real times; the
+  budget is the 50 ms frame.
+
+| style | event | function | name | length | divisions a frame | catalog page: ms (est.) | voice |
+|---|---|---|---|---|---|---|---|
+| 13 Аркада | Пробуждение | `arcWake` | Забег | 1800 ms | 370 | 2.4 | 0 |
+|  | Слушает | `arcListen` | Патруль | 8.8 s there and back | 300 | 4.0 | 0 |
+|  | Думает | `arcThink` | Погоня | 2.6 s a round | 375 | 2.6 | 0 |
+|  | Говорит | `arcSpeak` | Ам-ам | voice | 299 | 1.6 | 1 |
+|  | Готово | `arcDone` | Энерджайзер | 1700 ms | 958 | 4.0 | 0 |
+|  | Ошибка | `arcError` | Пойман | 1700 ms | 567 | 4.2 | 0 |
+|  | Уведомление | `arcNotify` | Бонус | 1500 ms | 1247 | 3.0 | 0 |
+| 14 Тетрис | Пробуждение | `tetWake` | Стопка | 2000 ms | 350 | 3.6 | 0 |
+|  | Слушает | `tetListen` | Фигура | a piece every 6 s, four columns | 426 | 3.5 | 0 |
+|  | Думает | `tetThink` | Ливень | 0.9 s | 434 | 2.8 | 0 |
+|  | Говорит | `tetSpeak` | Верхний ряд | voice | 438 | 1.2 | 3 |
+|  | Готово | `tetDone` | Линия | 1600 ms | 449 | 3.4 | 0 |
+|  | Ошибка | `tetError` | Конец игры | 1800 ms | 1546 | 3.8 | 0 |
+|  | Уведомление | `tetNotify` | Новая фигура | 1500 ms | 415 | 2.3 | 0 |
+| 15 Механизм | Пробуждение | `gearWake` | Завод | 2000 ms | 904 | 2.8 | 0 |
+|  | Слушает | `gearListen` | Ход | 12 s a turn, breath 5.7 s | 899 | 2.4 | 0 |
+|  | Думает | `gearThink` | Быстрый ход | 1.5 s a turn | 773 | 2.7 | 0 |
+|  | Говорит | `gearSpeak` | Тик | voice | 911 | 2.6 | 1 |
+|  | Готово | `gearDone` | Щелчок | 1600 ms | 1403 | 5.9 | 0 |
+|  | Ошибка | `gearError` | Заклинило | 1600 ms | 1084 | 5.4 | 0 |
+|  | Уведомление | `gearNotify` | Кукушка | 1600 ms | 1144 | 6.5 | 0 |
+| 16 Неон | Пробуждение | `neonWake` | Зажигание | 2000 ms | 489 | 2.8 | 0 |
+|  | Слушает | `neonListen` | Гул | 6.4 s, breath 6.9 s | 519 | 1.0 | 0 |
+|  | Думает | `neonThink` | Схема | 2.27 s a round | 1897 | 6.0 | 0 |
+|  | Говорит | `neonSpeak` | Пульс трубок | voice | 476 | 0.7 | 2 |
+|  | Готово | `neonDone` | Неоновая галочка | 1600 ms | 1166 | 3.8 | 0 |
+|  | Ошибка | `neonError` | Искрит | 1700 ms | 653 | 1.9 | 0 |
+|  | Уведомление | `neonNotify` | Стрелка | 1500 ms | 1596 | 4.2 | 0 |
+| 17 Маятник | Пробуждение | `pendWake` | Толчок | 2000 ms | 1101 | 4.4 | 0 |
+|  | Слушает | `pendListen` | Качание | 2.8 s | 1109 | 2.4 | 0 |
+|  | Думает | `pendThink` | Колыбель Ньютона | 1.2 s | 716 | 4.5 | 0 |
+|  | Говорит | `pendSpeak` | Прыжки | voice | **2185** | 3.4 | 3 |
+|  | Готово | `pendDone` | В такт | 1600 ms | **4317** | 7.4 | 0 |
+|  | Ошибка | `pendError` | Обрыв | 1700 ms | 968 | 2.8 | 0 |
+|  | Уведомление | `pendNotify` | Тик-так | 1400 ms | 1020 | 4.8 | 0 |
+| 18 Гирлянда | Пробуждение | `garWake` | По цепочке | 2000 ms | 855 | 4.4 | 0 |
+|  | Слушает | `garListen` | Мерцание | each bulb 3.9–6.6 s | 803 | 3.1 | 0 |
+|  | Думает | `garThink` | Бегущие огни | 0.5 s | 837 | 3.3 | 0 |
+|  | Говорит | `garSpeak` | Вспышки | voice | 810 | 3.7 | 3 |
+|  | Готово | `garDone` | Праздник | 1700 ms | 842 | 4.0 | 0 |
+|  | Ошибка | `garError` | Перегорела | 1700 ms | 1244 | 5.1 | 0 |
+|  | Уведомление | `garNotify` | Двойной бег | 1500 ms | 834 | 3.0 | 0 |
+
+- **Size**: the page is 78,820 B gzipped (part 1: 69,821 B), with the six styles, their names and the picker's texts:
+  about 9 KB of the 96 KB limit.
+
+The six styles, as the owner saw them in KAIA-202 (each animation's comment in `games.js` says what it does). In the
+«Стиль» picker, Аркада, Тетрис, Механизм and Маятник join Пинг-понг in «Игры», and Неон and Гирлянда join Калейдоскоп in
+«Узоры и свет», as KAIA-201's design placed them:
+
+| id | style | what |
+|---|---|---|
+| 13 | Аркада | an 8-bit chomper in Kaya's colour (a two-ball disc with a wedge of a mouth), a violet ghost (a dome of seven balls with white eyes), dots on every other ball of the middle row, a power dot at the left edge |
+| 14 | Тетрис | blocks on the diagonal grid: a block is a ball, a piece four, the stack the three bottom rows (`tet_st`); pieces fall by the grid's step and turn by 60°, which maps the grid onto itself |
+| 15 | Механизм | two big wheels on the grid's own hex rings (6 teeth on 18 balls) meshed in the middle, turning against each other, and a pinion at each edge three times as fast |
+| 16 | Неон | neon tubes in the dark: a white-hot core, a faint glow; the frame is the rim (ring 0) in Kaya's colour, the second tube (ring 2) pink |
+| 17 | Маятник | a pendulum hung above the top edge at (0, −45), 53 long: the bob hangs in the middle of row 4; the angle goes as a sine, fast at the bottom and still at the ends |
+| 18 | Гирлянда | 11 bulbs on a sagging wire, one ball each, in turn Kaya's colour, amber, rose and green (`gar_pal`); no halo, so neighbouring colours never mix; done, error and notify take the event's colour |
 
 ## Kaya's looks per event (v1.6)
 
@@ -710,7 +833,7 @@ v1.7's stays. Only the ranges grow (the ids are appended, the old ones mean what
 v1.8's stays. Only the ranges grow, each part to what it adds (see «The ids of v1.9»); out of range or not a number is
 400 `{error}` as before:
 
-| | part 1 (this) | part 2 | part 3 = v1.9.0 |
+| | part 1 | part 2 (this) | part 3 = v1.9.0 |
 |---|---|---|---|
 | `/kaia/anim` `style=` | 1–12 | 1–18 | 1–18 |
 | `look=` (listening … notify) | 0–17 | 0–23 | 0–27 |
@@ -741,12 +864,12 @@ thinking, speaking, done, error, notify). The tile of the draft's style is selec
 setting (the save bar). Every event's gallery ends with «Версии новых стилей» (9–14, the wake 15–20).
 
 v1.9 (KAIA-201's design): the tiles sit in groups, each with its heading: Классика (Выкл, Рябь, Орбита, Искры, Сканер,
-Мордашка), Природа (Лава-лампа, Снежинка, Светлячки, Пламя), Космос (Галактика), Игры (Пинг-понг), Узоры и свет
-(Калейдоскоп); catalog B's styles join Игры and Узоры и свет in part 2 (`STY_GROUPS` in `app.js`: every style in exactly
-one group). Chips above them, «Все» and one per group with its count, show all groups or one; until a chip is pressed a
+Мордашка), Природа (Лава-лампа, Снежинка, Светлячки, Пламя), Космос (Галактика), Игры (Пинг-понг, and from part 2
+Аркада, Тетрис, Механизм, Маятник), Узоры и свет (Калейдоскоп, and from part 2 Неон, Гирлянда) (`STY_GROUPS` in
+`app.js`: every style in exactly one group). Chips above them, «Все» and one per group with its count, show all groups or one; until a chip is pressed a
 wide screen shows all and the phone (≤ 520 px) the chosen style's group. «Сейчас выбран: 12 · Пламя · группа «Природа»»
-under the chips always names the draft's style, also while another group is shown. «новый» marks 10–12 now. The
-galleries' «Версии новых стилей» run 9–17 (the wake 15–23), from the id tables.
+under the chips always names the draft's style, also while another group is shown. «новый» marks 10–18 now. The
+galleries' «Версии новых стилей» run 9–23 (the wake 15–29), from the id tables.
 
 The unlit balls (⚙ on the preview): a colour and a transparency 0–100 % for the balls without light, on the big
 preview, the mini bar and the tiles. Only this page's look: kept in this browser's `localStorage` under

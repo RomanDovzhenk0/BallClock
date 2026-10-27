@@ -28,15 +28,16 @@ const at = (s, anim, style, look, t, extra) => frameOf(s, { ...C, play: { anim, 
 const diff = (a, b) => Math.max(...[...a].map((v, i) => Math.max(Math.abs(((v >> 16) & 255) - ((b[i] >> 16) & 255)), Math.abs(((v >> 8) & 255) - ((b[i] >> 8) & 255)), Math.abs((v & 255) - (b[i] & 255)))));
 const PFX = ["snow", "fly", "flame"], EVS = ["Wake", "Listen", "Think", "Speak", "Done", "Error", "Notify"];
 
-test("ids: styles 10–12 appended, their looks and wakes by table, nothing past what this part draws", () => {
-    assert.equal(STYLE_COUNT, 12);
-    assert.deepEqual(STYLE_NAMES.slice(10), ["Снежинка", "Светлячки", "Пламя"]);
-    assert.equal(LOOK_COUNT, 18);
-    assert.equal(WAKE_COUNT, 24);
-    for (const n of [...STATES, ...SHOTS]) assert.deepEqual(LOOK_NAMES[n].slice(15), ["Снежинка", "Светлячки", "Пламя"], K.ANIM_NAMES[n]);
-    assert.deepEqual(WAKE_NAMES.slice(21), ["Снежинка", "Светлячки", "Пламя"]);
-    assert.deepEqual(wake_ms.slice(21), [2000, 2000, 2000]);
-    assert.deepEqual(fam_ms.slice(6), [[1800, 1800, 1600], [1700, 1500, 1400], [1800, 2000, 1500]]);
+// part 2 (games.test.mjs) appends styles 13–18 after these and holds the counts and the ranges past them
+test("ids: styles 10–12 appended, their looks and wakes by table", () => {
+    assert.ok(STYLE_COUNT >= 12);
+    assert.deepEqual(STYLE_NAMES.slice(10, 13), ["Снежинка", "Светлячки", "Пламя"]);
+    assert.ok(LOOK_COUNT >= 18);
+    assert.ok(WAKE_COUNT >= 24);
+    for (const n of [...STATES, ...SHOTS]) assert.deepEqual(LOOK_NAMES[n].slice(15, 18), ["Снежинка", "Светлячки", "Пламя"], K.ANIM_NAMES[n]);
+    assert.deepEqual(WAKE_NAMES.slice(21, 24), ["Снежинка", "Светлячки", "Пламя"]);
+    assert.deepEqual(wake_ms.slice(21, 24), [2000, 2000, 2000]);
+    assert.deepEqual(fam_ms.slice(6, 9), [[1800, 1800, 1600], [1700, 1500, 1400], [1800, 2000, 1500]]);
     // the tables: as long as the ids, and each the other's inverse
     assert.equal(look_style.length, LOOK_COUNT);
     assert.equal(wake_style.length, WAKE_COUNT);
@@ -63,10 +64,6 @@ test("ids: styles 10–12 appended, their looks and wakes by table, nothing past
             assert.equal(shotLength(n, style + 5, 2), fam_ms[style - 4][n - K.A_DONE]);
         }
     }
-    // an id of parts 2 and 3 is not valid yet: the play clamps it to the last one drawn, the style is refused
-    assert.equal(resolvePlay({ anim: K.A_DONE, style: 1, look: 20, t: 10 }).look, LOOK_COUNT - 1);
-    assert.equal(resolvePlay({ anim: K.A_WAKE, style: 1, look: 30, speed: 100, t: 10 }).look, WAKE_COUNT - 1);
-    assert.equal(resolvePlay({ anim: K.A_DONE, style: 13, t: 10 }), null);
 });
 
 test("every id of v1.8 draws v1.8's frames bit for bit", () => {

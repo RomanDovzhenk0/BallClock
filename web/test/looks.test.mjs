@@ -72,8 +72,9 @@ test("every one-shot look ends within its length", () => {
                 assert.equal(resolvePlay({ ...p, t: du }), null);
                 // its last frame is the clock alone: the look has faded out by then
                 assert.deepEqual(frameOf(s, { ...C, play: p }), plain, K.ANIM_NAMES[n] + " " + look + " style " + style + " at " + (du - 1));
-                // Светлячки · Разлетелись (look 16): its fireflies have flown past the edges by 0.73 s of 1.5, as in KAIA-201
-                const mid = n === K.A_ERROR && look === 16 ? du >> 2 : du >> 1;
+                // Светлячки · Разлетелись (look 16): its fireflies have flown past the edges by 0.73 s of 1.5, as in KAIA-201;
+                // Неон · Стрелка (look 21) blinks three times (on 0–300 ms of every 380): halfway and at a quarter it is dark
+                const mid = n === K.A_ERROR && look === 16 ? du >> 2 : n === K.A_NOTIFY && look === 21 ? du >> 3 : du >> 1;
                 assert.notDeepEqual(at(s, n, look, mid), plain, K.ANIM_NAMES[n] + " " + look + " draws");
             }
         }

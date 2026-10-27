@@ -94,3 +94,33 @@ export function v18DigestOf(frameOf, DEFAULTS) {
     }
     return { sha: h.digest("hex"), frames: n };
 }
+
+// Every id of v1.9 part 1 (styles 1–12, looks 0–17, wakes 0–23 at two speeds, the listening's look after a wake, an old
+// one and a style's version) at a few moments, folded into one SHA-256: part 2 appends ids through the same tables and
+// must leave these frames as they were. Run once on the sources of part 1 (main at 2924f2c) for games.test.mjs.
+export function v19aDigestOf(frameOf, DEFAULTS) {
+    const h = createHash("sha256");
+    let n = 0;
+    const add = (S, c) => {
+        const f = frameOf(S, c);
+        h.update(Buffer.from(f.buffer, f.byteOffset, f.byteLength));
+        n++;
+    };
+    for (let style = 1; style <= 12; style++) {
+        const S = { ...DEFAULTS, back_mode: 2, back_pal: 13, clock_style: 1, kaia_anim: style };
+        const c = (t) => ({ millis: 250000 + t, synced: true, hour: 14, minute: 32, ms: t % 1000, night: false, duck: 255, hide: 40000 });
+        for (const anim of [1, 2, 3, 4, 5, 6]) {
+            for (let look = 0; look <= 17; look++) {
+                for (const t of [150, 1250]) add(S, { ...c(t), play: { anim, style, look, lk: 0, speed: 100, t, color: null, ms: 1e9 } });
+            }
+        }
+        for (let wake = 0; wake <= 23; wake++) {
+            for (const speed of [50, 150]) {
+                for (const lk of [0, 16]) {
+                    for (const t of [400, 2300]) add(S, { ...c(t), play: { anim: 0, style, look: wake, lk, speed, t, color: null } });
+                }
+            }
+        }
+    }
+    return { sha: h.digest("hex"), frames: n };
+}

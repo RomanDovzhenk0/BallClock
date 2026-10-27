@@ -3,7 +3,8 @@
 // live thumbnails and a gallery (a sheet on the phone), the try-out on the clock and the save bar. v1.8 (KAIA-195): the
 // «Стиль» picker by sight for styles 0–9, and every event's gallery lists the new styles' versions. v1.9 (KAIA-201's
 // design): the picker in groups with chips (one group on the phone, the chosen style's by default) and «Сейчас выбран»
-// under them; catalog A's Снежинка, Светлячки and Пламя (10–12).
+// under them; catalog A's Снежинка, Светлячки and Пламя (10–12); catalog B's Аркада, Тетрис, Механизм, Неон, Маятник and
+// Гирлянда (13–18).
 import { AuthError, ClockApi, fetchSend, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, keyId, OfflineError, parseLeds, TRY_STATE_MS, tryOut } from "./api.js";
 import { ClockSync, parseTime } from "./clock.js";
 import { animOf, digitHide, duckStep, hideTrack, isPlaying, isState, kaiaDraw, renderFrame, resolvePlay } from "./frame.js";
@@ -78,10 +79,11 @@ const unhm = (s) => {
 const rgb = (c) => ((c >> 16) & 255) + "," + ((c >> 8) & 255) + "," + (c & 255);
 const palCss = (p) => "linear-gradient(90deg," + PALETTES[p].map((c) => "rgb(" + rgb(c) + ")").join(",") + ")";
 const STY = STYLE_NAMES;
-// the «Стиль» picker (v1.8, KAIA-195; v1.9, KAIA-201): a line under each style, what it is, and the versions of
-// styles 4–12 by event
+// the «Стиль» picker (v1.8, KAIA-195; v1.9, KAIA-201, KAIA-202): a line under each style, what it is, and the versions
+// of styles 4–18 by event
 const STY_SUB = ["анимаций нет", "кольца из центра", "кометы по ободу", "знак в середине", "розыгрыш через сетку", "шестикратный узор", "мягкие капли", "лицо: глаза и рот", "спираль и звёзды", "бегущий луч",
-    "иней на решётке", "мягкие огоньки", "холодный огонь"];
+    "иней на решётке", "мягкие огоньки", "холодный огонь", "игра · 8 бит", "игра · блоки", "механика · шестерни", "вывеска · две трубки",
+    "физика · нить и шар", "праздник · лампочки"];
 const STY_IDEA = ["", "Кольца расходятся из центра и сходятся к нему.", "Кометы бегут по ободу шестиугольника.", "Искры собираются в знак посередине.",
     "Часы сами из мячиков для пинг-понга, значит — розыгрыш: мяч, сетка в середине нижних рядов, ракетки по краям, стол — нижний ряд.",
     "Шестикратная симметрия самого шестиугольника: узор из шести зеркальных секторов.",
@@ -91,7 +93,13 @@ const STY_IDEA = ["", "Кольца расходятся из центра и с
     "Свет «Рыцаря дорожного»: полоса через все ряды, ярче в среднем, со следом.",
     "Снежинка на самой решётке шаров: шесть лучей по три шара идут по линиям сетки, вокруг кончиков нарастает иней. По бокам падает редкий снег, по краю кое-где искрится иней.",
     "Мягкие огоньки: у каждого своё место, вокруг которого он плавает, и свой темп — разгорается и гаснет; где двое встречаются, свет складывается.",
-    "Холодное пламя цвета Каи с белеющими кончиками: языки на нижнем ряду лижут вверх, сквозь пламя поднимается свет, над ним летят угольки."];
+    "Холодное пламя цвета Каи с белеющими кончиками: языки на нижнем ряду лижут вверх, сквозь пламя поднимается свет, над ним летят угольки.",
+    "Восьмибитный едок цвета Каи, привидения и точки. Едок — круг в два шара с ртом-клином, привидение — купол из семи шаров с белыми глазами, точки — каждый второй шар среднего ряда; у левого края мигает энерджайзер.",
+    "Блоки на диагональной сетке: блок — шар, фигура — четыре, стопка — три нижних ряда. Фигуры падают по шагу сетки, мягко между шарами, и поворачиваются на 60°.",
+    "Это же часы — значит, шестерни. Два больших колеса сцеплены посередине и крутятся навстречу; у краёв — шестерёнки, втрое быстрее.",
+    "Неоновые трубки в темноте: белое горячее ядро и едва заметное свечение вокруг. Рамка вывески — обод цвета Каи, вторая трубка внутри — розовая.",
+    "Физика: маятник на нити подвешен над верхним краем, шарик висит посреди ряда 4. Быстро внизу, замирает у края — как настоящий.",
+    "Шары — лампочки гирлянды: 11 лампочек на провисшем проводе, каждая своего цвета — цвет Каи, янтарь, роза, зелень; соседние цвета не смешиваются."];
 const STY_EV = [
     ["Подача", "Розыгрыш", "Быстрый розыгрыш", "Подскоки", "Смэш", "В сетку", "Мячик"],
     ["Мандала", "Вращение", "Узоры", "Дыхание лепестков", "Цветок", "Осколки", "Лепестки по кругу"],
@@ -102,17 +110,23 @@ const STY_EV = [
     ["Иней", "Блеск", "Иней на кончиках", "Рост голосом", "Идеальная снежинка", "Оттепель", "Блик по кругу"],
     ["Слетаются", "Огоньки", "Хоровод", "Хор", "Рой", "Разлетелись", "Вспышка"],
     ["Розжиг", "Тихий огонь", "Пляска", "Голос огня", "Костёр", "Угасание", "Треск"],
+    ["Забег", "Патруль", "Погоня", "Ам-ам", "Энерджайзер", "Пойман", "Бонус"],
+    ["Стопка", "Фигура", "Ливень", "Верхний ряд", "Линия", "Конец игры", "Новая фигура"],
+    ["Завод", "Ход", "Быстрый ход", "Тик", "Щелчок", "Заклинило", "Кукушка"],
+    ["Зажигание", "Гул", "Схема", "Пульс трубок", "Неоновая галочка", "Искрит", "Стрелка"],
+    ["Толчок", "Качание", "Колыбель Ньютона", "Прыжки", "В такт", "Обрыв", "Тик-так"],
+    ["По цепочке", "Мерцание", "Бегущие огни", "Вспышки", "Праздник", "Перегорела", "Двойной бег"],
 ];
 // the newest styles get the «новый» mark
 const STY_NEW = 10;
-// the picker's groups (KAIA-201's design): name, what is in it, the style ids in their order; catalog B's styles join
-// «Игры» and «Узоры и свет» when they come in. Every style is in exactly one group.
+// the picker's groups (KAIA-201's design): name, what is in it, the style ids in their order; catalog B's styles in
+// «Игры» and «Узоры и свет», as the design placed them. Every style is in exactly one group.
 const STY_GROUPS = [
     ["Классика", "кольца, кометы, знак, луч, лицо", [0, 1, 2, 3, 9, 7]],
     ["Природа", "капли, снег, огоньки, огонь", [6, 10, 11, 12]],
     ["Космос", "спираль и звёзды", [8]],
-    ["Игры", "мяч", [4]],
-    ["Узоры и свет", "симметрия", [5]],
+    ["Игры", "мяч, едок, блоки, шестерни, маятник", [4, 13, 14, 15, 17]],
+    ["Узоры и свет", "симметрия и огни", [5, 16, 18]],
 ];
 const styGroupOf = (id) => STY_GROUPS.findIndex((g) => g[2].includes(id));
 // the group the chips show: the one pressed; before that all of them, on the phone the chosen style's
@@ -130,7 +144,7 @@ const EV = [
 ];
 const looksOf = (n) => (n === A_WAKE ? WAKE_COUNT : LOOK_COUNT);
 const lookName = (n, c) => LOOK_NAMES[n][c] || LOOK_NAMES[n][0];
-// the event's look that is style st's version (1–3 theirs; 4–12: looks 9–17, wakes 15–23, by the id tables); the wake's id
+// the event's look that is style st's version (1–3 theirs; 4–18: looks 9–23, wakes 15–29, by the id tables); the wake's id
 const verOf = (n, st) => (n === A_WAKE ? style_wake[st] : st <= 3 ? st : style_look[st]);
 const wakeIdOf = (s, c) => wakeOf(s.kaia_anim || 1, c);
 // a one-shot's or the wake's length with the draft (0 for a state)
@@ -338,7 +352,7 @@ function galleryHTML(n, s) {
     h += gh("Как у стиля и версии стиля", "0 — следует за стилем · 1 Рябь · 2 Орбита · 3 Искры") + tilesFor(n, 0, 3, s);
     if (n === A_WAKE) h += gh("Тематические пробуждения", "4–11") + tilesFor(n, 4, 11, s) + gh("Новые пробуждения", "12–14") + tilesFor(n, 12, 14, s);
     else h += gh("Новые по теме", "4–8 · " + EV[n][2]) + tilesFor(n, 4, 8, s);
-    // v1.8, v1.9: the versions of styles 4–12, appended (the ids the tables give a style)
+    // v1.8, v1.9: the versions of styles 4–18, appended (the ids the tables give a style)
     const vs = n === A_WAKE ? wake_style : look_style, b = vs.findIndex((x) => x), e = Math.min(vs.length, looksOf(n)) - 1;
     h += gh("Версии новых стилей", b + "–" + e + " · любое событие может взять их при любом стиле, как 1–3") + tilesFor(n, b, e, s);
     return h + "</div>";
