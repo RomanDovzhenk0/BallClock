@@ -770,13 +770,33 @@ static CRGB ColorFromPalette16(const CRGBPalette16 &pal, uint16_t index, uint8_t
 static CRGBPalette16 pal_ram;
 static uint8_t pal_cur = 255;
 
+// the longest gradient has 31 entries; a longer one is cut here, its last entry made the end
+#define GRAD_MAX 32
+
+// FastLED reads a palette with plain pointer loads (FASTLED_USE_PROGMEM 0), and GCC may turn them into byte loads:
+// a gradient's entry count became l8ui from flash, a LoadStoreError (KAIA-186). So the palette is copied out of
+// flash with memcpy_P and pgm_read_byte first, and FastLED reads the copy on the stack
+static void __attribute__((noinline)) loadPalette(const PalRef& r) {
+    uint32_t buf[GRAD_MAX];
+    if (r.grad) {
+        const uint8_t* p = (const uint8_t*)r.p;
+        uint8_t n = 1;
+        while (n < GRAD_MAX && pgm_read_byte(p + (n - 1) * 4) != 255) n++;
+        memcpy_P(buf, p, n * 4);
+        ((uint8_t*)buf)[(n - 1) * 4] = 255;
+        pal_ram.loadDynamicGradientPalette((TDynamicRGBGradientPalette_bytes)buf);
+    } else {
+        memcpy_P(buf, r.p, sizeof(TProgmemRGBPalette16));
+        pal_ram = *(const TProgmemRGBPalette16*)buf;
+    }
+}
+
 static const CRGBPalette16& usePalette(uint8_t pal) {
     if (pal >= PAL_COUNT) pal = 0;  // out of range reads as the first
     if (pal != pal_cur) {
         PalRef r;
         memcpy_P(&r, &pal::paletteArr[pal], sizeof(r));
-        if (r.grad) pal_ram = (TProgmemRGBGradientPalette_bytes)r.p;
-        else pal_ram = *(const TProgmemRGBPalette16*)r.p;
+        loadPalette(r);
         pal_cur = pal;
     }
     return pal_ram;
