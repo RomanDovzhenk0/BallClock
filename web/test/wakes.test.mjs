@@ -28,9 +28,10 @@ function listeningAt(s, style, t) {
 const diff = (a, b) => Math.max(...[...a].map((v, i) => Math.max(Math.abs(((v >> 16) & 255) - ((b[i] >> 16) & 255)), Math.abs(((v >> 8) & 255) - ((b[i] >> 8) & 255)), Math.abs((v & 255) - (b[i] & 255)))));
 
 test("ids and names in the site's order", () => {
-    assert.equal(WAKE_COUNT, 15);
+    assert.equal(WAKE_COUNT, 21);
     assert.deepEqual(WAKE_NAMES.slice(0, 4), ["Как у стиля", "Рябь", "Орбита", "Искры"]);
-    assert.deepEqual(WAKE_NAMES.slice(4), ["Рассвет", "Радар", "Спираль", "Сердцебиение", "Глаз", "Звёзды", "Салют", "Дождь", "Включение", "Зайчик", "«КАЯ»"]);
+    assert.deepEqual(WAKE_NAMES.slice(4, 15), ["Рассвет", "Радар", "Спираль", "Сердцебиение", "Глаз", "Звёзды", "Салют", "Дождь", "Включение", "Зайчик", "«КАЯ»"]);
+    assert.deepEqual(WAKE_NAMES.slice(15), ["Пинг-понг", "Калейдоскоп", "Лава-лампа", "Мордашка", "Галактика", "Сканер"]);  // v1.8: the styles' wakes
     // wakes 1–3 keep the lengths of the styles' own wakes
     for (let s = 1; s <= 3; s++) assert.equal(wake_ms[s], K.shot_ms[s - 1][0]);
     for (let id = 4; id < WAKE_COUNT; id++) assert.ok(wake_ms[id] >= 1200 && wake_ms[id] <= 2500, "wake " + id);
@@ -38,9 +39,9 @@ test("ids and names in the site's order", () => {
 
 test("the wake lengths at 50, 100 and 200 %", () => {
     const at = (sp) => [...Array(WAKE_COUNT - 1).keys()].map((k) => wakeLength(k + 1, sp));
-    assert.deepEqual(at(100), [1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000, 1800, 2000, 2200]);
-    assert.deepEqual(at(50), [3800, 4000, 4000, 4000, 3600, 4000, 3800, 4400, 4000, 4400, 4000, 3600, 4000, 4400]);
-    assert.deepEqual(at(200), [950, 1000, 1000, 1000, 900, 1000, 950, 1100, 1000, 1100, 1000, 900, 1000, 1100]);
+    assert.deepEqual(at(100), [1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000, 1800, 2000, 2200, 1800, 2000, 2000, 1900, 2000, 2000]);
+    assert.deepEqual(at(50), [3800, 4000, 4000, 4000, 3600, 4000, 3800, 4400, 4000, 4400, 4000, 3600, 4000, 4400, 3600, 4000, 4000, 3800, 4000, 4000]);
+    assert.deepEqual(at(200), [950, 1000, 1000, 1000, 900, 1000, 950, 1100, 1000, 1100, 1000, 900, 1000, 1100, 900, 1000, 1000, 950, 1000, 1000]);
     assert.equal(wakeLength(8, 150), 1466);  // 2200·100/150, truncated
     // the play turns into listening exactly then; 0 = the style's own
     for (const sp of [50, 100, 200]) {

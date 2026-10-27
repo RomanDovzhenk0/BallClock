@@ -12,6 +12,7 @@ import { LOOK_COUNT, LOOK_NAMES, look_ms, shotLength } from "../src/looks.js";
 import * as LK from "../src/looks.js";
 import { BallMatrix } from "../src/matrix.js";
 import { DEFAULTS, LOOK_KEYS, normalize } from "../src/settings.js";
+import * as ST from "../src/styles.js";
 import * as WK from "../src/wakes.js";
 
 const S = Object.assign({}, DEFAULTS, { back_mode: 2, back_pal: 13, clock_style: 1, kaia_anim: 1 });
@@ -28,12 +29,13 @@ test("ids and Russian names per event, and the one-shots' base lengths", () => {
         assert.equal(LOOK_NAMES[n].length, LOOK_COUNT, K.ANIM_NAMES[n]);
         assert.deepEqual(LOOK_NAMES[n].slice(0, 4), ["Как у стиля", "Рябь", "Орбита", "Искры"]);
     }
-    assert.deepEqual(LOOK_NAMES[K.A_LISTENING].slice(4), ["Эхо", "Прилив", "Сияние", "Взгляд", "Пузырьки"]);
-    assert.deepEqual(LOOK_NAMES[K.A_THINKING].slice(4), ["Змейка", "Нейроны", "Песочные часы", "Три точки", "Атом"]);
-    assert.deepEqual(LOOK_NAMES[K.A_SPEAKING].slice(4), ["Эквалайзер", "Осциллограф", "Лучи", "Динамики", "Губы"]);
-    assert.deepEqual(LOOK_NAMES[K.A_DONE].slice(4), ["Галочка", "Шкала", "Конфетти", "Кольцо", "«ОК»"]);
-    assert.deepEqual(LOOK_NAMES[K.A_ERROR].slice(4), ["Нет-нет", "Крест", "Сбой", "Сирена", "Отключение"]);
-    assert.deepEqual(LOOK_NAMES[K.A_NOTIFY].slice(4), ["«!»", "Тук-тук", "Маяк", "Конверт", "Значок"]);
+    assert.deepEqual(LOOK_NAMES[K.A_LISTENING].slice(4, 9), ["Эхо", "Прилив", "Сияние", "Взгляд", "Пузырьки"]);
+    assert.deepEqual(LOOK_NAMES[K.A_THINKING].slice(4, 9), ["Змейка", "Нейроны", "Песочные часы", "Три точки", "Атом"]);
+    assert.deepEqual(LOOK_NAMES[K.A_SPEAKING].slice(4, 9), ["Эквалайзер", "Осциллограф", "Лучи", "Динамики", "Губы"]);
+    assert.deepEqual(LOOK_NAMES[K.A_DONE].slice(4, 9), ["Галочка", "Шкала", "Конфетти", "Кольцо", "«ОК»"]);
+    assert.deepEqual(LOOK_NAMES[K.A_ERROR].slice(4, 9), ["Нет-нет", "Крест", "Сбой", "Сирена", "Отключение"]);
+    assert.deepEqual(LOOK_NAMES[K.A_NOTIFY].slice(4, 9), ["«!»", "Тук-тук", "Маяк", "Конверт", "Значок"]);
+    // 9–14 (v1.8): the styles' versions, styles.test.mjs
     assert.deepEqual(look_ms, [[1600, 1500, 1800, 1700, 1600], [1400, 1600, 1300, 1600, 1500], [1500, 1500, 1600, 1700, 1600]]);
     // 0 is the style's own, 1–3 a style's: the lengths of v1.5
     for (let style = 1; style <= 3; style++) {
@@ -78,6 +80,7 @@ test("every one-shot look ends within its length", () => {
 
 test("every wake ends within its length at its speed", () => {
     const fns = { 4: WK.dawnShot, 5: WK.radarShot, 6: WK.spiralShot, 7: WK.heartShot, 8: WK.eyeShot, 9: WK.starsShot, 10: WK.fireworkShot, 11: WK.rainShot, 12: WK.powerOnWake, 13: WK.bunnyWake, 14: WK.nameWake };
+    for (let id = 15; id < WK.WAKE_COUNT; id++) fns[id] = (n, t, du, col) => ST.styleShot(id - 11, n, t, du, col);  // v1.8: the styles' wakes
     for (let id = 4; id < WK.WAKE_COUNT; id++) {
         for (const sp of [50, 75, 100, 150, 200]) {
             const len = WK.wakeLength(id, sp), du = WK.wake_ms[id];

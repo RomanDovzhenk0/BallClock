@@ -220,7 +220,8 @@ line by line (`test/styles.test.mjs` holds it). A style is a whole visual langua
   ESP8266 has no divider, so they dominate; `put` with its `mix` is 5), every loop and helper counted in, both sides of
   every if. By that count v1.6's heaviest look is Тук-тук (3458) and its heaviest wake Салют (5355); the heaviest new
   animation is Пинг-понг · Подача (3874), and `styles.test.mjs` holds every new one under Салют's count. At most 3
-  `voice()` a frame (v1.6: 13), 2 `hash8()` (v1.6: 8), no `inoise16`. Мордашка dims the display (`dimAll`) and draws
+  `voice()` a frame (v1.6: Осциллограф calls it for every ball, 128; the equalizer 13), 2 `hash8()` (v1.6: 8), no
+  `inoise16`. Мордашка dims the display (`dimAll`) and draws
   the face over it. `GET /kaia/test` (the firmware task) will give the real times.
 
 | style | event | function | name | length | div | voice | hash8 |
