@@ -21,7 +21,7 @@ export function createMock() {
     });
     const M = {
         mode: "ok", update: false, text: false, version: "1.6.0", wifi: { ssid: "HomeNet-2G", ip: "192.168.1.47", rssi: -58 },
-        pass: "", play: null, down: 0, settings: S,
+        pass: "", play: null, down: 0, old: false, settings: S,
     };
     const hide = { h: 0, t: boot, end: 0, on: 0 };  // the Digit fade's level, stepped by each frame asked for
     const millis = () => boot + Math.floor(performance.now() - t0);
@@ -81,7 +81,8 @@ export function createMock() {
                 name: ANIM_NAMES[p.anim], style: p.style, look: p.look, wake: M.play.anim === A_WAKE ? M.play.look : S.kaia_wake, speed: p.speed, t: p.t,
                 color: playColor(S, p).toString(16).padStart(6, "0"),
             } : null,
-            settings: Object.fromEntries(Object.keys(DEFAULTS).filter((k) => !["wifi_ssid", "wifi_pass", "page_pass"].includes(k)).map((k) => [k, S[k]])),
+            // M.old: a clock before v1.7 carries no Digit fade keys
+            settings: Object.fromEntries(Object.keys(DEFAULTS).filter((k) => !["wifi_ssid", "wifi_pass", "page_pass"].includes(k) && !(M.old && k.startsWith("kaia_hide"))).map((k) => [k, S[k]])),
         };
     }
 

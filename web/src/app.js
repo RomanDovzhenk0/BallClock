@@ -1298,6 +1298,6 @@ poll(true);
 requestAnimationFrame(loop);
 setTimeout(() => S().kaia_anim && !P.M && play(ANIM_NAMES[P.ev]), 600);
 window.ballclock = {
-    P, api, S, play, setSrc, setLive, showTab, setEvent, setSheet, mock, sync, unlit, setU,
+    P, api, S, play, poll, setSrc, setLive, showTab, setEvent, setSheet, mock, sync, unlit, setU,
     tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; }, get tiles() { return tiles; },
 };

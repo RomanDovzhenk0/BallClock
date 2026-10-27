@@ -1,10 +1,11 @@
-# BallClock web: the clock's site (firmware v1.6)
+# BallClock web: the clock's site (firmware v1.7)
 
 The site the clock serves from its flash at `/`: a big live preview of the 128 balls, Kaya's events with a look per
 event, every setting of the classic page, and saving. It is the KAIA-161 variant B «Сцена» (big preview, tabs under it,
 a bottom tab bar on the phone), with KAIA-172 variant b on top of it in v1.6: palettes picked by sight, a list of
 Kaya's 7 events with live thumbnails and a gallery per event, a try-out on the clock for every event, and the unlit
-balls' look. The classic Settings page stays at `/old`.
+balls' look. v1.7 adds the Digit fade: the time fades out while Kaya's animation plays and back in after it. The
+classic Settings page stays at `/old`.
 
 One self-contained page: inline CSS and JS, no external requests, only relative URLs (it runs from the clock's
 own access point and behind the Kernel's gateway alike), Russian UI. No npm dependencies: Node built-ins only.
@@ -15,8 +16,8 @@ own access point and behind the Kernel's gateway alike), Russian UI. No npm depe
 |---|---|
 | `dist/site.html?mock` | open from disk in a browser: a mock clock inside the page answers the whole API from sample data with a running clock. The dashed «Макет» bar switches what it does: password (401, the mock's password is `kaia`), no answer, access point, update available, running text. |
 | `npm run build` | `src/` → `dist/site.html` (committed) → `../firmware/src/site_page.h` (`site_page_gz[] PROGMEM`, `site_page_gz_len`, `SITE_PAGE_ETAG`); prints the raw and gzip sizes and fails over 64 KB gzipped. The gzip is deterministic: the same input gives the same bytes. |
-| `npm test` | `node --test`: the renderer against hand-computed values and the firmware's own tables (the 61 palettes read back from `palettes.cpp`), the wakes, the looks per event (lengths, seamless loops, determinism, ids, C++ portability), the API client, the try-out queries, the unlit-ball storage and the mock. |
-| `npm run test:render` | headless Edge over CDP: `dist/site.html?mock` at 390×844 and 1280×800 in 35 states (the tabs, the palette picker, each event's gallery, the try-outs of a wake, a state and a one-shot, the unlit balls at 0, 50 and 100 % transparency, the phone with the preview in view, …); shots in `shots/` (git-ignored). In-page check: nothing wider than the viewport, no overlapping controls, no cut text, touch targets ≥ 44 px on the phone, no request off the page; the save, login and try-out flows; ≥ 18 frames a second with the CPU 4× slower. `node test/render.mjs <state>…` runs some states only. Run `npm run build` first. |
+| `npm test` | `node --test`: the renderer against hand-computed values and the firmware's own tables (the 61 palettes read back from `palettes.cpp`), the wakes, the looks per event (lengths, seamless loops, determinism, ids, C++ portability), the API client, the try-out queries, the unlit-ball storage and the mock, the Digit fade (`hide.test.mjs`: the level against hand-computed values, the frames of v1.6.2 bit for bit when it is off, C++ portability). |
+| `npm run test:render` | headless Edge over CDP: `dist/site.html?mock` at 390×844 and 1280×800 in 40 states (the tabs, the palette picker, the Digit fade block on and off, the draft half way through the fade, the way back, a clock without it, each event's gallery, the try-outs of a wake, a state and a one-shot, the unlit balls at 0, 50 and 100 % transparency, the phone with the preview in view, …); shots in `shots/` (git-ignored). In-page check: nothing wider than the viewport, no overlapping controls, no cut text, touch targets ≥ 44 px on the phone, no request off the page; the save, login and try-out flows; ≥ 18 frames a second with the CPU 4× slower. `node test/render.mjs <state>…` runs some states only. Run `npm run build` first. |
 
 The build joins the ES modules of `src/` in import order into one strict scope: top-level names must be unique
 across modules (the build checks), and strings never span lines (it drops whole-line comments and indentation).
@@ -28,17 +29,17 @@ across modules (the build checks), and strings never span lines (it drops whole-
 | `src/lib8.js` | FastLED 3.7.7 lib8tion as the ESP8266 compiles it (the C versions, SCALE8_FIXED and BLEND_FIXED): sin8, scale8, qadd8, nscale8_video, blend8 / nblend, scale16, ease16InOutQuad, lerp15by16, avg15 |
 | `src/noise.js` | `inoise16(x, y, z)` (noise.cpp) |
 | `src/palettes.js` | the 61 palettes as CRGBPalette16 and `getPaletteColor`; the picker's Russian names, groups and order |
-| `src/matrix.js` | `BallMatrix`: the layout, the strip, the marks, GyverGFX colour and `print` |
+| `src/matrix.js` | `BallMatrix`: the layout, the strip, the marks (and v1.7's mark alpha), `mix`, GyverGFX colour and `print` |
 | `src/redraw.js` | the clock under the overlay: background, digits, dots, night, brightness |
 | `src/kaia.js` | Kaya: the ball tables, the helpers (with v1.6's `ballRX`, `ballAt`, `oct`, `segDist`, `hash8`, `putb`), the 3 styles |
 | `src/wakes.js` | the wakes (ids, names, base lengths, the 11 themed ones of v1.5 and v1.6, the speed) |
 | `src/looks.js` | v1.6: the looks per event (ids, names, one-shot lengths, the 30 new ones), `stateLook`, `shotLook`, `wakeDraw` |
-| `src/frame.js` | one 50 ms frame: `renderFrame(matrix, settings, clock)`; what plays at t (`resolvePlay`); the duck |
+| `src/frame.js` | one 50 ms frame: `renderFrame(matrix, settings, clock)`; what plays at t (`resolvePlay`); the duck; v1.7: the Digit fade (`hideStep`, `digitHide`, `hideTrack`, `isPlaying`) |
 | `src/paint.js` | the canvas layer (the only DOM part of the drawing) and the unlit balls' setting |
 | `src/api.js` | the API client: one request at a time, 5 s, auth; `hash32`, `keyId`; `tryOut` (the try-out query) |
 | `src/clock.js` | the clock's time between two states (the NTP second's phase) |
 | `src/mock.js` | the mock clock of `?mock` |
-| `src/settings.js` | the keys, their defaults (db.init) and raw values; `LOOK_KEYS` |
+| `src/settings.js` | the keys, their defaults (db.init) and raw values; `LOOK_KEYS`; `HIDE_RANGES` (v1.7) |
 | `src/app.js`, `page.html`, `style.css` | the page |
 
 ## The renderer: the firmware's drawing in JS
@@ -50,7 +51,7 @@ where the C++ types do, and the float steps of the boot tables and the old wakes
 | JS | C++ | notes |
 |---|---|---|
 | `matrix.js` `xyToLed`, `diagToLed`, `ledXY`, `ledDiag` | `src/matrix.cpp` | the tests compare them with the C source |
-| `BallMatrix.setXY` / `getXY`, `beginMarks`, `marked` | `src/matrix.h` | the digit balls are marked while the clock draws |
+| `BallMatrix.setXY` / `getXY`, `beginMarks`, `marked` | `src/matrix.h` | the digit balls are marked while the clock draws; v1.7: while marking, `setXY` blends the new colour over what is there by `alpha` (`mix`) |
 | `BallMatrix.setColor24`, `getColor24`, `fastSet` | GyverGFX `core/core.h`, `core/utils.cpp` | the colour goes through RGB565 (`rgb888to565`); the digits are drawn with `rgb565to888full`, the dots with `getColor24` (`rgb565to888`, low bits zero) |
 | `BallMatrix.print` / `write` / `drawByte` | GyverGFX `GyverGFX.h` `write`, `_drawByte`, `fastByte`; `core/decoder.h` | a map font, scale 1: column byte bit i at y = cursor.y + i, the column at cursor.x: **no shear** in the diagonal grid (so font 1 leans; `font_3x5_diag` is drawn for the grid); space = font width, 1 px between glyphs, nothing printed at x ≥ 19 |
 | `gfx_font_3x5`, `font_3x5_diag`, `font_4x5` | `lib/GyverGFX-dev/src/default/font3x5.h`, `src/font_3x5_diag.h`, `src/font_4x5.h` | checked against the headers; `firmware/lib/GyverGFX-dev` is checked to equal `libraries/GyverGFX-dev` |
@@ -108,6 +109,69 @@ The looks are KAIA-173's catalog as it is (the owner dropped none), in the same 
 - **Cost**: at most 13 `voice()` calls, 8 hashes or 48 points a frame; no `inoise16`.
 - **Long states**: the new looks multiply t by at most 469 (`voice`): in a 32-bit `int` they stay exact for 76 minutes
   of one state (v1.5's ripple, t·2464, for 14 minutes).
+
+## Changes the firmware task copies into the firmware (v1.7): the Digit fade
+
+While Kaya's animation plays the time (the digits and the dots) fades out; when it ends it fades back in. It is written
+here first, integer-only, and copied line by line (`frame.js`, `matrix.js`, `kaia.js`; `test/hide.test.mjs` holds it).
+
+- **Settings** (the keys, their ranges and defaults are `db.init`'s; a value out of range reads as its default, as
+  `savedLook` does, and `/kaia/state` shows the value read that way):
+
+  | key | range | default | site label | classic page (group K.A.I.A.) |
+  |---|---|---|---|---|
+  | `kaia_hide` | 0 / 1 | 1 | «Прятать цифры» | switch «Прятать цифры» |
+  | `kaia_hide_out` | 100–3000 ms | 600 | «Исчезают за» | slider «Исчезают за, мс» |
+  | `kaia_hide_in` | 100–5000 ms | 1200 | «Появляются за» | slider «Появляются за, мс» |
+  | `kaia_hide_hold` | 0–5000 ms | 1000 | «Пауза перед появлением» | slider «Пауза перед появлением, мс» |
+  | `kaia_hide_keep` | 0–100 % | 0 | «Остаётся от цифр» | slider «Остаётся от цифр, %» |
+
+  The classic page builds them in a `noinline` function of their own with `F()` labels (the 4 KB cont stack).
+  `kaia_hide_hold` bridges the gap after a one-shot until Kaya's next state arrives (`clock_indicator.py` sends an
+  animation only on a change, and a one-shot gives the screen back by itself), so the time does not flicker back between
+  a wake and the listening after it.
+- **API**: `/kaia/state` `settings` gains the five keys. Nothing else in the API changes (no new route, no new field in
+  `play`, `/kaia/frame` is the real LEDs as ever). The page shows its block only when the state carries `kaia_hide`.
+- **The level** `ov.hide`, 16 bits (0 = the time shown, 65535 = gone), stepped by real milliseconds with
+  `hideStep(h, dt, playing, sinceEnd, S)` (in C++ a static function on `uint16_t` / `uint32_t`):
+  - `kaia_hide == 0` gives 0 at once;
+  - `dt` is capped at 60000 (65535 * 60000 < 2^32, so the `uint32_t` product cannot overflow);
+  - playing: `h += 65535 * dt / kaia_hide_out`, clamped at 65535;
+  - not playing and `sinceEnd >= kaia_hide_hold`: `h -= 65535 * dt / kaia_hide_in`, clamped at 0; before that it stays;
+  - a new animation just starts adding from where `h` stands: no jump. The division truncates (a 50 ms frame at 600 ms
+    adds 5461, not 5461.25), so "full" comes a frame or so after `kaia_hide_out` ms of playing.
+- **Where it runs**: in `kaiaDraw`, once a frame, **before** its early returns (it must keep stepping down while nothing
+  draws), after the mode updates (a one-shot that has ended, a state whose `ms` has passed, a wake that turned into
+  listening). `hideTrack(L, S, playing, now)` is that sequence: `dt = now - L.t` (`ov.hideT`), the end of the last
+  animation (`ov.hideEnd`, set on the first frame without one), then `hideStep`. **playing** = an animation is drawn this
+  frame: `ov.mode` is `M_SHOT` or `M_STATE` after the updates, `kaia_anim != 0`, and not (night and `kaia_night == 2`).
+  The running text (`M_TEXT`) never counts. The level `redraw` uses in a frame is the one `kaiaDraw` stepped in the
+  frame before (as the duck is).
+- **`kaiaDigitScale()`** (`digitHide(S, h)` in JS), for `redraw.cpp`: 0 when `kaia_hide == 0`, else
+  `smooth(0, 65535, ov.hide) * (100 - kaia_hide_keep) / 100`, 0 to 255 (kaia.cpp's `smooth()`; an `h` under 257 is still 0).
+- **redraw.cpp**: `uint8_t hd = kaiaDigitScale();` before the clock, `matrix.markAlpha = 255 - hd;`, then `beginMarks()`,
+  `drawClock()`, `endMarks()`, `matrix.markAlpha = 255;`, then `kaiaDraw(...)` with `fr.hd = hd`. `renderFrame` is exactly
+  this (`c.hide` is the level; absent = 0).
+- **matrix.h**: `uint8_t markAlpha = 255;` and, in `setXY` / `setLED(x, y, c)` while `marking`:
+  `if (markAlpha < 255) color = mix(getLED(idx), color, markAlpha);`. `mix()` of kaia.cpp (per channel
+  `old + (new - old) * k / 255`, truncating toward zero) moves to a header both include (`matrix.js` holds it, `kaia.js`
+  re-exports it). The digits go through `fastSet` and the dots through `setXY` (`dots()` blends the old ball colour with the
+  clock's first, then `setXY` takes the result), so both melt into the (ducked) background under them, at night into
+  black: never dark holes.
+- **put()** (kaia.js): on a marked ball `a = a * (fr.dg + (255 - fr.dg) * fr.hd / 255) / 255`: the digit balls take the
+  overlay as the time goes, at `fr.hd == 255` like any other ball, so no ghost of the time stays inside the animation.
+  `fr.hd` is set by `kaiaDraw` while it draws (0 after), so a look that sets `fr.dg` itself still gets the lift.
+- **Identical when off**: with `kaia_hide == 0`, or `kaia_hide_keep == 100`, or no level, every frame is v1.6.2's bit for
+  bit (`test/frames.mjs` folds 850 frames into one SHA-256 taken on the sources of v1.6.2; `hide.test.mjs` checks it).
+  At the full level with keep 0 the digit balls equal a frame drawn with `clock_style` 0, with and without an overlay.
+- **RAM**: a few bytes in `ov`: `uint16_t hide`, `uint32_t hideT`, `uint32_t hideEnd` and one bit for "an animation drew"
+  (11 bytes with a `uint8_t`). `mix` and the alpha need no tables.
+- **The page**: "Черновик" and "Сейчас" each keep a level (`P.hideD`, `P.hideN`) stepped every drawn frame by the real ms
+  with `hideTrack`: "Сейчас" from `playNow()` and the saved settings, "Черновик" from the event pressed (so after a
+  one-shot the time comes back after the pause and the whole cycle shows). The tiles and the event thumbnails draw the
+  time at the full level with the draft's keep (`digitHide(S, 65535)`), as it looks mid-animation. A clock before v1.7
+  (no `kaia_hide` in its state) never fades in the preview and its Кая tab has no block. "Показать на часах" plays on the
+  clock with the digit settings saved there; the block says so.
 
 ## Kaya's looks per event (v1.6)
 
@@ -402,6 +466,12 @@ New in v1.6.1 (diagnostics, the page does not read them):
 - `crash` adds `reason`: `exception`, `hw_wdt`, `soft_wdt`, `stack` (the cont stack overflowed) or `panic` (panic,
   abort, a failed assert or new). A `stack` or `panic` crash used to leave `crash` null: it boots as
   `reset` "Software/System restart", like a plain restart.
+
+## The site's API (BallClock v1.7)
+
+v1.6's stays. `/kaia/state` `settings` gain `kaia_hide`, `kaia_hide_out`, `kaia_hide_in`, `kaia_hide_hold` and
+`kaia_hide_keep` (ranges and defaults above). Nothing else changes. They are written through the Settings API like every
+other key (`set` by the key's hash).
 
 ## How the page uses it
 

@@ -2461,8 +2461,9 @@ kaia_anim: 1, kaia_wake: 0, kaia_wake_speed: 100, log_host: "192.168.1.20:9000",
 });
 const M = {
 mode: "ok", update: false, text: false, version: "1.6.0", wifi: { ssid: "HomeNet-2G", ip: "192.168.1.47", rssi: -58 },
-pass: "", play: null, down: 0, settings: S,
+pass: "", play: null, down: 0, old: false, settings: S,
 };
+const hide = { h: 0, t: boot, end: 0, on: 0 };  // the Digit fade's level, stepped by each frame asked for
 const millis = () => boot + Math.floor(performance.now() - t0);
 const secAt = (ms) => (Math.floor((ms - boot + 52325370) / 1000) % 86400);
 const msIn = (ms) => (ms - boot + 52325370) % 1000;
@@ -2490,7 +2491,8 @@ return p;
 function frameLeds(ms) {
 const m = new BallMatrix(), s = secAt(ms), p = playing(ms), nt = night(ms);
 const on = !!(p && !(nt && S.kaia_night === 2));
-const c = { millis: ms, synced: synced(), hour: (s / 3600) | 0, minute: ((s % 3600) / 60) | 0, ms: msIn(ms), night: nt, play: p, duck: on ? duckAfter(0, true, (p.t / 50) | 0) : 0 };
+hideTrack(hide, S, isPlaying(S, nt, p), ms);
+const c = { millis: ms, synced: synced(), hour: (s / 3600) | 0, minute: ((s % 3600) / 60) | 0, ms: msIn(ms), night: nt, play: p, duck: on ? duckAfter(0, true, (p.t / 50) | 0) : 0, hide: hide.h };
 renderFrame(m, S, c);
 if (M.text) {  // a running text: the clock dims and the digits run by
 useMatrix(m);
@@ -2514,7 +2516,7 @@ play: p && !M.text ? {
 name: ANIM_NAMES[p.anim], style: p.style, look: p.look, wake: M.play.anim === A_WAKE ? M.play.look : S.kaia_wake, speed: p.speed, t: p.t,
 color: playColor(S, p).toString(16).padStart(6, "0"),
 } : null,
-settings: Object.fromEntries(Object.keys(DEFAULTS).filter((k) => !["wifi_ssid", "wifi_pass", "page_pass"].includes(k)).map((k) => [k, S[k]])),
+settings: Object.fromEntries(Object.keys(DEFAULTS).filter((k) => !["wifi_ssid", "wifi_pass", "page_pass"].includes(k) && !(M.old && k.startsWith("kaia_hide"))).map((k) => [k, S[k]])),
 };
 }
 function answer(path, q, ms) {
@@ -3849,7 +3851,7 @@ poll(true);
 requestAnimationFrame(loop);
 setTimeout(() => S().kaia_anim && !P.M && play(ANIM_NAMES[P.ev]), 600);
 window.ballclock = {
-P, api, S, play, setSrc, setLive, showTab, setEvent, setSheet, mock, sync, unlit, setU,
+P, api, S, play, poll, setSrc, setLive, showTab, setEvent, setSheet, mock, sync, unlit, setU,
 tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; }, get tiles() { return tiles; },
 };
 })();</script></body></html>
