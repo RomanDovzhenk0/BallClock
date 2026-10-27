@@ -69,6 +69,10 @@ static struct {
     bool own_color = false;    // the call gave one
     bool text_waits = false;   // a text waits for the one-shot to end
     uint8_t duck = 0;          // 0..255: how far the background stepped back
+    bool hideOn = false;       // the Digit fade (v1.7): an animation drew in the last frame
+    uint16_t hide = 0;         // its level: 0 = the time shown, 65535 = gone
+    uint32_t hideT = 0;        // millis() of its last step
+    uint32_t hideEnd = 0;      // millis() of the first frame without an animation
 } ov;
 
 static struct {
@@ -87,6 +91,7 @@ static struct {
     uint8_t dg;  // what of it the digit balls keep
     int lt;      // after a wake: the listening's time (t - the wake's real length)
     uint8_t ls;  // after a wake: the listening's style
+    uint8_t hd;  // how much of the time the Digit fade has taken, 0..255: set by kaiaDraw while it draws
 } fr;
 
 // ================= ball tables, from the real layout at boot =================
@@ -267,14 +272,7 @@ static int comet(uint8_t pos, int h, uint8_t n, int tail, bool back = false) {
     return u * u / 255;
 }
 
-static uint32_t mix(uint32_t a, uint32_t b, int k) {
-    uint32_t out = 0;
-    for (uint8_t s = 0; s <= 16; s += 8) {
-        int ca = (a >> s) & 0xff, cb = (b >> s) & 0xff;
-        out |= (uint32_t)(ca + (cb - ca) * k / 255) << s;
-    }
-    return out;
-}
+// mix(): matrix.h
 
 static inline uint32_t dim(uint32_t c, int k) {
     return mix(0, c, k);
@@ -285,7 +283,7 @@ static void put(uint8_t i, uint32_t color, int a) {
     if (a <= 0) return;
     if (a > 255) a = 255;
     a = a * fr.sc / 255;
-    if (matrix.marked(i)) a = a * fr.dg / 255;
+    if (matrix.marked(i)) a = a * (fr.dg + (255 - fr.dg) * fr.hd / 255) / 255;  // the Digit fade lifts it to all
     if (a) matrix.setLED(i, mix(matrix.getLED(i), color, a));
 }
 
@@ -1716,6 +1714,82 @@ static uint8_t savedWakeSpeed() {
     return s >= 50 && s <= 200 ? s : 100;
 }
 
+// ================= the Digit fade (v1.7, web/src/frame.js) =================
+
+// its settings, in hide_keys' order
+struct HideSet {
+    uint32_t kaia_hide, kaia_hide_out, kaia_hide_in, kaia_hide_hold, kaia_hide_keep;
+};
+
+// the keys with their ranges and db.init's defaults
+static const struct {
+    uint32_t key;
+    uint16_t lo, hi, def;
+} hide_keys[] PROGMEM = {
+    {kk::kaia_hide, 0, 1, 1},
+    {kk::kaia_hide_out, 100, 3000, 600},
+    {kk::kaia_hide_in, 100, 5000, 1200},
+    {kk::kaia_hide_hold, 0, 5000, 1000},
+    {kk::kaia_hide_keep, 0, 100, 0},
+};
+#define HIDE_KEYS (sizeof(hide_keys) / sizeof(hide_keys[0]))
+
+// the index of a Digit fade key in hide_keys, or -1
+static int hideIndex(size_t key) {
+    for (uint8_t i = 0; i < HIDE_KEYS; i++) {
+        if (pgm_read_dword(&hide_keys[i].key) == key) return i;
+    }
+    return -1;
+}
+
+// the saved value of hide_keys[i]; a value out of range reads as the default (as savedLook)
+static uint16_t savedHide(uint8_t i) {
+    int v = db[(size_t)pgm_read_dword(&hide_keys[i].key)].toInt();
+    return v >= (int)pgm_read_word(&hide_keys[i].lo) && v <= (int)pgm_read_word(&hide_keys[i].hi) ? v : pgm_read_word(&hide_keys[i].def);
+}
+
+static HideSet hideSet() {
+    return {savedHide(0), savedHide(1), savedHide(2), savedHide(3), savedHide(4)};
+}
+
+// the level h, 16 bits (0 = shown, 65535 = gone), stepped by the real ms between two frames (dt, capped so the
+// uint32_t product cannot overflow): up while an animation is drawn, down once kaia_hide_hold ms have passed since the
+// last one (sinceEnd); a new animation turns it round where it stands. kaia_hide 0 → 0 at once
+static uint16_t hideStep(int32_t h, uint32_t dt, bool playing, uint32_t sinceEnd, const HideSet& S) {
+    if (!S.kaia_hide) return 0;
+    if (dt > 60000) dt = 60000;
+    if (playing) {
+        h += (int32_t)(65535 * dt / S.kaia_hide_out);
+        return h > 65535 ? 65535 : h;
+    }
+    if (sinceEnd >= S.kaia_hide_hold) {
+        h -= (int32_t)(65535 * dt / S.kaia_hide_in);
+        return h < 0 ? 0 : h;
+    }
+    return h;
+}
+
+// one step a frame with whether an animation is drawn now (frame.js hideTrack: ov.hide, ov.hideT, ov.hideEnd, ov.hideOn).
+// It reads the settings itself, so they stay out of kaiaDraw's frame while the looks run
+static void hideTrack(bool playing, uint32_t now) {
+    HideSet S = hideSet();
+    uint32_t dt = now - ov.hideT;
+    ov.hideT = now;
+    if (playing) ov.hideOn = true;
+    else if (ov.hideOn) {
+        ov.hideOn = false;
+        ov.hideEnd = now;
+    }
+    ov.hide = hideStep(ov.hide, dt, playing, now - ov.hideEnd, S);
+}
+
+// frame.js digitHide(): smoothstep of the level, less by kaia_hide_keep %
+uint8_t kaiaDigitScale() {
+    HideSet S = hideSet();
+    if (!S.kaia_hide) return 0;
+    return smooth(0, 65535, ov.hide) * (100 - S.kaia_hide_keep) / 100;
+}
+
 // ================= running text =================
 
 static RunningGFX& runner() {
@@ -1794,7 +1868,7 @@ static bool playNow(uint32_t now, Anim& n, uint32_t& t, uint8_t& look) {
     return t < ov.ms;
 }
 
-void kaiaDraw(bool night) {
+void kaiaDraw(bool night, uint8_t hide) {
     uint32_t now = millis();
     uint8_t rule = db[kk::kaia_night].toInt();
     uint8_t style = db[kk::kaia_anim].toInt();
@@ -1825,6 +1899,10 @@ void kaiaDraw(bool night) {
     }
     if (ov.mode == M_STATE && now - ov.start >= ov.ms) ov.mode = M_NONE;
 
+    // the Digit fade steps every frame, before the returns below: an animation is drawn (frame.js isPlaying; the
+    // running text never counts)
+    hideTrack((ov.mode == M_SHOT || ov.mode == M_STATE) && style && !(night && rule == 2), now);
+
     // the background eases back in about 0.25 s
     int target = ov.mode == M_NONE ? 0 : 255, step = (target - ov.duck) * 72 / 256;
     if (!step && target != ov.duck) step = target > ov.duck ? 1 : -1;
@@ -1842,10 +1920,12 @@ void kaiaDraw(bool night) {
 
     int t = now - ov.start;
     uint32_t col = playColor(ov.anim);
+    fr.hd = hide;
 
     if (ov.mode == M_STATE) stateLook(ov.style, ov.look, ov.anim, t, col, 255);
     else if (ov.anim == A_WAKE) wakeDraw(ov.style, ov.look, ov.lk, ov.speed, t, col);
     else shotLook(ov.style, ov.look, ov.anim, t, col);
+    fr.hd = 0;
 }
 
 // ================= HTTP: /kaia/state, /kaia/show, /kaia/anim =================
@@ -1858,6 +1938,7 @@ static const char state_keys[] PROGMEM =
     "night_mode,night_mode_auto,night_mode_auto_since,night_mode_auto_to,night_color,night_trsh,"
     "clock_style,clock_style_zero,clock_color,back_mode,back_pal,back_speed,back_angle,back_scale,back_bright,"
     "kaia_anim,kaia_wake,kaia_wake_speed,kaia_listen,kaia_think,kaia_speak,kaia_done,kaia_error,kaia_notify,"
+    "kaia_hide,kaia_hide_out,kaia_hide_in,kaia_hide_hold,kaia_hide_keep,"
     "kaia_color,kaia_bright,kaia_night,log_host";
 
 // as the settings page answers
@@ -1951,7 +2032,7 @@ static void handleState() {
     bool playing = ov.mode != M_TEXT && playNow(now, pn, pt, plook);
 
     String s;
-    s.reserve(1400);
+    s.reserve(1500);  // v1.7: the Digit fade's keys add about 95
     s += F("{\"name\":\"" PROJECT_NAME "\",\"version\":\"" PROJECT_VER "\",\"time\":\"");
     s += NTP.timeToString();
     s += F("\",\"synced\":");
@@ -2029,10 +2110,13 @@ static void handleState() {
 
         size_t h = su::hash(key) & DB_HASH_MASK;
         Anim ev = lookEvent(h);
+        int hi = hideIndex(h);
         if (ev != A_OFF) {
             s += savedLook(ev);
         } else if (h == kk::kaia_wake_speed) {
             s += savedWakeSpeed();
+        } else if (hi >= 0) {
+            s += savedHide(hi);
         } else {
             gdb::Entry e = db.get(h);
             switch (e.type()) {

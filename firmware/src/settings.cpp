@@ -133,6 +133,15 @@ SETS_GROUP buildKaiaLooks(sets::Builder& b) {
     b.Select(kk::kaia_notify, F("Уведомление"), FPSTR(kaia_notify_names));
 }
 
+// the Digit fade (v1.7): the time fades out while Kaya's animation plays; flash labels as the looks'
+SETS_GROUP buildKaiaHide(sets::Builder& b) {
+    b.Switch(kk::kaia_hide, F("Прятать цифры"));
+    b.Slider(kk::kaia_hide_out, F("Исчезают за"), 100, 3000, 100, F("мс"));
+    b.Slider(kk::kaia_hide_in, F("Появляются за"), 100, 5000, 100, F("мс"));
+    b.Slider(kk::kaia_hide_hold, F("Пауза перед появлением"), 0, 5000, 100, F("мс"));
+    b.Slider(kk::kaia_hide_keep, F("Остаётся от цифр"), 0, 100, 1, F("%"));
+}
+
 SETS_GROUP buildKaia(sets::Builder& b) {
     sets::Group g(b, "K.A.I.A.");
 
@@ -142,6 +151,7 @@ SETS_GROUP buildKaia(sets::Builder& b) {
     b.Select(kk::kaia_wake, "Пробуждение", FPSTR(kaia_wake_names));
     b.Slider(kk::kaia_wake_speed, "Скорость пробуждения", 50, 200, 1, "%");
     buildKaiaLooks(b);
+    buildKaiaHide(b);
     b.Select(kk::kaia_night, "Ночью", "Как обычно;Тусклее;Не показывать");
     b.Pass(kk::page_pass, "Пароль страницы", "");
     b.Input(kk::log_host, "Сервер логов");
@@ -276,6 +286,11 @@ static void __attribute__((noinline)) settingsBegin() {
     db.init(kk::kaia_done, 0);
     db.init(kk::kaia_error, 0);
     db.init(kk::kaia_notify, 0);
+    db.init(kk::kaia_hide, 1);
+    db.init(kk::kaia_hide_out, 600);
+    db.init(kk::kaia_hide_in, 1200);
+    db.init(kk::kaia_hide_hold, 1000);
+    db.init(kk::kaia_hide_keep, 0);
     db.init(kk::page_pass, "");
     db.init(kk::log_host, "");
     db.init(kk::ota_last, "");

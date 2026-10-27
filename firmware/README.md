@@ -92,3 +92,58 @@ On the clock, `/kaia/state` `stack` is the lowest free cont stack since boot. A 
 through `system_restart`, so the next boot reads "Software/System restart" as for `ESP.restart()`; the crash record
 keeps the core's reason (253 stack, 254 panic) and is reported as `crash.reason` `stack` / `panic` and `crash=` in
 the boot line. The Kernel counts only Exception and the watchdogs as unexpected restarts, not these.
+
+## The Digit fade (v1.7)
+
+While Kaya's animation plays the time (the digits and the dots) fades out, and after it fades back in. It is a line by
+line copy of the site's renderer (`../web/src/frame.js` `hideStep` / `hideTrack` / `digitHide`, `matrix.js` `alpha`,
+`kaia.js` `put`); `../web/README.md` «Changes the firmware task copies into the firmware (v1.7)» is the spec.
+
+| key | range | default | classic page (group K.A.I.A., after the looks) |
+|---|---|---|---|
+| `kaia_hide` | 0 / 1 | 1 | switch «Прятать цифры» |
+| `kaia_hide_out` | 100–3000 ms | 600 | slider «Исчезают за», мс |
+| `kaia_hide_in` | 100–5000 ms | 1200 | slider «Появляются за», мс |
+| `kaia_hide_hold` | 0–5000 ms | 1000 | slider «Пауза перед появлением», мс |
+| `kaia_hide_keep` | 0–100 % | 0 | slider «Остаётся от цифр», % |
+
+A value out of range reads as its default (`savedHide`, as `savedLook` does), and `/kaia/state` `settings` shows the
+five keys read that way. The classic page builds them in `buildKaiaHide()`, a `noinline` group function of its own with
+`F()` labels and units; none of them reloads the page.
+
+- **The level** `ov.hide` (16 bits, 0 = shown, 65535 = gone) steps in `kaiaDraw()` once a frame, right after the mode
+  updates and before its early returns, by the real ms since the last frame (`ov.hideT`, capped at 60 s): up by
+  65535 per `kaia_hide_out` ms while an animation is drawn (`ov.mode` is a one-shot or a state, `kaia_anim` is not
+  «Выкл» and the night rule does not hide it; the running text never counts), down by 65535 per `kaia_hide_in` ms once
+  `kaia_hide_hold` ms have passed since the last one ended (`ov.hideEnd`, `ov.hideOn`). A new animation turns it round
+  where it stands. `kaia_hide` 0 sets it to 0 at once.
+- **The redraw** takes `kaiaDigitScale()` (smoothstep of the level, less by `kaia_hide_keep` %) before the clock:
+  `matrix.markAlpha = 255 - hd`, so `setLED(x, y, c)` blends every marked ball (the digits through `fastSet`, the dots)
+  from what is under it, the ducked background or black at night, towards the clock colour; back to 255 after
+  `endMarks()`. The level used is the one `kaiaDraw()` stepped in the frame before, as the duck is.
+- **`put()`** lifts what the digit balls keep of the overlay by `fr.hd` (set by `kaiaDraw()` while a look draws):
+  `fr.dg + (255 - fr.dg) * fr.hd / 255`, so at the full level the overlay covers them like any other ball.
+- **Off**: with `kaia_hide` 0, or `kaia_hide_keep` 100, the alpha stays 255 and `fr.hd` 0: every frame is v1.6.2's.
+- `mix()` moved from `kaia.cpp` to `matrix.cpp` (declared in `matrix.h`): out of line, as the `static` one was, since an
+  inline one is copied into every look by -Og (8 KB of flash).
+- Deliberate differences from the JS: the settings come from the DB (`hideSet()`, read inside `hideTrack()` so they
+  stay out of `kaiaDraw()`'s frame while the looks run) instead of the `S` object; `hideStep` works on `int32_t` /
+  `uint32_t` (the same values, the products cannot overflow); "playing" is `ov.mode` after the updates (JS
+  `isPlaying` asks `resolvePlay`, which is the same thing for the clock's own play).
+- Port check (KAIA-175's method, no host C++ compiler): normalized token streams of `hideStep`, `digitHide` /
+  `kaiaDigitScale`, `hideTrack`, `put`, `mix`, the mark alpha (`setXY` / `setLED(x, y, c)`), the frame order
+  (`renderFrame` / the redraw timer) and `fr.hd` around the look in `kaiaDraw` match the JS but for the differences
+  above, the parentheses of the `(int32_t)` casts and the marks as a bitset (as since v1.4).
+
+Sizes (d1_mini, -Og), v1.6.2 → v1.7.0:
+
+| | v1.6.2 | v1.7.0 |
+|---|---|---|
+| static RAM (.data + .rodata + .bss) | 40,168 B | 40,188 B (`ov` +12, `matrix` +4, alignment) |
+| flash used / bin | 701,217 B / 705,376 B | 704,629 B / 708,784 B (1,349 B of it the v1.7 site page) |
+| `/settings` build chain, K.A.I.A. group | ≈ 2,144 B (`buildKaia` 400, `buildKaiaLooks` 192) | ≈ 2,176 B (`buildKaiaHide` 224) of 4096 |
+| redraw frames | `kaiaDraw` 112, `put` 32 | `kaiaDraw` 144, `put` 48 (+48 B on the deepest look) |
+
+The timer lambda (96), `drawClock`, `drawTime` and `dots` (112 each) keep their frames; `kaiaDigitScale()` (48, with
+`hideSet` 16 and `savedHide` 80 under it) runs before the clock, not under the looks. The new code reads its flash
+tables only through `pgm_read_*` (no `l8ui` / `l16ui` on a 0x402… address, KAIA-186).

@@ -21,6 +21,15 @@ static const uint8_t diagToLed[MX_DIAG_H][MX_DIAG_W] = {
     {0, 0, 0, 7, 20, 21, 34, 35, 48, 49, 62, 63, 76, 77, 90, 91, 104, 105, 118, 119},
 };
 
+uint32_t mix(uint32_t a, uint32_t b, int k) {
+    uint32_t out = 0;
+    for (uint8_t s = 0; s <= 16; s += 8) {
+        int ca = (a >> s) & 0xff, cb = (b >> s) & 0xff;
+        out |= (uint32_t)(ca + (cb - ca) * k / 255) << s;
+    }
+    return out;
+}
+
 int BallMatrix::ledXY(int x, int y) {
     if (x < 0 || y < 0 || x >= MX_XY_W || y >= MX_XY_H) return -1;
     return ((y & 1) ? 0 : xyToLed[y >> 1][x]) - 1;

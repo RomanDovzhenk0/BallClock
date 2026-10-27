@@ -58,6 +58,11 @@ DB_KEYS(
     kaia_done,
     kaia_error,
     kaia_notify,
+    kaia_hide,        // the Digit fade (v1.7): 0/1, the time fades out while an animation plays
+    kaia_hide_out,    // 100..3000 ms to fade out
+    kaia_hide_in,     // 100..5000 ms to fade back in
+    kaia_hide_hold,   // 0..5000 ms without an animation before it comes back
+    kaia_hide_keep,   // 0..100 % of the time that stays
     page_pass,
     log_host,     // "IP:port" the log goes to, empty = nowhere
     ota_last      // the result of the last update over the air: "result=ok from=…", "result=connect try=3 stage=…", …
