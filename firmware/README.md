@@ -339,3 +339,88 @@ Sizes (d1_mini, -Og), v1.9.0 part 1 → part 2 (frames as in part 1):
 The new frames: `garError` 192, the other Гирлянда animations and `tetThink` 160–176, the rest 128 or less. No `l8ui` /
 `l16ui` / `l16si` in the new functions loads from a 0x402… address (the ones the disassembly shows read `b_cr`,
 FastLED's `sin8` table in RAM, or are literal-pool bytes decoded as code).
+
+## Kaya's single animations of v1.9, part 3 (catalog C)
+
+All 28 single animations of KAIA-203's catalog C, as the owner took them: not a style, but four new looks for each
+event and four new wakes, which any event takes with any style (look 0 «Как у стиля» never plays them). A line by
+line copy of `../web/src/singles.js` (KAIA-207); `../web/README.md` «Changes the firmware task copies (v1.9, part 3)»
+is the spec. This is the last part of v1.9.0: the ids are now at their v1.9 end (style 1–18, look 0–27, wake 0–33).
+
+| setting | v1.9 part 2 | appended in v1.9 part 3 |
+|---|---|---|
+| `kaia_listen` | 0–23 | 24 Облака, 25 Листопад, 26 Дюны, 27 Нить (`LOOK_COUNT` 28 for all six events) |
+| `kaia_think` | 0–23 | 24 Спиннер, 25 ДНК, 26 Лабиринт, 27 Сортировка |
+| `kaia_speak` | 0–23 | 24 Шёлк, 25 Сфера, 26 Телеграф, 27 Брызги |
+| `kaia_done` | 0–23 | 24 Радуга, 25 Звезда, 26 Солнце, 27 Кубок |
+| `kaia_error` | 0–23 | 24 Обвал, 25 Трещина, 26 Тучка, 27 Замыкание |
+| `kaia_notify` | 0–23 | 24 Вибрация, 25 Птица, 26 Стадион, 27 Подарок |
+| `kaia_wake` | 0–29 | 30 Занавес, 31 Кофе, 32 Будильник, 33 Спидометр (`WAKE_COUNT` 34) |
+
+`kaia_anim` stays 0–18 (`STYLE_COUNT` 18).
+
+- **Dispatch**: `look_style` and `wake_style` grow by four zeros each; `style_look` and `style_wake` do not change.
+  After the tables' branch, `stateLook` sends look ≥ 24 to `singleState`, `shotLook` to `singleShot`, `shotLength` reads
+  `single_ms[n − A_DONE][look − 24]`, and `wakeDraw` sends wake ≥ 30 to `singleWake`; the listening fades in under the
+  wake's last 800 ms and goes on after it, as under every themed wake.
+- **Lengths**: `single_ms` (done, error, notify by look − 24): Радуга 1800, Звезда 1700, Солнце 1800, Кубок 1800;
+  Обвал 1700, Трещина 1600, Тучка 1900, Замыкание 1700; Вибрация 1500, Птица 1600, Стадион 1800, Подарок 1900.
+  `wake_ms[30..33]` 2000, 2200, 2000, 2000 (`kaia_wake_speed` scales them).
+- **Helpers**: `soft`, `isqrt` (`uint32_t`), `cloud`, and `lineY` twice: for corners in PROGMEM (Трещина) and in RAM
+  (Замыкание's zigzag), as `segDist` has both.
+- **Tables** in PROGMEM (167 B, plus `single_ms` 24 B): `al_h1`, `al_h2`, `cl_y`, `cl_v`, `cl_o`, `cl_a`, `lf_x`,
+  `mz_gap`, `mz_seg`, `silk_f`, `silk_w`, `silk_d`, `silk_h`, `rb_col`, `st_gl`, `pict_cup`, `crk_y`, `crk_b1`,
+  `crk_b2`, read with `pgm_read_*`; no per-ball tables. The arrays of a frame are on the stack, sized as the loop that
+  fills them (at most `int[10]` ×2 and `int[9]`, Замыкание, or `int[9]` ×3, Брызги).
+- **Обвал** reads this frame's digit marks: `ballRX` gives −1 off the plate and `matrix.marked()` indexes its array
+  without a check, so the loop tests `b >= 0` first. **Замыкание** keeps the JS's box skip (a spark only within 8 of
+  a ball, checked before it divides).
+- **Arithmetic right shifts**: Сортировка's `(b_x − 1) >> 2` (−1 for the ball at x 0: no bar) and Птица's `fl >> 1`
+  stay `>>` on `int`.
+- **Settings and API**: `savedLook` reads 0–27 and the wake 0–33. The classic page's event Selects list 28 names,
+  «Пробуждение» 34, «Анимации» stays at 19 (the names in flash through `FPSTR`). `/kaia/anim` `style=1–18`,
+  `look=0–27`, `look=` / `wake=` `0–33` for the wake; past them 400 (`style: 1-18`, `wake: 0-33`, `look: 0-27`,
+  `look: 0-33 for wake`).
+- **`GET /kaia/test`** draws the new ones by the same loops: styles 1–18 × 7 events, looks 1–27 × 6, wakes 1–33:
+  18 × 27 + 27 × 24 + 33 × 3 = **1233 draws** (part 2: 1125). Обвал draws over the marks of the last frame the clock
+  drew. The heaviest new frame by divisions is Подарок (3290), under part 2's Маятник · В такт (4317); the real times
+  come from the clock, nothing here was run on it.
+- **Deliberate differences from the JS**: Сортировка fills its `v[9]` (0, 1 … 8) with a loop: an `int` array
+  initializer that is not all zeros is copied from `.rodata`, which is RAM on the ESP8266. Declarations of mixed types
+  are split (`uint32_t` colours apart) and the JS `[]` arrays are sized stack arrays. Nothing else.
+- **Port check** (KAIA-175's method): the normalized token streams of the 35 functions of `singles.js` (the 28
+  animations, the 4 helpers and the 3 dispatchers) equal the C++ ones but Сортировка's by its fill loop; `stateLook`,
+  `shotLook` and `wakeDraw` equal `looks.js`, `shotLength` but for a nested `pgm_read_*` the normalizer does not
+  unwrap. The 19 tables, `single_ms`, `wake_ms`, the four id tables and the name lists (28 per event, 34 wakes, 19
+  styles) equal the JS ones.
+
+Sizes (d1_mini, -Og), v1.9.0 part 2 → part 3 (frames as in part 1):
+
+| | v1.9.0 part 2 (KAIA-208) | v1.9.0 part 3 |
+|---|---|---|
+| static RAM (.data + .rodata + .bss) | 40,104 B | 40,104 B (the tables and names are in flash) |
+| flash used / bin | 800,141 B / 804,288 B | 833,789 B / 837,936 B of 1,044,464 (+9.2 KB KAIA-207's site page, +24.2 KB the 35 new functions, their tables and names) |
+| `/settings` build chain | 1,216 B | the same |
+| redraw path, deepest | 720 B | 720 B (the same chain through Гирлянда; through the singles 640 B: … `stateLook` 48, `singleState` 16, `splashSpeak` 208, …) |
+| `/kaia/test` draws | 656 B | the same (`testAnim` 48, `testDraw` 112, then the redraw path's looks) |
+
+The new frames: `shortError` 224, `splashSpeak` 208, `leavesListen` 176, `sortThink` and `birdNotify` 144, the rest
+112 or less. No `l8ui` / `l16ui` / `l16si` in the new functions loads from a 0x402… address.
+
+### v1.9.0 against v1.8.0 (the release)
+
+v1.9.0 = parts 1–3: nine new styles (10–18), their versions (looks 15–23, wakes 21–29) and catalog C's 28 singles
+(looks 24–27, wakes 30–33): 91 new animations (63 in the styles, which also join every event's list, and the 28 singles); the site of KAIA-204, KAIA-205 and KAIA-207.
+
+| | v1.8.0 | v1.9.0 |
+|---|---|---|
+| static RAM (.data + .rodata + .bss) | 40,104 B | 40,104 B (.data 1,580 + .rodata 5,132 + .bss 33,392; every new table and name is in flash) |
+| flash used / bin | 739,325 B / 743,472 B | 833,789 B / 837,936 B of 1,044,464 (79.8 %; +94.5 KB: about 70 KB the animations, about 24 KB the bigger site page) |
+| `/settings` build chain | 1,216 B | 1,216 B (`build` 240, `buildKaia` 400, `buildKaiaHide` 224, …) |
+| redraw path, deepest | 608 B | 720 B (the timer 16, `redrawFrame` 96, `kaiaDraw` 128, `wakeDraw` 64, `stateLook` 48, `styleState` 16, `garThink` 176, `garPut` 80, `put` 48, …) |
+| `/kaia/test` draws | 528 B | 656 B (`testAnim` 48, `testDraw` 112, then the redraw path's looks); `handleTest` → `redrawFrame` 752 B |
+| `/kaia/test` n | 639 | 1233 |
+
+All of these sit well inside the 4,096 B cont stack. The heaviest frame by divisions grew from 2010 (Пинг-понг · Смэш)
+to 4317 (Маятник · В такт), about 4.5 × Мордашка's wake (3.2 ms on v1.8.0): `GET /kaia/test` on the clock gives the
+real slowest draw against the 50 ms frame.
