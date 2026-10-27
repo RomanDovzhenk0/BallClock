@@ -1,10 +1,11 @@
-# BallClock web: the clock's site (firmware v1.7)
+# BallClock web: the clock's site (firmware v1.8)
 
 The site the clock serves from its flash at `/`: a big live preview of the 128 balls, Kaya's events with a look per
 event, every setting of the classic page, and saving. It is the KAIA-161 variant B «Сцена» (big preview, tabs under it,
 a bottom tab bar on the phone), with KAIA-172 variant b on top of it in v1.6: palettes picked by sight, a list of
 Kaya's 7 events with live thumbnails and a gallery per event, a try-out on the clock for every event, and the unlit
-balls' look. v1.7 adds the Digit fade: the time fades out while Kaya's animation plays and back in after it. The
+balls' look. v1.7 adds the Digit fade: the time fades out while Kaya's animation plays and back in after it. v1.8 adds
+six Kaya styles (KAIA-195), a «Стиль» picker by sight and the new styles' versions in every event's gallery. The
 classic Settings page stays at `/old`.
 
 One self-contained page: inline CSS and JS, no external requests, only relative URLs (it runs from the clock's
@@ -16,8 +17,8 @@ own access point and behind the Kernel's gateway alike), Russian UI. No npm depe
 |---|---|
 | `dist/site.html?mock` | open from disk in a browser: a mock clock inside the page answers the whole API from sample data with a running clock. The dashed «Макет» bar switches what it does: password (401, the mock's password is `kaia`), no answer, access point, update available, running text. |
 | `npm run build` | `src/` → `dist/site.html` (committed) → `../firmware/src/site_page.h` (`site_page_gz[] PROGMEM`, `site_page_gz_len`, `SITE_PAGE_ETAG`); prints the raw and gzip sizes and fails over 64 KB gzipped. The gzip is deterministic: the same input gives the same bytes. |
-| `npm test` | `node --test`: the renderer against hand-computed values and the firmware's own tables (the 61 palettes read back from `palettes.cpp`), the wakes, the looks per event (lengths, seamless loops, determinism, ids, C++ portability), the API client, the try-out queries, the unlit-ball storage and the mock, the Digit fade (`hide.test.mjs`: the level against hand-computed values, the frames of v1.6.2 bit for bit when it is off, C++ portability). |
-| `npm run test:render` | headless Edge over CDP: `dist/site.html?mock` at 390×844 and 1280×800 in 40 states (the tabs, the palette picker, the Digit fade block on and off, the draft half way through the fade, the way back, a clock without it, each event's gallery, the try-outs of a wake, a state and a one-shot, the unlit balls at 0, 50 and 100 % transparency, the phone with the preview in view, …); shots in `shots/` (git-ignored). In-page check: nothing wider than the viewport, no overlapping controls, no cut text, touch targets ≥ 44 px on the phone, no request off the page; the save, login and try-out flows; ≥ 18 frames a second with the CPU 4× slower. `node test/render.mjs <state>…` runs some states only. Run `npm run build` first. |
+| `npm test` | `node --test`: the renderer against hand-computed values and the firmware's own tables (the 61 palettes read back from `palettes.cpp`), the wakes, the looks per event (lengths, seamless loops, determinism, ids, C++ portability), the API client, the try-out queries, the unlit-ball storage and the mock, the Digit fade (`hide.test.mjs`: the level against hand-computed values, the frames of v1.6.2 bit for bit when it is off, C++ portability), the styles of v1.8 (`styles.test.mjs`: every old id's frames bit for bit, the new ids through «Как у стиля» and the galleries, seamless loops, fade-outs, the cost per frame, the long-state check, C++ portability). |
+| `npm run test:render` | headless Edge over CDP: `dist/site.html?mock` at 390×844 and 1280×800 in 40 states (the tabs, the palette picker, the Digit fade block on and off, the draft half way through the fade, the way back, a clock without it, each event's gallery, the «Стиль» picker (its listening and all-7 thumbnails, a new style's events in the draft, its try-out), the try-outs of a wake, a state and a one-shot, the unlit balls at 0, 50 and 100 % transparency, the phone with the preview in view, …); shots in `shots/` (git-ignored). In-page check: nothing wider than the viewport, no overlapping controls, no cut text, touch targets ≥ 44 px on the phone, no request off the page; the save, login and try-out flows; ≥ 18 frames a second with the CPU 4× slower. `node test/render.mjs <state>…` runs some states only. Run `npm run build` first. |
 
 The build joins the ES modules of `src/` in import order into one strict scope: top-level names must be unique
 across modules (the build checks), and strings never span lines (it drops whole-line comments and indentation).
@@ -33,7 +34,8 @@ across modules (the build checks), and strings never span lines (it drops whole-
 | `src/redraw.js` | the clock under the overlay: background, digits, dots, night, brightness |
 | `src/kaia.js` | Kaya: the ball tables, the helpers (with v1.6's `ballRX`, `ballAt`, `oct`, `segDist`, `hash8`, `putb`), the 3 styles |
 | `src/wakes.js` | the wakes (ids, names, base lengths, the 11 themed ones of v1.5 and v1.6, the speed) |
-| `src/looks.js` | v1.6: the looks per event (ids, names, one-shot lengths, the 30 new ones), `stateLook`, `shotLook`, `wakeDraw` |
+| `src/looks.js` | v1.6: the looks per event (ids, names, one-shot lengths, the 30 new ones), `stateLook`, `shotLook`, `wakeDraw`; v1.8: `lookOf`, looks 9–14 |
+| `src/styles.js` | v1.8: Kaya's styles 4–9 (KAIA-195): their 42 animations, helpers and tables, `styleState`, `styleShot`, `STYLE_NAMES`, `fam_ms` |
 | `src/frame.js` | one 50 ms frame: `renderFrame(matrix, settings, clock)`; what plays at t (`resolvePlay`); the duck; v1.7: the Digit fade (`hideStep`, `digitHide`, `hideTrack`, `isPlaying`) |
 | `src/paint.js` | the canvas layer (the only DOM part of the drawing) and the unlit balls' setting |
 | `src/api.js` | the API client: one request at a time, 5 s, auth; `hash32`, `keyId`; `tryOut` (the try-out query) |
@@ -41,6 +43,7 @@ across modules (the build checks), and strings never span lines (it drops whole-
 | `src/mock.js` | the mock clock of `?mock` |
 | `src/settings.js` | the keys, their defaults (db.init) and raw values; `LOOK_KEYS`; `HIDE_RANGES` (v1.7) |
 | `src/app.js`, `page.html`, `style.css` | the page |
+| `test/frames.mjs`, `test/cost.mjs` | test helpers: the frame digests (v1.6.2, every v1.6 id), the cost of a frame read from the source |
 
 ## The renderer: the firmware's drawing in JS
 
@@ -66,6 +69,7 @@ where the C++ types do, and the float steps of the boot tables and the old wakes
 | `frame.js` `kaiaDraw`, `resolvePlay`, `duckStep`, `backScale` | `src/kaia.cpp` `kaiaDraw`, `kaiaBackScale` | the night rule 2 hides the overlay; done / error / notify default to green / red / amber |
 | `wakes.js` | `src/kaia.cpp` (v1.5) `wakeLength`, `dawnShot` … `rainShot` | see below; the C++ keeps `b_col`, `b_row`, `b_x` in one byte a ball (`b_cr`, column and row) and computes `h1`–`h3` inline: the same values, 640 B less RAM |
 | `looks.js`, the v1.6 helpers of `kaia.js`, wakes 12–14 | for `src/kaia.cpp` v1.6 (the firmware task) | see «Changes the firmware task copies into kaia.cpp (v1.6)» |
+| `styles.js`, `lookOf`, `wakeOf` | for `src/kaia.cpp` v1.8 (the firmware task) | see «Changes the firmware task copies into kaia.cpp (v1.8)» |
 
 Not modelled: NeoPixel's `setBrightness` pre-multiplies the strip and `getPixelColor` scales back, so on the clock a
 read-modify-write (the dots, `put`, `dimAll`) at brightness < 255 loses low bits. The brightness belongs to the
@@ -173,11 +177,118 @@ here first, integer-only, and copied line by line (`frame.js`, `matrix.js`, `kai
   (no `kaia_hide` in its state) never fades in the preview and its Кая tab has no block. "Показать на часах" plays on the
   clock with the digit settings saved there; the block says so.
 
+## Changes the firmware task copies into kaia.cpp (v1.8): Kaya's styles
+
+KAIA-195's catalog as the owner accepted it (all six kept), in `src/styles.js`: integer-only like `looks.js`, copied
+line by line (`test/styles.test.mjs` holds it). A style is a whole visual language, its own version of all 7 events.
+
+- **Ids, appended.** The old ones never move: `kaia_anim` 0–3, looks 0–8 and wakes 0–14 draw v1.7's frames bit for bit
+  (`test/frames.mjs` `idsDigestOf`: 2268 frames of every old id, one SHA-256 taken on the sources of v1.7).
+
+  | setting | v1.7 | appended in v1.8 |
+  |---|---|---|
+  | `kaia_anim` («Стиль») | 0 Выкл, 1 Рябь, 2 Орбита, 3 Искры | 4 Пинг-понг, 5 Калейдоскоп, 6 Лава-лампа, 7 Мордашка, 8 Галактика, 9 Сканер (`STYLE_COUNT` 9) |
+  | `kaia_listen` … `kaia_notify` | 0–8 | 9–14: the versions of styles 4–9, look = style + 5 (`LOOK_COUNT` 9 → 15) |
+  | `kaia_wake` | 0–14 | 15–20: the wakes of styles 4–9, wake = style + 11 (`WAKE_COUNT` 15 → 21) |
+
+- **The classic page** (group K.A.I.A.): «Стиль» becomes a Select of 10 in `STYLE_NAMES` order: Выкл, Рябь, Орбита,
+  Искры, Пинг-понг, Калейдоскоп, Лава-лампа, Мордашка, Галактика, Сканер. Each event's Select appends the same six names
+  as 9–14 (`LOOK_NAMES`), «Пробуждение» as 15–20 (`WAKE_NAMES`). The strings in flash like v1.6's lists. Home's
+  profile (`src/profiles/ballclock.ts`) appends them by index the same way (Home's own task).
+- **settings.cpp**: the ranges `kaia_anim` 0–9, the six looks 0–14, `kaia_wake` 0–20 (out of range reads as the
+  default, as `savedLook` does).
+- **Dispatch** (`looks.js`): `lookOf(style, look)` = `look || style <= 3 ? look : style + 5`, so look 0 with style 4–9
+  plays that style's version. `stateLook` and `shotLook` start with `look = lookOf(style, look)`, then send 9–14 to
+  `styleState(look - 5, n, t, col, k)` / `styleShot(look - 5, n, t, du, col)` (`styles.js`: a switch per event, as
+  stateLook's). `shotLength(n, look, style)` takes `lookOf` too and reads `fam_ms[look - 9][n - A_DONE]` for 9–14.
+- **Wakes**: `wakeOf(style, wake)` (`wakes.js`) = `wake ? wake : style <= 3 ? style : style + 11`; `wakeDraw` and the
+  wake → listening switch (`wakeLength(wakeOf(style, look), speed)`) use it. `wake_ms[15..20]` = 1800, 2000, 2000,
+  1900, 2000, 2000. In `wakeDraw`: `if (id >= 15) styleShot(id - 11, A_WAKE, u, du, col); else switch (id) {…}`; the
+  listening fades in over the last 800 ms of u, as under every themed wake. `kaia_wake_speed` scales them too.
+- **`fr.ls`** = `lk >= 4 ? 0 : lk ? lk : style <= 3 ? style : 0`. After a new style's wake the listening is
+  `stateLook(style, lk, …)`: with `kaia_listen` 0 the style's own listening takes over (the sparks mark only checks 3).
+- **Play**: `ov.style` and `play.style` 1–9 (`resolvePlay` takes 1 – `STYLE_COUNT`).
+- **Helpers** (`styles.js`, no tables): `kfold(a)` (the six-fold fold of an angle), `ell(dx, dy, w, h)` (an ellipse's
+  measure), `blob(dx, dy, r)` (a metaball's field), `lavaPut`, `ppScene`, `ppY`, `ppRally`, `ppServeX`, `ppServeY`,
+  `face(…)` (the whole face, 11 parameters), `arm(i, d, rot)`, `galStar(i, t)`; and v1.6's `oct`, `segDist`, `hash8`.
+- **Small const tables** (under 100 bytes together): `pp_bt[4]`, `pp_bh[3]`, `pp_smash[4]`, `kal_sp[12]`,
+  `lava_from[6]`, `drip_x[3]`, `drip_t[3]`, `scan_row[7]`, `fam_ms[6][3]` (uint16_t: done, error, notify). No per-ball
+  tables: p = 4·(x − 19), q = 7·(row − 3) from `b_cr` as in v1.6, `b_dist`, `b_ang` and `h1`–`h3` of the boot. Stack
+  arrays a frame: `int[3]` ×2 (Пинг-понг), `int[4]` ×2 (Лава-лампа · Слияния), `int[4]` (Сканер), `int[4]` (Комета's
+  segment).
+- **Cost per frame**, within v1.6's budget. `test/cost.mjs` counts from the source the integer divisions a frame (the
+  ESP8266 has no divider, so they dominate; `put` with its `mix` is 5), every loop and helper counted in, both sides of
+  every if. By that count v1.6's heaviest look is Тук-тук (3458) and its heaviest wake Салют (5355); the heaviest new
+  animation is Пинг-понг · Подача (3874), and `styles.test.mjs` holds every new one under Салют's count. At most 3
+  `voice()` a frame (v1.6: Осциллограф calls it for every ball, 128; the equalizer 13), 2 `hash8()` (v1.6: 8), no
+  `inoise16`. Мордашка dims the display (`dimAll`) and draws
+  the face over it. `GET /kaia/test` (the firmware task) will give the real times.
+
+| style | event | function | name | length | div | voice | hash8 |
+|---|---|---|---|---|---|---|---|
+| 4 Пинг-понг | Пробуждение | `ppWake` | Подача | 1800 ms | 3874 | 0 | 0 |
+|  | Слушает | `ppListen` | Розыгрыш | 2.8 s | 1807 | 0 | 0 |
+|  | Думает | `ppThink` | Быстрый розыгрыш | 1.04 s | 1810 | 0 | 0 |
+|  | Говорит | `ppSpeak` | Подскоки | voice | 2080 | 3 | 0 |
+|  | Готово | `ppDone` | Смэш | 1500 ms | 2834 | 0 | 0 |
+|  | Ошибка | `ppError` | В сетку | 1600 ms | 1548 | 0 | 0 |
+|  | Уведомление | `ppNotify` | Мячик | 1600 ms | 1544 | 0 | 0 |
+| 5 Калейдоскоп | Пробуждение | `kalWake` | Мандала | 2000 ms | 1807 | 0 | 0 |
+|  | Слушает | `kalListen` | Вращение | 5 s (the turn / 6), breath 5.1 s | 2310 | 0 | 0 |
+|  | Думает | `kalThink` | Узоры | 1.3 s, a turn 5 s | 1931 | 0 | 0 |
+|  | Говорит | `kalSpeak` | Дыхание лепестков | voice | 1942 | 2 | 0 |
+|  | Готово | `kalDone` | Цветок | 1600 ms | 2574 | 0 | 0 |
+|  | Ошибка | `kalError` | Осколки | 1600 ms | 1416 | 0 | 0 |
+|  | Уведомление | `kalNotify` | Лепестки по кругу | 1700 ms | 1286 | 0 | 0 |
+| 6 Лава-лампа | Пробуждение | `lavaWake` | Всплытие | 2000 ms | 2070 | 0 | 0 |
+|  | Слушает | `lavaListen` | Дрейф | 15, 11 and 8.5 s | 2063 | 0 | 0 |
+|  | Думает | `lavaThink` | Слияния | 2.6–4.2 s | 2198 | 0 | 0 |
+|  | Говорит | `lavaSpeak` | Пульс | voice | 2084 | 3 | 0 |
+|  | Готово | `lavaDone` | Слияние | 1600 ms | 2829 | 0 | 0 |
+|  | Ошибка | `lavaError` | Стекает | 1600 ms | 2829 | 0 | 0 |
+|  | Уведомление | `lavaNotify` | Пузырь | 1600 ms | 2962 | 0 | 0 |
+| 7 Мордашка | Пробуждение | `faceWake` | Просыпается | 1900 ms | 2704 | 0 | 0 |
+|  | Слушает | `faceListen` | Смотрит | blinks 8.4 s, glance 12.6 s | 2700 | 0 | 0 |
+|  | Думает | `faceThink` | Задумалась | 3.2 s | 2701 | 0 | 0 |
+|  | Говорит | `faceSpeak` | Говорит | voice | 2702 | 1 | 0 |
+|  | Готово | `faceDone` | Подмигивает | 1700 ms | 2700 | 0 | 0 |
+|  | Ошибка | `faceError` | Огорчение | 1600 ms | 2697 | 0 | 0 |
+|  | Уведомление | `faceNotify` | Удивление | 1500 ms | 2706 | 0 | 0 |
+| 8 Галактика | Пробуждение | `galWake` | Большой взрыв | 2000 ms | 2065 | 0 | 0 |
+|  | Слушает | `galListen` | Спираль | 10 s | 1540 | 0 | 0 |
+|  | Думает | `galThink` | Вихрь ядра | 2.6 s, the whirl 0.6 s | 1800 | 0 | 0 |
+|  | Говорит | `galSpeak` | Пульс ядра | voice | 1942 | 2 | 0 |
+|  | Готово | `galDone` | Сверхновая | 1700 ms | 1423 | 0 | 0 |
+|  | Ошибка | `galError` | Чёрная дыра | 1700 ms | 1804 | 0 | 0 |
+|  | Уведомление | `galNotify` | Комета | 1500 ms | 2183 | 0 | 0 |
+| 9 Сканер | Пробуждение | `scanWake` | Запуск | 2000 ms | 1553 | 0 | 0 |
+|  | Слушает | `scanListen` | Луч | 3.2 s | 2059 | 0 | 0 |
+|  | Думает | `scanThink` | Два луча | 1.28 s | 2189 | 0 | 0 |
+|  | Говорит | `scanSpeak` | Ширина голосом | voice | 1295 | 1 | 0 |
+|  | Готово | `scanDone` | Проход | 1500 ms | 1548 | 0 | 0 |
+|  | Ошибка | `scanError` | Сбой | 1600 ms | 1288 | 0 | 2 |
+|  | Уведомление | `scanNotify` | Три прохода | 1500 ms | 2061 | 0 | 0 |
+
+- **Long states**: a state multiplies t by at most 500 (Калейдоскоп · Узоры, `t * 500 / 1000`; `voice` 469,
+  Галактика's stars 213, the turns 256): t × 500 stays exact in a 32-bit `int` for 71 minutes of one state.
+
+The six styles, as the owner saw them in KAIA-195 (each animation's comment in `styles.js` says what it does):
+
+| id | style | what |
+|---|---|---|
+| 4 | Пинг-понг | the clock is made of ping-pong balls, so a rally: a ball, the net in the middle of the bottom rows, paddles at the edges, the bottom row is the table |
+| 5 | Калейдоскоп | the hexagon's own six-fold symmetry: `b_ang` folded into six mirrored sectors (`kfold`) |
+| 6 | Лава-лампа | soft blobs (metaballs, Σ 256·r²/d²): they merge and split by themselves |
+| 7 | Мордашка | Kaya as a tiny face, two eyes in row 2 and a mouth in rows 4–6; the face takes the display, the time steps back |
+| 8 | Галактика | a two-armed spiral `(2·b_ang + 9·d − rot) & 255` round the core; stars twinkle on `h1 < 40` |
+| 9 | Сканер | the Knight Rider light: a band across all rows, brightest in the middle one (`scan_row`), with a trail |
+
 ## Kaya's looks per event (v1.6)
 
 Every event lists 0 «Как у стиля» and 1–3 Рябь, Орбита, Искры first (the style versions of v1.5; one-shot lengths
 `shot_ms` 1200–1600). The new ones, by id. A one-shot fades out over its last 300 ms (a wake over its last 400 ms of
-its own time); states run until the call's ms ends.
+its own time); states run until the call's ms ends. v1.8 appends 9–14 to every event: the versions of styles 4–9
+(Пинг-понг, Калейдоскоп, Лава-лампа, Мордашка, Галактика, Сканер; see the table above).
 
 ### Слушает (`kaia_listen`, Kaya's colour; a loop)
 
@@ -243,7 +354,7 @@ its own time); states run until the call's ms ends.
 
 | id | name | base length (100 %) | what |
 |---|---|---|---|
-| 0 | Как у стиля | the style's: 1900 / 2000 / 2000 | the style's own wake (the default) |
+| 0 | Как у стиля | the style's: 1900 / 2000 / 2000; 4–9: theirs | the style's own wake (the default); with style 4–9 its wake 15–20 |
 | 1 | Рябь | 1900 | three rings out of the centre (rippleShot); listening fades in from 1100 |
 | 2 | Орбита | 2000 | a comet speeds round the rim, the rings close like an iris (orbitShot); from 1500 |
 | 3 | Искры | 2000 | 18 sparks fly in, the mark pops (sparksShot); from 1600 |
@@ -258,6 +369,7 @@ its own time); states run until the call's ms ends.
 | 12 | Включение | 1800 | like an old TV switched on: a dot, a line along the middle row, the picture opens (v1.6) |
 | 13 | Зайчик | 2000 | a spot of light bounces off the edges like a sunbeam from a mirror, with a short trail (v1.6) |
 | 14 | «КАЯ» | 2200 | Kaya writes her name column by column with a white pen, holds it, and it scatters (v1.6) |
+| 15–20 | Пинг-понг … Сканер | 1800, 2000, 2000, 1900, 2000, 2000 | the wakes of styles 4–9 (v1.8): Подача, Мандала, Всплытие, Просыпается, Большой взрыв, Запуск |
 
 `kaia_wake_speed` 50–200 %: the wake runs on u = t·speed/100 and lasts base·100/speed (e.g. Глаз at 150 %:
 1466 ms); the listening under it and after it keeps real time and is the listening's look (`kaia_listen`). The
@@ -473,6 +585,17 @@ v1.6's stays. `/kaia/state` `settings` gain `kaia_hide`, `kaia_hide_out`, `kaia_
 `kaia_hide_keep` (ranges and defaults above). Nothing else changes. They are written through the Settings API like every
 other key (`set` by the key's hash).
 
+## The site's API (BallClock v1.8)
+
+v1.7's stays. Only the ranges grow (the ids are appended, the old ones mean what they meant):
+- `/kaia/anim` `style=1–9` (`STYLE_COUNT`); `look=0–14` for listening … notify (`LOOK_COUNT` − 1) and `look=` /
+  `wake=` `0–20` for the wake (`WAKE_COUNT` − 1). A value out of range (or not a number) → 400 `{error}` as today
+  (`style: 1-9`, `wake: 0-20`, …). An explicit style still plays when the saved one is «Выкл»; look 0 follows that
+  style, with 4–9 its version.
+- `/kaia/state` `play.style` 1–9; `play.look` up to 14 (20 for a wake).
+- `/kaia/state` `settings`: `kaia_anim` 0–9, `kaia_listen` … `kaia_notify` 0–14, `kaia_wake` 0–20.
+- `GET /kaia/test` (the firmware task's self-test) is not called by the page.
+
 ## How the page uses it
 
 The state every 5 s while the tab is visible; «Сейчас» runs the renderer on the saved settings with the clock's
@@ -485,7 +608,14 @@ state again.
 «Показать на часах» (in the preview panel and under the event's gallery) plays the event in view with the draft's
 choice and saves nothing: `kaia/anim?name=<event>&style=<kaia_anim>&look=<the event's key>`, plus
 `&speed=<kaia_wake_speed>` for the wake and `&ms=6000` for a state (`tryOut` in `api.js`). While it plays the page says
-«Идёт на часах: … · ещё 1,1 с», then «Сыграно на часах: … Ничего не сохранено.»
+«Идёт на часах: … · ещё 1,1 с», then «Сыграно на часах: … Ничего не сохранено.» With a new style in the draft it sends
+`style=4–9`.
+
+«Стиль» (v1.8, KAIA-195): ten tiles, 0 Выкл and 1–9, each with a live thumbnail of the style's listening, or with
+«Миниатюры: Все 7 событий» its seven events in a row as «Как у стиля» plays them (the wake with 1.6 s of listening,
+thinking, speaking, done, error, notify). The tile of the draft's style is selected, the saved one says «на часах»,
+4–9 say «новый»; under them the selected style's version of each event with its length. A tap is a draft like any
+setting (the save bar). Every event's gallery ends with «Версии новых стилей» (9–14, the wake 15–20).
 
 The unlit balls (⚙ on the preview): a colour and a transparency 0–100 % for the balls without light, on the big
 preview, the mini bar and the tiles. Only this page's look: kept in this browser's `localStorage` under

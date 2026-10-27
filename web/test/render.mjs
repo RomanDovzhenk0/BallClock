@@ -143,7 +143,17 @@ const STATES = [
         expect: "ballclock.S().back_pal === 38 && document.querySelector('.pc.sel').dataset.pick === '38'" },
     // each event's gallery: beside the list on the desktop, a sheet under the preview on the phone
     ...["wake", "listening", "thinking", "speaking", "done", "error", "notify"].map((e, n) => ({ name: "gallery-" + e, go: "ballclock.setEvent(" + n + ", true)", wait: 900, el: "#kb", desk: true,
-        expect: "document.querySelectorAll('#evg .tile').length === " + (n ? 9 : 15) + " && document.querySelector('.er.on').dataset.ev === '" + n + "' && document.querySelector('[data-ks=\"" + n + "\"]').classList.contains('on')" })),
+        expect: "document.querySelectorAll('#evg .tile').length === " + (n ? 15 : 21) + " && document.querySelectorAll('#evg [data-tc=\"" + n + ":" + (n ? 14 : 20) + "\"]').length === 1 && document.querySelector('.er.on').dataset.ev === '" + n + "' && document.querySelector('[data-ks=\"" + n + "\"]').classList.contains('on')" })),
+    // v1.8: the «Стиль» picker by sight: 10 tiles, the draft's style selected, «на часах» on the saved one, its events under them
+    { name: "style-picker", go: "ballclock.showTab('kaia'); document.querySelector('[data-sty=\"6\"]').click()", wait: 900, el: "[data-f=kaia_anim]",
+        expect: "document.querySelectorAll('.stg .st').length === 10 && document.querySelectorAll('.st .nw').length === 6 && ballclock.S().kaia_anim === 6 && document.querySelector('.st.sel').dataset.sty === '6' && document.querySelector('.st .pl').closest('.st').dataset.sty === '1' && /Лава-лампа/.test(document.getElementById('sts').textContent) && /Всплытие · 2,0 с/.test(document.getElementById('sts').textContent) && !document.getElementById('sbar').hidden" },
+    { name: "style-all7", go: "ballclock.showTab('kaia'); document.querySelector('[data-thumb=\"1\"]').click(); ballclock.tilesAt(5200)", wait: 500, el: ".stg",
+        expect: "ballclock.P.thumb === 1 && document.querySelector('[data-thumb=\"1\"]').classList.contains('on')" },
+    // a new style's events in the draft: Мордашка as the style, «Готово» with «Как у стиля» on the big preview
+    { name: "style-draft", go: "document.querySelector('[data-sty=\"7\"]').click(); ballclock.setEvent(4, false)", wait: 600,
+        expect: "ballclock.P.M && ballclock.P.M.anim === 4 && /0 → Мордашка/.test(document.getElementById('badge').textContent) && /Подмигивает · 1,7 с/.test(document.querySelector('[data-tc=\"4:12\"]').textContent)" },
+    { name: "try-out-style", go: "document.querySelector('[data-sty=\"8\"]').click(); ballclock.setEvent(5, false); document.querySelector('.pvf [data-act=onclock]').click()", wait: 700,
+        expect: "ballclock.mock.M.play && ballclock.mock.M.play.style === 8 && ballclock.mock.M.play.anim === 5 && ballclock.mock.M.play.look === 0 && ballclock.mock.M.settings.kaia_anim === 1 && ballclock.LIVE.play && ballclock.LIVE.play.style === 8" },
     // the phone: the preview stays in view while a palette or an animation is picked
     { name: "phone-preview", go: "ballclock.showTab('look'); document.querySelector('.brows').scrollIntoView(); document.querySelector('[data-pick=\"45\"]').click()", wait: 700,
         expect: "innerWidth > 900 || (() => { const h = document.getElementById('hero').getBoundingClientRect(); return h.top > -2 && h.bottom > 200; })()" },
