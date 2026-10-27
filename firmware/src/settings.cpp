@@ -145,7 +145,7 @@ SETS_GROUP buildKaiaHide(sets::Builder& b) {
 SETS_GROUP buildKaia(sets::Builder& b) {
     sets::Group g(b, "K.A.I.A.");
 
-    b.Select(kk::kaia_anim, "Анимации", "Выкл;Рябь из центра;Орбита по краю;Искры в знак");
+    b.Select(kk::kaia_anim, "Анимации", FPSTR(kaia_style_names));  // v1.8: Kaya's styles 4–9, the names in flash
     b.Color(kk::kaia_color, "Цвет Каи");
     b.Slider(kk::kaia_bright, "Яркость", 0, 255);
     b.Select(kk::kaia_wake, "Пробуждение", FPSTR(kaia_wake_names));

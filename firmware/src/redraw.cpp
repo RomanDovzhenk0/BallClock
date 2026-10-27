@@ -238,9 +238,7 @@ static bool isNight() {
     return isTimeBetween(dt.hour, dt.minute, startHour, startMinute, endHour, endMinute);
 }
 
-LP_TIMER_("redraw", 50, []() {
-    Looper.thisTimer()->restart(50);
-
+void redrawFrame() {
     applyBright();
 
     night_now = isNight();
@@ -263,4 +261,9 @@ LP_TIMER_("redraw", 50, []() {
     kaiaDraw(night_now, hd);
 
     matrix.update();
+}
+
+LP_TIMER_("redraw", 50, []() {
+    Looper.thisTimer()->restart(50);
+    redrawFrame();
 });
