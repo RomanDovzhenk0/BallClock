@@ -16,15 +16,15 @@ typedef WebServer KaiaServer;
 #define STYLE_COUNT 18
 extern const char kaia_style_names[] PROGMEM;
 
-// the wakes (kaia_wake): 0 the style's own, 1..WAKE_COUNT - 1 the others (15–29 those of styles 4–18); their names for
-// a Select, in PROGMEM
-#define WAKE_COUNT 30
+// the wakes (kaia_wake): 0 the style's own, 1..WAKE_COUNT - 1 the others (15–29 those of styles 4–18, 30–33 catalog C's
+// singles); their names for a Select, in PROGMEM
+#define WAKE_COUNT 34
 extern const char kaia_wake_names[] PROGMEM;
 
 // the looks of the other events (kaia_listen, kaia_think, kaia_speak, kaia_done, kaia_error, kaia_notify):
 // 0 as the style (kaia_anim), 1–3 the ripple, orbit or sparks version with any style, 4–8 the new ones of v1.6,
-// 9..LOOK_COUNT - 1 the versions of styles 4–18
-#define LOOK_COUNT 24
+// 9–23 the versions of styles 4–18, 24..LOOK_COUNT - 1 catalog C's singles (v1.9)
+#define LOOK_COUNT 28
 extern const char kaia_listen_names[] PROGMEM;
 extern const char kaia_think_names[] PROGMEM;
 extern const char kaia_speak_names[] PROGMEM;
