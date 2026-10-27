@@ -661,31 +661,33 @@ static void shotDraw(uint8_t style, Anim n, int t, int du, uint32_t col) {
 
 // ================= the wakes of v1.5 (web/src/wakes.js, line by line) =================
 // kaia_wake picks one apart from the style: 0 the style's own (1 ripple, 2 orbit, 3 sparks), 1–3 those three with
-// any style, 4–14 the new ones below, 15–20 (v1.8) those of styles 4–9 (Kaya's styles), 21–23 (v1.9) those of styles
-// 10–12; which wake is which style's is the table wake_style (style_wake the other way). kaia_wake_speed (50–200 %):
+// any style, 4–14 the new ones below, 15–20 (v1.8) those of styles 4–9 (Kaya's styles), 21–29 (v1.9) those of styles
+// 10–18; which wake is which style's is the table wake_style (style_wake the other way). kaia_wake_speed (50–200 %):
 // the wake runs on u = t·speed/100 and lasts du·100/speed; the listening of the style that fades in under it, and that
 // takes over after it, keeps real time.
 
 // ids in the site's order (the names: kaia_wake_names); base lengths at 100 %, ms (1–3 = shot_ms[style - 1][0])
-// 15–20 (v1.8): the wakes of styles 4–9 (Kaya's styles); 21–23 (v1.9): styles 10–12
+// 15–20 (v1.8): the wakes of styles 4–9 (Kaya's styles); 21–23 (v1.9): styles 10–12; 24–29: styles 13–18
 static const uint16_t wake_ms[WAKE_COUNT] PROGMEM = {0, 1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000, 1800, 2000, 2200, 1800, 2000, 2000, 1900, 2000, 2000,
-                                                     2000, 2000, 2000};
+                                                     2000, 2000, 2000, 1800, 2000, 2000, 2000, 2000, 2000};
 // which style each wake is the wake of (0: none; 1–3 are drawn by wakeDraw's own switch), by wake id
-static const uint8_t wake_style[WAKE_COUNT] PROGMEM = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+static const uint8_t wake_style[WAKE_COUNT] PROGMEM = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
 // and the wake of each style, by style id (1–3 their own)
-static const uint8_t style_wake[STYLE_COUNT + 1] PROGMEM = {0, 1, 2, 3, 15, 16, 17, 18, 19, 20, 21, 22, 23};
+static const uint8_t style_wake[STYLE_COUNT + 1] PROGMEM = {0, 1, 2, 3, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
 // when the listening starts to fade in under wakes 1–3 (the new ones: du - 800)
 static const uint16_t wake_from[4] = {0, 1100, 1500, 1600};
 
 const char kaia_wake_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Рассвет;Радар;Спираль;Сердцебиение;Глаз;Звёзды;Салют;Дождь;Включение;Зайчик;«КАЯ»;"
-                                       "Пинг-понг;Калейдоскоп;Лава-лампа;Мордашка;Галактика;Сканер;Снежинка;Светлячки;Пламя";
+                                       "Пинг-понг;Калейдоскоп;Лава-лампа;Мордашка;Галактика;Сканер;Снежинка;Светлячки;Пламя;Аркада;Тетрис;Механизм;Неон;"
+                                       "Маятник;Гирлянда";
 
 // kaia_anim (web/src/styles.js STYLE_NAMES), 0..STYLE_COUNT
-const char kaia_style_names[] PROGMEM = "Выкл;Рябь;Орбита;Искры;Пинг-понг;Калейдоскоп;Лава-лампа;Мордашка;Галактика;Сканер;Снежинка;Светлячки;Пламя";
+const char kaia_style_names[] PROGMEM = "Выкл;Рябь;Орбита;Искры;Пинг-понг;Калейдоскоп;Лава-лампа;Мордашка;Галактика;Сканер;Снежинка;Светлячки;Пламя;"
+                                        "Аркада;Тетрис;Механизм;Неон;Маятник;Гирлянда";
 
 // the looks per event of v1.6 (web/src/looks.js LOOK_NAMES), 0..LOOK_COUNT - 1; 9–14 the versions of styles 4–9 (v1.8),
-// 15–17 those of styles 10–12 (v1.9)
-#define STYLE_LOOK_NAMES ";Пинг-понг;Калейдоскоп;Лава-лампа;Мордашка;Галактика;Сканер;Снежинка;Светлячки;Пламя"
+// 15–23 those of styles 10–18 (v1.9)
+#define STYLE_LOOK_NAMES ";Пинг-понг;Калейдоскоп;Лава-лампа;Мордашка;Галактика;Сканер;Снежинка;Светлячки;Пламя;Аркада;Тетрис;Механизм;Неон;Маятник;Гирлянда"
 const char kaia_listen_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Эхо;Прилив;Сияние;Взгляд;Пузырьки" STYLE_LOOK_NAMES;
 const char kaia_think_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Змейка;Нейроны;Песочные часы;Три точки;Атом" STYLE_LOOK_NAMES;
 const char kaia_speak_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Эквалайзер;Осциллограф;Лучи;Динамики;Губы" STYLE_LOOK_NAMES;
@@ -1024,14 +1026,14 @@ static void nameWake(Anim, int t, int, uint32_t col) {
 // with any style; 4 and up: the new ones below. The listening after a wake (and under its end) is the listening's look.
 // The small tables are in PROGMEM.
 
-// v1.8: 9–14 are the versions of styles 4–9 (Kaya's styles below); v1.9: 15–17 those of styles 10–12. Look 0 with style
+// v1.8: 9–14 are the versions of styles 4–9 (Kaya's styles below); v1.9: 15–23 those of styles 10–18. Look 0 with style
 // 4 or later plays its version. Which look is which style's version is the table look_style (style_look the other way),
 // so later ids can be appended anywhere.
 
 // which style each look is the version of (0: none; 1–3 go through stateDraw / shotDraw with the style), by look id
-static const uint8_t look_style[LOOK_COUNT] PROGMEM = {0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+static const uint8_t look_style[LOOK_COUNT] PROGMEM = {0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
 // and the look of each style's version, by style id (0 for 0–3)
-static const uint8_t style_look[STYLE_COUNT + 1] PROGMEM = {0, 0, 0, 0, 9, 10, 11, 12, 13, 14, 15, 16, 17};
+static const uint8_t style_look[STYLE_COUNT + 1] PROGMEM = {0, 0, 0, 0, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23};
 
 // the look an event plays: look 0 with style 4 or later is that style's version (style_look); with 1–3 it stays 0
 // (stateDraw and shotDraw take the style)
@@ -1046,9 +1048,9 @@ static const uint16_t look_ms[3][5] PROGMEM = {
     {1500, 1500, 1600, 1700, 1600},
 };
 
-// the one-shot lengths of styles 4–12 (styles.js fam_ms, row style − 4), ms: done, error, notify (their wakes:
+// the one-shot lengths of styles 4–18 (styles.js fam_ms, row style − 4), ms: done, error, notify (their wakes:
 // wake_ms[style_wake[style]])
-static const uint16_t fam_ms[9][3] PROGMEM = {
+static const uint16_t fam_ms[15][3] PROGMEM = {
     {1500, 1600, 1600},
     {1600, 1600, 1700},
     {1600, 1600, 1600},
@@ -1058,9 +1060,15 @@ static const uint16_t fam_ms[9][3] PROGMEM = {
     {1800, 1800, 1600},  // 10 Снежинка
     {1700, 1500, 1400},  // 11 Светлячки
     {1800, 2000, 1500},  // 12 Пламя
+    {1700, 1700, 1500},  // 13 Аркада
+    {1600, 1800, 1500},  // 14 Тетрис
+    {1600, 1600, 1600},  // 15 Механизм
+    {1600, 1700, 1500},  // 16 Неон
+    {1600, 1700, 1400},  // 17 Маятник
+    {1700, 1700, 1500},  // 18 Гирлянда
 };
 
-// a one-shot's length, ms: look 0 = the style's version, 1–3 that style's version, 4–8 the new ones, 9–17 styles 4–12
+// a one-shot's length, ms: look 0 = the style's version, 1–3 that style's version, 4–8 the new ones, 9–23 styles 4–18
 static int shotLength(Anim n, uint8_t look, uint8_t style) {
     look = lookOf(style, look);
     if (pgm_read_byte(&look_style[look])) return pgm_read_word(&fam_ms[pgm_read_byte(&look_style[look]) - 4][n - A_DONE]);
@@ -3103,9 +3111,1074 @@ static void flameNotify(Anim, int t, int du, uint32_t col) {
     }
 }
 
+// ================= Kaya's styles of v1.9, part 2 (KAIA-202's catalog B: web/src/games.js, line by line) =================
+// As the styles of v1.8: a style is a whole visual language, its own version of all 7 events; kaia_anim 13–18 picks one
+// as the style, and its versions join every event's list (looks 18–23, wakes 24–29; look_style, wake_style).
+//   13 Аркада, 14 Тетрис, 15 Механизм, 16 Неон, 17 Маятник, 18 Гирлянда
+// The wakes fade out over their last 400 ms (wakeDraw fades the listening in under their last 800), the other
+// one-shots over their last 300 ms; the states loop. The small tables are in PROGMEM; the arrays of a frame are on the
+// stack, sized as the loop that fills them.
+// ">>" on a negative int (tetPlace's (v + 64) >> 7, tetStack's k off the left end, Маятник · Обрыв's sx >> 1 and
+// (sy − 45) >> 1) shifts arithmetically in GCC, as in the JS (rounds down: −4 >> 3 is −1): keep it ">>", never "/ 2"
+// or "/ 8", which round towards 0.
+// p = 4·(x − 19), q = 7·(row − 3): a ball from the middle in 1/8 balls (p to the right, q down), as in KAIA-173
+
+// the sine and cosine of an angle (256 a turn), −128..127
+static inline int psin(int a) {
+    return sin8(a & 255) - 128;
+}
+static inline int pcos(int a) {
+    return sin8((a + 64) & 255) - 128;
+}
+
+// the angle of (dx, dy) clockwise from 12 o'clock without atan, 0..255: exact on the axes and diagonals, a few off between
+static int pang(int dx, int dy) {
+    int s = abs(dx) + abs(dy);
+    if (!s) return 0;
+    return (dx >= 0 ? 64 + (dy * 64 / s) : 192 - (dy * 64 / s)) & 255;
+}
+
+// ----- 13 · Аркада: an 8-bit chomper with ghosts and dots, in Kaya's colour
+
+// the chomper at (dp, dq) from its centre, radius r, facing dir (1 right, −1 left, 0 up),
+// its mouth m (0 shut, 256 = ±45°, 2560 = all but a sliver): 0..255; the centre ball is never cut
+static int chomp(int dp, int dq, int r, int dir, int m) {
+    int d = oct(dp, dq);
+    if (d >= r + 7) return 0;
+    int a = d <= r ? 255 : (r + 7 - d) * 255 / 7;
+    int fw = dir ? dp * dir : -dq, sd = dir ? abs(dq) : abs(dp);  // ahead of the centre, and to the side
+    if (fw <= 0 || m <= 0) return a;
+    int e = (fw * m >> 8) - sd;  // > 0 inside the mouth
+    return e <= -4 ? a : e >= 4 ? 0 : a * (4 - e) >> 3;
+}
+
+// a ghost at (dp, dq) from its centre: a dome of seven balls, its two feet wiggling out of step: 0..255
+// (the caller whitens the two balls on top, dq < −3: the eyes)
+static int ghost(int dp, int dq, int t) {
+    int d = oct(dp, dq);
+    if (d >= 16) return 0;
+    int a = d <= 9 ? 255 : (16 - d) * 255 / 7;
+    return dq > 3 ? a * (170 + ((dp < 0 ? 85 : -85) * wave(t, 768) / 128)) / 255 : a;
+}
+
+// the dots: every other ball of the middle row; the one at the left edge is a power dot and pulses
+static int arcDot(uint8_t i, int p, int t) {
+    if (b_row(i) != 3 || (b_x(i) & 3)) return 0;
+    return p == -76 ? 150 + (wave(t, 160) * 80 / 128) : 80;
+}
+
+// Пробуждение · Забег: the dots come up along the middle row; the chomper runs in from the left eating them,
+// slowing to the patrol's pace, and is in the middle at the end (the patrol goes on from there)
+static void arcWake(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 400, t), g = smooth(0, 250, t);
+    uint32_t dc = mix(col, C_WHITE, 170);
+    int x = -100 + (t * 31 / 1000) + ((t * (3600 - t) / 3600) * 491 / 10000), m = abs(wave(t, 512)) * 3;
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = p > x ? arcDot(i, p, t) * g / 255 : 0;
+        uint32_t c = dc;
+        int v = chomp(p - x, q, 12, 1, m);
+        if (v > a) {
+            a = v;
+            c = col;
+        }
+        put(i, c, a * fo / 255);
+    }
+}
+
+// Слушает · Патруль: the chomper walks the middle row there and back (4.4 s a way), its mouth shut at the turns;
+// the dots it ate come back behind it 0.7–1.7 s later
+static void arcListen(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int s = posMod(t + 2200, 8800), dir = s < 4400 ? 1 : -1, x = s < 4400 ? -68 + (s * 136 / 4400) : 68 - ((s - 4400) * 136 / 4400);
+    int m = abs(wave(t, 384)) * 3 * smooth(68, 52, abs(x)) / 255;
+    uint32_t dc = mix(col, C_WHITE, 170);
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = arcDot(i, p, t);
+        uint32_t c = dc;
+        if (a && p > -76) {
+            int sr = (p + 68) * 4400 / 136, sl = 8800 - sr;  // when it passes the dot: going right, going left
+            a = a * smooth(700, 1700, imin(posMod(s - sr, 8800), posMod(s - sl, 8800))) / 255;
+        }
+        int v = chomp(p - x, q, 12, dir, m);
+        if (v > a) {
+            a = v;
+            c = col;
+        }
+        put(i, c, a * k / 255);
+    }
+}
+
+// Думает · Погоня: a violet ghost chases the chomper along the middle row, now closing in, now falling back;
+// out at the right and in again at the left (2.6 s a round); the dots are eaten and grow again
+static void arcThink(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int h = t * 80 / 1000, xc = -104 + posMod(h, 208), xg = -104 + posMod(h - 40 - (wave(t, 98) * 14 / 128), 208), gy = wave(t, 300) * 3 / 128;
+    // (v1.9: wave(t, 640) repeats every 400 ms and the ghost's wave(t, 768) every 1000, so t goes in modulo those: the
+    // same frames, and t · 768 never overflows a 32-bit int in a long state)
+    uint32_t cc = mix(col, C_VIOLET, 64), gc = mix(C_VIOLET, C_WHITE, 50), ec = mix(gc, C_WHITE, 170), dc = mix(col, C_WHITE, 170);
+    int m = abs(wave(posMod(t, 400), 640)) * 3;
+    int tg = posMod(t, 1000);
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = b_row(i) == 3 && !(b_x(i) & 3) ? 80 * smooth(900, 1700, posMod(t - ((p + 104) * 25 / 2), 2600)) / 255 : 0;
+        uint32_t c = dc;
+        int v = chomp(p - xc, q, 12, 1, m);
+        if (v > a) {
+            a = v;
+            c = cc;
+        }
+        v = ghost(p - xg, q - gy, tg);
+        if (v > a) {
+            a = v;
+            c = q - gy < -3 ? ec : gc;
+        }
+        put(i, c, a * k / 255);
+    }
+}
+
+// Говорит · Ам-ам: the chomper bites with the voice in the middle; a chain of dots flows into its mouth from the right
+static void arcSpeak(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int v = voice(t), x = -16 + (wave(t, 30) * 8 / 128), m = 40 + (v * 420 / 255), off = t * 40 / 1000;
+    uint32_t dc = mix(col, C_WHITE, 170);
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = b_row(i) == 3 && p > x + 10 ? tent(posMod(p + off, 16) - 8, 8) * 90 / 255 : 0;  // the dots, two balls apart, sliding left
+        uint32_t c = dc;
+        int w = chomp(p - x, q, 12, 1, m);
+        if (w > a) {
+            a = w;
+            c = col;
+        }
+        put(i, c, a * k / 255);
+    }
+}
+
+// Готово · Энерджайзер: the chomper runs at a big pulsing power dot and eats it (0.52 s): the display flashes,
+// a ring goes out, the chomper glows, grows and runs off
+static void arcDone(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), e = t - 520, x = e < 0 ? -84 + (t * 104 / 520) : 20 + (e * 50 / 1000);
+    int m = abs(wave(t, 640)) * 3, gl = e > 0 ? smooth(0, 300, e) : 0;
+    uint32_t cc = mix(col, C_WHITE, 110 * gl / 255), wc = mix(col, C_WHITE, 150);
+    int pd = e < 0 ? 170 + (wave(t, 700) * 85 / 128) : 0, fl = tent(e - 60, 220) * 235 / 255, rr = e * 120 / 1000, rf = e > 0 ? 255 - smooth(0, 700, e) : 0;
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = fl;
+        uint32_t c = wc;
+        if (pd) a = imax(a, tent(oct(p - 20, q), 11) * pd / 255);
+        if (rf) a = imax(a, tent(oct(p - 20, q) - rr, 8) * rf / 255);
+        int v = chomp(p - x, q, 12 + (3 * gl / 255), 1, m);
+        if (v > a) {
+            a = v;
+            c = cc;
+        }
+        put(i, c, a * fo / 255);
+    }
+}
+
+// Ошибка · Пойман: a violet ghost flies at the chomper head on and catches it (0.56 s); it freezes, its mouth opens
+// upwards wider and wider while it shrinks to a dot, and pops
+static void arcError(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), tc = imin(t, 560), xc = -40 + (tc * 40 / 1000), xg = 70 - (tc * 120 / 1000);
+    int e = smooth(800, 1400, t), r = 12 - (12 * e / 255), m = t < 560 ? abs(wave(t, 512)) * 3 : t < 800 ? 0 : 256 + e * 9, dir = t < 800 ? 1 : 0;
+    int g = 255 - smooth(1380, 1460, t), gf = 255 - smooth(700, 1000, t), pop = tent(t - 1450, 180), pr = imax(0, t - 1400) * 60 / 1000;
+    uint32_t gc = mix(C_VIOLET, C_WHITE, 50), ec = mix(gc, C_WHITE, 170), pc = mix(col, C_WHITE, 120);
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = pop ? tent(oct(p - xc, q) - pr, 6) * pop / 255 : 0;
+        uint32_t c = pc;
+        int v = chomp(p - xc, q, r, dir, m) * g / 255;
+        if (v > a) {
+            a = v;
+            c = col;
+        }
+        if (gf) {
+            v = ghost(p - xg, q, t) * gf / 255;
+            if (v > a) {
+                a = v;
+                c = q < -3 ? ec : gc;
+            }
+        }
+        put(i, c, a * fo / 255);
+    }
+}
+
+// Уведомление · Бонус: a pair of cherries on green stems pops up in the middle and blinks three times, whiter on each blink
+static const int8_t arc_ch[6] PROGMEM = {-8, 7, 8, 7, 4, -14};  // the two cherries and where their stems meet, (p, q)
+#define C_STEM 0x5fd05a
+static void arcNotify(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), g = smooth(0, 150, t), b = imax(imax(tent(t - 250, 200), tent(t - 650, 200)), tent(t - 1050, 200));
+    int a0 = (110 + (145 * b / 255)) * g / 255;
+    uint32_t cc = mix(col, C_WHITE, 120 * b / 255);
+    int s1[4] = {(int8_t)pgm_read_byte(&arc_ch[0]), (int8_t)pgm_read_byte(&arc_ch[1]), (int8_t)pgm_read_byte(&arc_ch[4]), (int8_t)pgm_read_byte(&arc_ch[5])},
+        s2[4] = {(int8_t)pgm_read_byte(&arc_ch[2]), (int8_t)pgm_read_byte(&arc_ch[3]), (int8_t)pgm_read_byte(&arc_ch[4]), (int8_t)pgm_read_byte(&arc_ch[5])};
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = tent(imin(oct(p - (int8_t)pgm_read_byte(&arc_ch[0]), q - (int8_t)pgm_read_byte(&arc_ch[1])), oct(p - (int8_t)pgm_read_byte(&arc_ch[2]), q - (int8_t)pgm_read_byte(&arc_ch[3]))), 11) * a0 / 255;
+        uint32_t c = cc;
+        int v = tent(imin(segDist(p, q, s1, 256), segDist(p, q, s2, 256)), 5) * (g * 3 >> 2) / 255;  // the stems
+        if (v > a) {
+            a = v;
+            c = C_STEM;
+        }
+        put(i, c, a * fo / 255);
+    }
+}
+
+// ----- 14 · Тетрис: blocks in the diagonal grid, a stack in the three bottom rows
+
+// the stack: rows 4, 5, 6, bit k = the k-th ball of the row from the left (row r starts at p = −76 + 4·(r − 3)); its brightness by row
+static const uint32_t tet_st[3] PROGMEM = {0x18007, 0x3e0cf, 0x1f7ff};
+static const uint8_t tet_sh[3] PROGMEM = {205, 165, 130};
+static int tetStack(int r, int p) {
+    if (r < 4 || r > 6) return 0;
+    int k = (p + 76 - 4 * (r - 3)) >> 3;
+    return k >= 0 && k < 20 ? (pgm_read_dword(&tet_st[r - 4]) >> k) & 1 : 0;
+}
+
+// the stack's block at (r, p) when it is in quarter j (from the left): its brightness, else 0
+static int tetQ(int r, int p, int j) {
+    if (!tetStack(r, p)) return 0;
+    return (p < -36 ? 0 : p < 0 ? 1 : p < 36 ? 2 : 3) == j ? pgm_read_byte(&tet_sh[r - 4]) : 0;
+}
+
+// a piece of 4 blocks (tet_pc, from its centre) turned by ang (256 a turn, 43 ≈ 60°: the grid maps onto itself), centre (x, y):
+// its blocks into xs, ys from j0
+static const int8_t tet_pc[8] PROGMEM = {-8, 0, 0, 0, 8, 0, 4, -7};
+static void tetPlace(int* xs, int* ys, int j0, int x, int y, int ang) {
+    int cs = pcos(ang), sn = psin(ang);
+    for (int j = 0; j < 4; j++) {
+        int ox = (int8_t)pgm_read_byte(&tet_pc[2 * j]), oy = (int8_t)pgm_read_byte(&tet_pc[2 * j + 1]);
+        xs[j0 + j] = x + ((ox * cs - oy * sn + 64) >> 7);
+        ys[j0 + j] = y + ((ox * sn + oy * cs + 64) >> 7);
+    }
+}
+
+// n blocks at (p, q): the nearest one, a ball wide (between two balls both share it)
+static int tetAt(int p, int q, const int* xs, const int* ys, int n) {
+    int a = 0;
+    for (int j = 0; j < n; j++) {
+        int dx = p - xs[j];
+        if (dx > -8 && dx < 8) a = imax(a, tent(oct(dx, q - ys[j]), 8));
+    }
+    return a;
+}
+
+// Пробуждение · Стопка: the stack falls in four chunks, one after another, row by row from above the top
+// (each row down moves it half a ball, as the grid wants); each lands with a soft white flash
+static const int16_t tet_dt[4] PROGMEM = {380, 0, 570, 190};  // when each quarter (from the left) starts to fall, ms
+static void tetWake(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 400, t);
+    uint32_t sc = mix(col, C_WHITE, 40);
+    int off[4] = {0, 0, 0, 0}, fl[4] = {0, 0, 0, 0};
+    for (int j = 0; j < 4; j++) {
+        int u = imin(imax(0, t - (int16_t)pgm_read_word(&tet_dt[j])), 480), lt = t - (int16_t)pgm_read_word(&tet_dt[j]) - 480;
+        off[j] = 1792 - (1792 * u * u / 230400);  // 7 rows above, in 1/256 row, falling with gravity
+        fl[j] = lt >= 0 ? tent(lt, 200) : 0;
+    }
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), r = b_row(i);
+        int a = 0;
+        uint32_t c = sc;
+        for (int j = 0; j < 4; j++) {
+            if (t < (int16_t)pgm_read_word(&tet_dt[j])) continue;
+            int R = off[j] >> 8, w = off[j] & 255;
+            int v = (tetQ(r + R, p - 4 * (R & 1), j) * (256 - w) + tetQ(r + R + 1, p - 4 * ((R + 1) & 1), j) * w) >> 8;
+            if (v > a) {
+                a = v;
+                c = fl[j] ? mix(sc, C_WHITE, fl[j] * 150 / 255) : sc;
+            }
+        }
+        put(i, c, a * fo / 255);
+    }
+}
+
+// Слушает · Фигура: one piece drifts down from above the top, turning twice by 60° on the way, and melts into the stack;
+// then the next one, in another column (6 s each)
+static const int8_t tet_cx[4] PROGMEM = {-28, 20, -4, 28};
+static void tetListen(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int u = posMod(t, 6000), x = (int8_t)pgm_read_byte(&tet_cx[((t - u) / 6000) & 3]), y = -34 + (34 * smooth(0, 5000, u) / 255);
+    int g = smooth(0, 700, u) * smooth(6000, 5100, u) / 255, ang = (43 * smooth(1000, 1700, u) + 43 * smooth(2800, 3500, u)) / 255;
+    int xs[4] = {0, 0, 0, 0}, ys[4] = {0, 0, 0, 0};
+    uint32_t sc = mix(col, C_WHITE, 40), pc = mix(col, C_WHITE, 110);
+    int glow = tent(u - 5600, 500) * 40 / 255;
+    tetPlace(xs, ys, 0, x, y, ang);
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3), r = b_row(i);
+        int a = tetStack(r, p) ? pgm_read_byte(&tet_sh[r - 4]) + glow : 0;
+        uint32_t c = sc;
+        int v = tetAt(p, q, xs, ys, 4) * g / 255;
+        if (v > a) {
+            a = v;
+            c = pc;
+        }
+        put(i, c, a * k / 255);
+    }
+}
+
+// Думает · Ливень: pieces rain into three columns, each falling in 0.6 s and flashing as it goes into the stack; violet
+static const int8_t tet_lx[3] PROGMEM = {-44, 4, 44};
+static const uint8_t tet_la[3] PROGMEM = {0, 43, 128};
+static void tetThink(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    uint32_t pc = mix(col, C_VIOLET, 140), sc = mix(col, C_WHITE, 40);
+    int xs[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, ys[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, fl[3] = {0, 0, 0};
+    for (int m = 0; m < 3; m++) {
+        int u = posMod(t - m * 300, 900);
+        tetPlace(xs, ys, 4 * m, (int8_t)pgm_read_byte(&tet_lx[m]), u < 600 ? -42 + (42 * u * u / 360000) : -99, pgm_read_byte(&tet_la[m]));
+        fl[m] = tent(u - 650, 150);
+    }
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3), r = b_row(i);
+        int a = 0;
+        uint32_t c = sc;
+        if (tetStack(r, p)) {
+            int m = p < -20 ? 0 : p < 24 ? 1 : 2, fv = fl[m] * tent(p - (int8_t)pgm_read_byte(&tet_lx[m]), 24) / 255;
+            a = imax(pgm_read_byte(&tet_sh[r - 4]), fv);
+            if (fv) c = mix(sc, C_WHITE, fv * 150 / 255);
+        }
+        int v = tetAt(p, q, xs, ys, 12);
+        if (v > a) {
+            a = v;
+            c = pc;
+        }
+        put(i, c, a * k / 255);
+    }
+}
+
+// Говорит · Верхний ряд: the top of the stack lights with the voice, from the middle out; when loud, a glow rises over it
+static void tetSpeak(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int v[3] = {voice(t), voice(t - 90), voice(t - 180)};
+    uint32_t sc = mix(col, C_WHITE, 40);
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), r = b_row(i), e = v[abs(p) < 28 ? 0 : abs(p) < 56 ? 1 : 2];
+        int a = 0;
+        uint32_t c = sc;
+        if (tetStack(r, p)) {
+            a = pgm_read_byte(&tet_sh[r - 4]) * 3 >> 2;
+            if (!tetStack(r - 1, p - 4) && !tetStack(r - 1, p + 4)) {  // a top block: nothing over it
+                a = 90 + (165 * e / 255);
+                c = mix(col, C_WHITE, 60 + (120 * e / 255));
+            }
+        } else if (r >= 3 && (tetStack(r + 1, p - 4) || tetStack(r + 1, p + 4))) {
+            a = imax(0, e - 150) * 110 / 105;  // just over the top, only when loud
+            c = col;
+        }
+        put(i, c, a * k / 255);
+    }
+}
+
+// Готово · Линия: a block falls into the gap of the bottom row; the full row flashes white and melts from the gap outwards;
+// the stack over it drops a row
+static void tetDone(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), y = t < 450 ? -28 + (49 * t * t / 202500) : 21, x = 24 + (abs(posMod(y, 14) - 7) * 4 / 7);
+    int fl = smooth(430, 520, t) * (255 - smooth(700, 1000, t)) / 255, e = smooth(1000, 1250, t);
+    uint32_t sc = mix(col, C_WHITE, 40), bc = mix(col, C_WHITE, 90);
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3), r = b_row(i);
+        int a = 0;
+        uint32_t c = sc;
+        if (r == 6 && (tetStack(6, p) || t >= 450)) {  // the bottom row, full once the block is in: white, then gone from the gap out
+            int g = 255 - smooth(700 + abs(p - 24) * 3, 820 + abs(p - 24) * 3, t);
+            a = imax(pgm_read_byte(&tet_sh[2]), fl) * g / 255;
+            if (fl) c = mix(sc, C_WHITE, fl * 200 / 255);
+        }
+        if (r >= 4) {  // rows 4–5 as they are, and one row lower (down-left) as e goes to 255
+            int here = r < 6 && tetStack(r, p) ? pgm_read_byte(&tet_sh[r - 4]) : 0, up = r > 4 && tetStack(r - 1, p + 4) ? pgm_read_byte(&tet_sh[r - 5]) : 0;
+            int s = (here * (255 - e) + up * e) / 255;
+            if (s > a) {
+                a = s;
+                c = sc;
+            }
+        }
+        if (t < 450) {
+            int v = tent(oct(p - x, q - y), 8);
+            if (v > a) {
+                a = v;
+                c = bc;
+            }
+        }
+        put(i, c, a * fo / 255);
+    }
+}
+
+// Ошибка · Конец игры: the stack grows row after row up to the top; the full display flashes, then empties from the top down
+static void tetError(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), fl = tent(t - 900, 160);
+    uint32_t sc = mix(col, C_WHITE, 40), wc = mix(sc, C_WHITE, 170 * fl / 255);
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), r = b_row(i), up = (6 - r) * 120;
+        int a = imax(tetStack(r, p) ? pgm_read_byte(&tet_sh[r - 4]) : 0, (210 - r * 10) * smooth(up, up + 140, t) / 255);
+        a = imax(a, fl * 230 / 255) * (255 - smooth(1050 + r * 70, 1250 + r * 70, t)) / 255;
+        put(i, wc, a * fo / 255);
+    }
+}
+
+// Уведомление · Новая фигура: a piece appears at the top and blinks three times, whiter on each blink, over a dim stack
+static void tetNotify(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), b = imax(imax(tent(t - 200, 200), tent(t - 600, 200)), tent(t - 1000, 200)), g = smooth(0, 120, t);
+    int xs[4] = {0, 0, 0, 0}, ys[4] = {0, 0, 0, 0};
+    uint32_t pc = mix(col, C_WHITE, 150 * b / 255);
+    int a0 = (90 + (165 * b / 255)) * g / 255;
+    tetPlace(xs, ys, 0, 0, -21, 128);
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3), r = b_row(i);
+        int a = tetStack(r, p) ? pgm_read_byte(&tet_sh[r - 4]) >> 2 : 0;
+        uint32_t c = col;
+        int v = tetAt(p, q, xs, ys, 4) * a0 / 255;
+        if (v > a) {
+            a = v;
+            c = pc;
+        }
+        put(i, c, a * fo / 255);
+    }
+}
+
+// ----- 15 · Механизм: it is a clock, so gears: two big wheels meshed in the middle, a pinion at each edge
+
+// a gear on the axle ball (x0 half-balls across, row r0): its teeth on the hex ring R balls out (6R balls, a clean loop on this
+// grid) with a dim rim between them, a bar across the ring 1 out (on the big wheels), the axle; turned by th (256 a turn): 0..255
+static int gear(uint8_t i, int x0, int r0, int R, int N, int th) {
+    int dr = b_row(i) - r0, dx = b_x(i) - x0, ar = abs(dr), ax = abs(dx), h = ar >= ax ? ar : (ax + ar) >> 1;  // the hex distance, balls
+    if (h > R) return 0;
+    if (!h) return 255;  // the axle
+    int a = pang(4 * dx, 7 * dr) + th;
+    if (h == R) {  // the ring: a tooth, or the rim between two
+        int v = (a * N) & 255, w = v < 128 ? v : 256 - v;
+        return 50 + (smooth(80, 36, w) * 190 / 255);
+    }
+    if (h > 1) return 0;
+    int s = (a * 2) & 255, ws = s < 128 ? s : 256 - s;  // the bar: two spokes
+    return smooth(48, 16, ws) * 160 / 255;
+}
+
+// the mechanism at ball i: two big wheels (6 teeth on rings of 18 balls) round the balls 3 to each side of the middle, meshed
+// where they touch, and a pinion (2 teeth on 6 balls) at each edge, three times as fast; th turns the left wheel, the rest follow
+static int gears(uint8_t i, int th) {
+    int x = b_x(i);
+    if (x < 5) return gear(i, 2, 3, 1, 2, 64 - 3 * th) * 190 / 255;
+    if (x < 19) return gear(i, 12, 3, 3, 6, th);
+    if (x < 34) return gear(i, 26, 3, 3, 6, 21 - th);
+    return gear(i, 36, 3, 1, 2, 1 + 3 * th) * 190 / 255;
+}
+
+// Пробуждение · Завод: the big wheels come up, then the pinions, and the mechanism starts to turn, speeding up to the listening's pace
+// (the angle −21 + 21·t²/du² ends where the listening starts, at its speed)
+static void gearWake(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 400, t), al = (21 * t * t / 4000000) - 21, g0 = smooth(0, 450, t), g1 = smooth(350, 850, t);
+    uint32_t wc = mix(col, C_WHITE, 140);
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int x = b_x(i), a = gears(i, al) * (x < 5 || x >= 34 ? g1 : g0) / 255;
+        put(i, a > 240 ? wc : col, a * fo / 255);
+    }
+}
+
+// Слушает · Ход: the gears turn slowly, meshed (a big wheel 12 s a turn, the pinions three times faster); a soft light breathes on them
+static void gearListen(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int th = t * 256 / 12000, br = 215 + (wave(t, 45) * 40 / 128);
+    uint32_t wc = mix(col, C_WHITE, 140);
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int a = gears(i, th);
+        put(i, a > 240 ? wc : col, (a * br / 255) * k / 255);
+    }
+}
+
+// Думает · Быстрый ход: the same gears spin fast (1.5 s a turn of a big wheel); violet
+static void gearThink(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    uint32_t c = mix(col, C_VIOLET, 128), wc = mix(c, C_WHITE, 140);
+    int th = t * 256 / 1500;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int a = gears(i, th);
+        put(i, a > 240 ? wc : c, a * k / 255);
+    }
+}
+
+// Говорит · Тик: the mechanism ticks with the voice: the gears jerk forward on its peaks (up to a third of a tooth) and glow brighter
+static void gearSpeak(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int v = voice(t), th = (t * 256 / 12000) + (v * 14 / 255);
+    int br = 140 + (v * 115 / 255);
+    uint32_t c = mix(col, C_WHITE, v * 60 / 255), wc = mix(col, C_WHITE, 80 + (v * 120 / 255));
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int a = gears(i, th);
+        put(i, a > 240 ? wc : c, (a * br / 255) * k / 255);
+    }
+}
+
+// Готово · Щелчок: the gears turn a quarter, overshoot a little and click into place; a chime: a flash and a ring from where they mesh
+static void gearDone(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), g = smooth(0, 150, t), th = (70 * smooth(0, 520, t) - 6 * smooth(520, 640, t)) / 255;
+    int fl = tent(t - 600, 220), e = t - 600, rr = e * 110 / 1000, rf = e > 0 ? 255 - smooth(0, 800, e) : 0;
+    uint32_t c = mix(col, C_WHITE, 150 * fl / 255), wc = mix(col, C_WHITE, 180);
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = (gears(i, th) * (170 + (85 * fl / 255)) / 255) * g / 255;
+        uint32_t cc = a > 240 ? wc : c;
+        if (rf) {
+            int v = tent(oct(p, q) - rr, 7) * rf / 255;
+            if (v > a) {
+                a = v;
+                cc = wc;
+            }
+        }
+        put(i, cc, a * fo / 255);
+    }
+}
+
+// Ошибка · Заклинило: the gears turn, then jam (0.35 s): they shake on the spot, sparks where the teeth meet, the mechanism dims
+static void gearError(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), sh = (wave(t, 2000) * 5 / 128) * (255 - smooth(350, 1100, t)) / 255;
+    int th = (imin(t, 350) * 256 / 2000) + (t > 350 ? sh : 0), sp = tent(t - 380, 250);
+    uint32_t wc = mix(col, C_WHITE, 170);
+    int g = 255 - (110 * smooth(500, 1200, t) / 255);
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = gears(i, th) * g / 255;
+        uint32_t c = a > 240 ? wc : col;
+        int v = tent(imin(oct(p, q), oct(abs(p) - 56, q)), 12) * sp / 255;  // the sparks where the teeth jam
+        if (v > a) {
+            a = v;
+            c = wc;
+        }
+        put(i, c, a * fo / 255);
+    }
+}
+
+// Уведомление · Кукушка: over the still mechanism a door opens at the top between the wheels and the cuckoo pops out twice;
+// a soft ring on each «ку»
+static void gearNotify(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), u = t < 650 ? t - 100 : t - 750;  // the two pops, 500 ms each
+    int y = -34 + ((22 * smooth(0, 130, u) + 5 * tent(u - 170, 90) - 22 * smooth(330, 480, u)) / 255);
+    int rr = imax(0, u - 150) * 80 / 1000, rf = u > 150 ? 255 - smooth(150, 500, u) : 0;
+    uint32_t wc = mix(col, C_WHITE, 170);
+    int dr = 40 + (100 * smooth(-34, -24, y) / 255);
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = gears(i, 0) * 50 / 255;
+        uint32_t c = col;
+        if (q == -21 && abs(p) <= 12) a = imax(a, dr);  // the door
+        if (rf) a = imax(a, tent(oct(p, q - y) - 14 - rr, 6) * rf / 400);
+        int v = tent(oct(p, q - y), 12);
+        if (v > a) {
+            a = v;
+            c = tent(oct(p - 7, q - y + 3), 7) > 150 ? wc : col;  // the beak whiter
+        }
+        put(i, c, a * fo / 255);
+    }
+}
+
+// ----- 16 · Неон: neon tubes in the dark: a white-hot core, a faint glow round it
+// the sign's frame is the rim, its second tube (pink) the ring inside
+#define C_PINK 0xff3fa8
+
+// a tube d (1/8 ball) from its line: the core (d < 3), a faint glow round it to 11: 0..255
+static int neon(int d) {
+    return d < 3 ? 255 : d < 11 ? (11 - d) * 70 / 8 : 0;
+}
+
+// the circuit: a closed trace along the grid's lines (0° and 60°): its corners (p, q) and the lengths of its sides (272 in all)
+static const int8_t neon_pt[16] PROGMEM = {-44, -14, 44, -14, 56, 7, 16, 7, 12, 0, -20, 0, -28, 14, -60, 14};
+static const uint8_t neon_len[8] PROGMEM = {88, 24, 40, 8, 32, 16, 32, 32};
+// the circuit at (p, q) with its bright head at h along it, a cooling trail 150 behind: 0..255
+static int neonTrace(int p, int q, int h) {
+    int best = 0, at = 0;
+    for (int j = 0; j < 8; j++) {
+        int x0 = (int8_t)pgm_read_byte(&neon_pt[2 * j]), y0 = (int8_t)pgm_read_byte(&neon_pt[2 * j + 1]), x1 = (int8_t)pgm_read_byte(&neon_pt[(2 * j + 2) & 15]), y1 = (int8_t)pgm_read_byte(&neon_pt[(2 * j + 3) & 15]);
+        if (p >= imin(x0, x1) - 10 && p <= imax(x0, x1) + 10) {
+            int dx = x1 - x0, dy = y1 - y0;
+            int u = ((p - x0) * dx + (q - y0) * dy) * 256 / (dx * dx + dy * dy);
+            u = u < 0 ? 0 : u > 256 ? 256 : u;
+            int d = oct(p - x0 - (dx * u / 256), q - y0 - (dy * u / 256));
+            if (d < 11) {
+                int e = posMod(h - at - (pgm_read_byte(&neon_len[j]) * u >> 8), 272), w = e < 150 ? (150 - e) * 255 / 150 : 0;
+                best = imax(best, neon(d) * (w * w / 255) / 255);
+            }
+        }
+        at += pgm_read_byte(&neon_len[j]);
+    }
+    return best;
+}
+
+// Пробуждение · Зажигание: the frame stutters twice, then the light runs round it from 12 o'clock both ways (white at its front);
+// the pink tube catches with its own stutter
+static void neonWake(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 400, t);
+    uint32_t fc = mix(col, C_WHITE, 110), hc = mix(col, C_WHITE, 220), pc = mix(C_PINK, C_WHITE, 90);
+    int st = imax(tent(t - 130, 60) * 150 / 255, tent(t - 300, 50) * 200 / 255), fs = smooth(430, 800, t), n0 = ring_len[0];
+    int g2 = imax(imax(tent(t - 920, 60) * 150 / 255, tent(t - 1060, 50) * 200 / 255), 120 * smooth(1150, 1300, t) / 255);
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int r = ringOf(i);
+        if (r == 0) {
+            int m = imin(b_pos[i], n0 - b_pos[i]), F = (n0 / 2 + 3) * fs / 255;
+            put(i, fs < 255 && m >= F - 3 && m < F ? hc : fc, imax(st, m < F ? 185 : 0) * fo / 255);
+        } else if (r == 2) put(i, pc, g2 * fo / 255);
+    }
+}
+
+// Слушает · Гул: the sign hums: the frame burns evenly, two slightly brighter zones creep round it (6.4 s); the pink tube breathes;
+// dark between them
+static void neonListen(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int n0 = ring_len[0];
+    uint32_t fc = mix(col, C_WHITE, 110), pc = mix(C_PINK, C_WHITE, 90);
+    int g2 = 120 + (wave(t, 37) * 30 / 128);
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int r = ringOf(i);
+        if (r == 0) put(i, fc, (185 + (psin((b_pos[i] * 512 / n0) - (t * 40 / 1000)) * 30 / 128)) * k / 255);
+        else if (r == 2) put(i, pc, g2 * k / 255);
+    }
+}
+
+// Думает · Схема: a bright head runs round a closed circuit trace, a cooling trail behind it: the circuit keeps tracing itself; violet
+static void neonThink(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    uint32_t c = mix(col, C_VIOLET, 128), wc = mix(c, C_WHITE, 150);
+    int h = t * 120 / 1000;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int v = neonTrace(4 * (b_x(i) - 19), 7 * (b_row(i) - 3), h);
+        put(i, v > 200 ? wc : c, v * k / 255);
+    }
+}
+
+// Говорит · Пульс трубок: both tubes beat with the voice, the frame at once, the pink one a beat later; loud, the cores go white
+static void neonSpeak(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int v = voice(t), v2 = voice(t - 120);
+    uint32_t fc = mix(col, C_WHITE, 60 + (v * 120 / 255)), pc = mix(C_PINK, C_WHITE, 40 + (v2 * 120 / 255));
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int r = ringOf(i);
+        if (r == 0) put(i, fc, (70 + (v * 185 / 255)) * k / 255);
+        else if (r == 2) put(i, pc, (50 + (v2 * 205 / 255)) * k / 255);
+    }
+}
+
+// Готово · Неоновая галочка: a check of tube along the grid's lines catches with two stutters, burns with a white core and flashes
+static const int8_t neon_ck[6] PROGMEM = {-16, -7, -4, 14, 16, -21};
+static void neonDone(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), s = imax(imax(tent(t - 110, 50) * 160 / 255, tent(t - 250, 50) * 210 / 255), smooth(360, 440, t)), fl = tent(t - 700, 250);
+    int s1[4] = {(int8_t)pgm_read_byte(&neon_ck[0]), (int8_t)pgm_read_byte(&neon_ck[1]), (int8_t)pgm_read_byte(&neon_ck[2]), (int8_t)pgm_read_byte(&neon_ck[3])},
+        s2[4] = {(int8_t)pgm_read_byte(&neon_ck[2]), (int8_t)pgm_read_byte(&neon_ck[3]), (int8_t)pgm_read_byte(&neon_ck[4]), (int8_t)pgm_read_byte(&neon_ck[5])};
+    uint32_t cc = mix(col, C_WHITE, 90 + (120 * fl / 255));
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3), d = imin(segDist(p, q, s1, 256), segDist(p, q, s2, 256));
+        put(i, d < 3 ? cc : col, (neon(d) * s / 255) * fo / 255);
+    }
+}
+
+// Ошибка · Искрит: the frame sparks at the top right, three white sparks, the tube by them stutters; then it dies from there
+// both ways round, and the pink tube goes out with a last flicker
+static void neonError(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), D = 140 * smooth(650, 1250, t) / 255, sk = imax(imax(tent(t - 220, 60), tent(t - 390, 50)), tent(t - 560, 70));
+    uint32_t fc = mix(col, C_WHITE, 110), pc = mix(C_PINK, C_WHITE, 90);
+    int g2 = 120 - (120 * smooth(750, 950, t) / 255) + (tent(t - 1000, 50) * 90 / 255), dip = 255 - (sk >> 1);
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3), r = ringOf(i), da = abs(((b_ang[i] - 44 + 128) & 255) - 128);
+        int a = 0;
+        uint32_t c = col;
+        if (r == 0) {
+            a = 185 * (da < D ? 0 : da < D + 12 ? (da - D) * 255 / 12 : 255) / 255;
+            if (da < 24) a = a * dip / 255;
+            c = fc;
+        } else if (r == 2) {
+            a = g2;
+            c = pc;
+        }
+        int v = tent(oct(p - 44, q + 21), 12) * sk / 255;
+        if (v > a) {
+            a = v;
+            c = C_WHITE;
+        }
+        put(i, c, a * fo / 255);
+    }
+}
+
+// Уведомление · Стрелка: a neon arrow to the right blinks three times, stepping a ball forward on each blink
+static const int8_t neon_ar[12] PROGMEM = {-36, 0, 20, 0, 12, -14, 20, 0, 12, 14, 20, 0};
+static void neonNotify(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), j = t < 380 ? 0 : t < 760 ? 1 : 2, u = t - j * 380, dx = j * 8;
+    int g = smooth(0, 50, u) * (j < 2 ? smooth(300, 250, u) : 255) / 255;
+    uint32_t cc = mix(col, C_WHITE, 120);
+    int s[4] = {0, 0, 0, 0};
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int d = 99;
+        for (int m = 0; m < 3; m++) {
+            s[0] = (int8_t)pgm_read_byte(&neon_ar[4 * m]) + dx;
+            s[1] = (int8_t)pgm_read_byte(&neon_ar[4 * m + 1]);
+            s[2] = (int8_t)pgm_read_byte(&neon_ar[4 * m + 2]) + dx;
+            s[3] = (int8_t)pgm_read_byte(&neon_ar[4 * m + 3]);
+            d = imin(d, segDist(p, q, s, 256));
+        }
+        put(i, d < 3 ? cc : col, (neon(d) * g / 255) * fo / 255);
+    }
+}
+
+// ----- 17 · Маятник: physics: a pendulum hung above the top edge
+// at (x, −45), 53 long: the bob hangs in the middle of row 4
+
+// the bob of a pendulum hung at px, turned by th (256 a turn, + to the right)
+static int pendX(int px, int th) {
+    return px + (53 * psin(th) / 128);
+}
+static int pendY(int th) {
+    return -45 + (53 * pcos(th) / 128);
+}
+
+// Пробуждение · Толчок: the pendulum fades in hanging still; at 0.35 s a push (a ring off the bob) and it swings wider and wider
+// into the listening's swing (its phase, the amplitude growing)
+static void pendWake(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 400, t), g = smooth(0, 300, t), e = smooth(350, 1700, t), fl = tent(t - 380, 160);
+    int th = (wave(t - du, 91) * 28 / 128) * e / 255, bx = pendX(0, th), by = pendY(th), s[4] = {0, -45, bx, by};
+    int rr = imax(0, t - 350) * 70 / 1000, rf = t > 350 ? 255 - smooth(350, 900, t) : 0;
+    uint32_t hc = mix(col, C_WHITE, 90 + (fl * 150 / 255));
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = tent(segDist(p, q, s, 256), 5) * 40 / 255;
+        uint32_t c = col;
+        int d = oct(p - bx, q - by), v = tent(d, 10);
+        if (rf) a = imax(a, tent(d - 10 - rr, 6) * rf / 300);
+        if (v > a) {
+            a = v;
+            c = d < 4 ? hc : col;
+        }
+        put(i, c, (a * g / 255) * fo / 255);
+    }
+}
+
+// Слушает · Качание: one pendulum swings slowly (2.8 s there and back, ±39°) with a soft trail; the string glows faintly
+static void pendListen(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int bx[3] = {0, 0, 0}, by[3] = {0, 0, 0};
+    uint32_t wc = mix(col, C_WHITE, 150);
+    int s[4] = {0, -45, 0, 0};
+    for (int m = 0; m < 3; m++) {
+        int th = wave(t - m * 70, 91) * 28 / 128;
+        bx[m] = pendX(0, th);
+        by[m] = pendY(th);
+    }
+    s[2] = bx[0];
+    s[3] = by[0];
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = tent(segDist(p, q, s, 256), 5) * 40 / 255;
+        uint32_t c = col;
+        for (int m = 0; m < 3; m++) {
+            int d = oct(p - bx[m], q - by[m]), v = tent(d, m ? 8 : 10) * (m ? 120 - m * 40 : 255) / 255;
+            if (v > a) {
+                a = v;
+                c = !m && d < 4 ? wc : col;
+            }
+        }
+        put(i, c, a * k / 255);
+    }
+}
+
+// Думает · Колыбель Ньютона: five balls hang in a row; the right one swings out on its string and clicks back, the left one flies out; violet
+static void pendThink(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    uint32_t c = mix(col, C_VIOLET, 128);
+    int s = posMod(t, 1200), ln[4] = {0, -45, 0, 0};
+    int thR = s < 600 ? psin(s * 128 / 600) * 24 / 128 : 0, thL = s >= 600 ? -(psin((s - 600) * 128 / 600) * 24 / 128) : 0;
+    int ck = imax(imax(tent(s, 90), tent(s - 600, 90)), tent(s - 1200, 90));
+    uint32_t wc = mix(c, C_WHITE, 200 * ck / 255), hc = mix(c, C_WHITE, 90);
+    int j = s < 600 ? 4 : 0, th = j ? thR : thL, mx = pendX(-32 + 16 * j, th), my = pendY(th);  // the ball that swings now
+    ln[0] = -32 + 16 * j;
+    ln[2] = mx;
+    ln[3] = my;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = th ? tent(segDist(p, q, ln, 256), 4) * 36 / 255 : 0;  // its string
+        uint32_t cc = c;
+        for (int b = 0; b < 5; b++) {
+            int x = b == j ? mx : -32 + 16 * b, y = b == j ? my : 7, d = oct(p - x, q - y);
+            if (d < 8) {
+                int v = tent(d, 8);
+                if (v > a) {
+                    a = v;
+                    cc = d < 4 ? (b && b < 4 ? wc : hc) : c;
+                }
+            }
+        }
+        put(i, cc, a * k / 255);
+    }
+}
+
+// Говорит · Прыжки: the five balls on their strings jump with the voice: the middle one at once, its neighbours a beat and two later
+static void pendSpeak(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int v[3] = {voice(t - 140), voice(t - 70), voice(t)};
+    uint32_t wc = mix(col, C_WHITE, 160);
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = 0;
+        uint32_t c = col;
+        for (int j = 0; j < 5; j++) {
+            int e = v[j < 2 ? j : 4 - j], x = -32 + 16 * j, y = 7 - (e * 16 / 255);
+            if (q < y - 4 && p == x) a = imax(a, 24);  // the string, straight up
+            int d = oct(p - x, q - y), w = tent(d, 8) * (150 + (e * 105 / 255)) / 255;
+            if (w > a) {
+                a = w;
+                c = d < 4 && e > 150 ? wc : col;
+            }
+        }
+        put(i, c, a * k / 255);
+    }
+}
+
+// Готово · В такт: all five balls swing out to the right together and come back as one; the click: a flash and a ring
+static void pendDone(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), g = smooth(0, 150, t), th = t < 900 ? psin(t * 128 / 900) * 26 / 128 : 0, fl = tent(t - 920, 240);
+    int ox = pendX(0, th), y = pendY(th), rr = imax(0, t - 900) * 90 / 1000, rf = t > 900 ? 255 - smooth(900, 1500, t) : 0;
+    uint32_t wc = mix(col, C_WHITE, 170), hc = mix(col, C_WHITE, 60 + (150 * fl / 255));
+    int s[4] = {0, -45, 0, y};
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = 0;
+        uint32_t c = col;
+        for (int j = 0; j < 5; j++) {
+            int x0 = -32 + 16 * j, x = x0 + ox;
+            if (th) {
+                s[0] = x0;
+                s[2] = x;
+                a = imax(a, tent(segDist(p, q, s, 256), 4) * 30 / 255);
+            }
+            int d = oct(p - x, q - y), v = tent(d, 8) * (170 + (85 * fl / 255)) / 255;
+            if (v > a) {
+                a = v;
+                c = d < 4 || fl > 120 ? hc : col;
+            }
+        }
+        if (rf) {
+            int v = tent(oct(p, q - 7) - rr, 7) * rf / 255;
+            if (v > a) {
+                a = v;
+                c = wc;
+            }
+        }
+        put(i, c, (a * g / 255) * fo / 255);
+    }
+}
+
+// Ошибка · Обрыв: the pendulum swings down from the left; near the bottom (0.6 s) the string snaps with a white flash and the ball
+// flies on to the right and falls off the bottom edge; the stub of the string fades
+static void pendError(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), g = smooth(0, 100, t), th = -(28 * pcos(imin(t, 600) * 128 / 1400) / 128), sx = pendX(0, th), sy = pendY(th), w = t - 600;
+    int bx = w > 0 ? sx + (w * 82 / 1000) : sx, by = w > 0 ? sy + (w * 12 / 1000) + (w * w * 64 / 1000000) : sy;
+    int sg = w > 0 ? 40 * (255 - smooth(0, 500, w)) / 255 : 40, s[4] = {0, -45, w > 0 ? sx >> 1 : sx, w > 0 ? (sy - 45) >> 1 : sy}, fl = w >= 0 ? tent(w, 160) : 0;
+    uint32_t wc = mix(col, C_WHITE, 170), hc = mix(col, C_WHITE, 90);
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = sg ? tent(segDist(p, q, s, 256), 5) * sg / 255 : 0;
+        uint32_t c = col;
+        if (fl) {
+            int v = tent(oct(p - s[2], q - s[3]), 10) * fl / 255;
+            if (v > a) {
+                a = v;
+                c = wc;
+            }
+        }
+        int d = oct(p - bx, q - by), v = tent(d, 10);
+        if (v > a) {
+            a = v;
+            c = d < 4 ? hc : col;
+        }
+        put(i, c, (a * g / 255) * fo / 255);
+    }
+}
+
+// Уведомление · Тик-так: the pendulum gives two quick short swings, right and left; a «tick» at each end: the bob whitens, a faint ring
+static void pendNotify(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), g = smooth(0, 120, t);
+    int th = t < 300 ? psin(t * 128 / 300) * 18 / 128 : t >= 350 && t < 650 ? -(psin((t - 350) * 128 / 300) * 18 / 128) : 0;
+    int tk = imax(tent(t - 150, 110), tent(t - 500, 110)), bx = pendX(0, th), by = pendY(th), s[4] = {0, -45, bx, by};
+    uint32_t hc = mix(col, C_WHITE, 60 + (tk * 150 / 255));
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = tent(segDist(p, q, s, 256), 5) * 40 / 255;
+        uint32_t c = col;
+        int d = oct(p - bx, q - by), v = tent(d, 10);
+        a = imax(a, tent(d - 14, 5) * tk / 400);
+        if (v > a) {
+            a = v;
+            c = d < 4 ? hc : col;
+        }
+        put(i, c, (a * g / 255) * fo / 255);
+    }
+}
+
+// ----- 18 · Гирлянда: the balls as string lights: 11 bulbs on a sagging wire, each in its own colour, Kaya's among them
+static const int8_t gar_b[22] PROGMEM = {-64, -21, -52, -14, -40, -7, -28, 0, -16, 7, 0, 7, 16, 7, 28, 0, 40, -7, 52, -14, 64, -21};  // the bulbs, (p, q), each on a ball
+static const uint32_t gar_pal[4] PROGMEM = {0, 0xffa83a, 0xff4f6e, 0x7fe05a};  // by k & 3: 0 = Kaya's colour, warm amber, rose, green
+static const uint8_t gar_ph[11] PROGMEM = {0, 140, 60, 200, 100, 30, 170, 90, 220, 120, 45}, gar_sp[11] PROGMEM = {57, 43, 64, 50, 39, 61, 47, 55, 41, 66, 52};  // each bulb's phase and pace
+#define C_WIRE 0xffe2b0
+#define C_WARM 0xfff0d8
+
+// bulb k's own colour (c0: the colour of every fourth, Kaya's in the states)
+static uint32_t garCol(int k, uint32_t c0) {
+    int j = k & 3;
+    return j ? pgm_read_dword(&gar_pal[j]) : c0;
+}
+
+// the garland at ball i: the wire at brightness w between the bulbs; bulb k lights its own ball at g[k] in cb[k];
+// no halo, so neighbouring colours never mix
+static void garPut(uint8_t i, int p, int q, const int* g, const uint32_t* cb, int w, int k) {
+    int s[4] = {0, 0, 0, 0};
+    int j = 0, a = 0;
+    uint32_t c = C_WIRE;
+    while (j < 9 && p >= (int8_t)pgm_read_byte(&gar_b[2 * j + 2])) j++;
+    if (w && p >= -64 && p <= 64) {
+        s[0] = (int8_t)pgm_read_byte(&gar_b[2 * j]);
+        s[1] = (int8_t)pgm_read_byte(&gar_b[2 * j + 1]);
+        s[2] = (int8_t)pgm_read_byte(&gar_b[2 * j + 2]);
+        s[3] = (int8_t)pgm_read_byte(&gar_b[2 * j + 3]);
+        a = tent(segDist(p, q, s, 256), 5) * w / 255;
+    }
+    for (int m = j; m <= j + 1; m++) {  // the two bulbs round it
+        if (oct(p - (int8_t)pgm_read_byte(&gar_b[2 * m]), q - (int8_t)pgm_read_byte(&gar_b[2 * m + 1])) < 4 && g[m] > a) {
+            a = g[m];
+            c = cb[m];
+        }
+    }
+    put(i, c, a * k / 255);
+}
+
+// Пробуждение · По цепочке: the wire glows first, then the bulbs light one after another from the left, each with a white flash
+static void garWake(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 400, t), g[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    uint32_t cb[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    for (int m = 0; m < 11; m++) {
+        int u = t - 200 - m * 100;
+        g[m] = u < 0 ? 0 : smooth(0, 80, u) * (255 - (70 * smooth(100, 450, u) / 255)) / 255;
+        cb[m] = mix(garCol(m, col), C_WHITE, 60 + (160 * tent(u - 80, 150) / 255));
+    }
+    fr.dg = 128;
+    int w = 18 * smooth(0, 250, t) / 255;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) garPut(i, 4 * (b_x(i) - 19), 7 * (b_row(i) - 3), g, cb, w, fo);
+}
+
+// Слушает · Мерцание: every bulb breathes slowly at its own pace (3.9–6.6 s), the wire faintly warm
+static void garListen(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int g[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    uint32_t cb[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    for (int m = 0; m < 11; m++) {
+        int s = sin8((pgm_read_byte(&gar_ph[m]) + (t * pgm_read_byte(&gar_sp[m]) / 1000)) & 255);
+        g[m] = 120 + ((s * s / 255) * 135 / 255);
+        cb[m] = mix(garCol(m, col), C_WHITE, 60);
+    }
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) garPut(i, 4 * (b_x(i) - 19), 7 * (b_row(i) - 3), g, cb, 18, k);
+}
+
+// Думает · Бегущие огни: a chase runs along the string: every third bulb is lit and the light flows on to the next, 6 bulbs a second
+static void garThink(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    // (v1.9: h moves 768, a whole round of the pattern, every 500 ms, so t goes in modulo 500: the same frames, and
+    // t · 1536 never overflows a 32-bit int in a long state)
+    int h = posMod(t, 500) * 1536 / 1000, g[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    uint32_t cb[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    for (int m = 0; m < 11; m++) {
+        int ph = posMod(m * 256 - h, 768), w = imin(ph, 768 - ph);
+        g[m] = 20 + (235 * smooth(256, 0, w) / 255);
+        cb[m] = mix(garCol(m, col), C_WHITE, 40 + (110 * smooth(160, 0, w) / 255));
+    }
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) garPut(i, 4 * (b_x(i) - 19), 7 * (b_row(i) - 3), g, cb, 18, k);
+}
+
+// Говорит · Вспышки: the bulbs flare with the voice, from the middle out to the ends
+static void garSpeak(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int v[3] = {voice(t), voice(t - 80), voice(t - 160)}, g[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    uint32_t cb[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    for (int m = 0; m < 11; m++) {
+        int e = v[abs(m - 5) >> 1];
+        g[m] = 70 + (e * 185 / 255);
+        cb[m] = mix(garCol(m, col), C_WHITE, 40 + (e * 140 / 255));
+    }
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) garPut(i, 4 * (b_x(i) - 19), 7 * (b_row(i) - 3), g, cb, 18, k);
+}
+
+// Готово · Праздник: the whole garland flashes green and white, then sparkles: bulb by bulb they flare to white
+static void garDone(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), fl = 255 - smooth(150, 450, t), on = smooth(0, 60, t), g[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    uint32_t cb[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    for (int m = 0; m < 11; m++) {
+        int s = sin8((pgm_read_byte(&gar_ph[m]) + (t * pgm_read_byte(&gar_sp[m]) * 5 / 1000)) & 255), tw = s * s / 255;
+        g[m] = imax(fl, 100 + (tw * 155 / 255)) * on / 255;
+        cb[m] = mix(col, C_WHITE, imax(fl * 200 / 255, tw * 170 / 255));
+    }
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) garPut(i, 4 * (b_x(i) - 19), 7 * (b_row(i) - 3), g, cb, 30, fo);
+}
+
+// Ошибка · Перегорела: the middle bulb blows with a white pop (a ring of sparks) and smoulders red; the garland goes dark from it
+// to the ends, each bulb reddening and going out
+static void garError(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), on = smooth(0, 80, t), pop = tent(t - 300, 120), rr = imax(0, t - 300) * 70 / 1000, rf = t > 300 ? 255 - smooth(300, 750, t) : 0;
+    int g[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    uint32_t cb[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, pc = mix(col, C_WHITE, 120);
+    int wl = 18 * (255 - smooth(900, 1400, t)) / 255;
+    for (int m = 0; m < 11; m++) {
+        if (m == 5) {
+            g[m] = imax(pop, t < 300 ? 185 : 90 * (255 - smooth(400, 1000, t)) / 255);
+            cb[m] = mix(t < 300 ? garCol(5, C_WARM) : col, C_WHITE, imax(60, 230 * pop / 255));
+        } else {
+            int T = 450 + abs(m - 5) * 110;
+            g[m] = 185 * (255 - smooth(T + 80, T + 260, t)) / 255;
+            cb[m] = mix(mix(garCol(m, C_WARM), col, smooth(T - 80, T + 60, t)), C_WHITE, 50);
+        }
+        g[m] = g[m] * on / 255;
+    }
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        garPut(i, p, q, g, cb, wl, fo);
+        if (rf) put(i, pc, (tent(oct(p, q - 7) - rr, 6) * rf / 255) * fo / 255);
+    }
+}
+
+// Уведомление · Двойной бег: a bright light runs along the garland from left to right twice, fast, with a tail; then all of it blinks amber
+static void garNotify(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), j = t < 550 ? 0 : 1, u = t - j * 550, h = u < 480 ? u * 3072 / 450 : 99999, all = tent(t - 1150, 220), on = smooth(0, 80, t);
+    int g[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    uint32_t cb[11] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    for (int m = 0; m < 11; m++) {
+        int d = h - m * 256, v = d >= -128 && d < 768 ? tent(d, d < 0 ? 128 : 768) : 0, e = imax(v, all);
+        g[m] = imax(45, e) * on / 255;
+        cb[m] = mix(mix(garCol(m, C_WARM), col, e), C_WHITE, 40 + (e * 150 / 255));
+    }
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) garPut(i, 4 * (b_x(i) - 19), 7 * (b_row(i) - 3), g, cb, 16, fo);
+}
+
 // ----- the event in a new style
 
-// a state (listening, thinking, speaking) of style 4–12; k: how far it shows (255 = all)
+// a state (listening, thinking, speaking) of style 4–18; k: how far it shows (255 = all)
 static void styleState(uint8_t style, Anim n, int t, uint32_t col, int k) {
     if (n == A_LISTENING) {
         switch (style) {
@@ -3117,7 +4190,13 @@ static void styleState(uint8_t style, Anim n, int t, uint32_t col, int k) {
             case 9: scanListen(n, t, col, k); break;
             case 10: snowListen(n, t, col, k); break;
             case 11: flyListen(n, t, col, k); break;
-            default: flameListen(n, t, col, k); break;
+            case 12: flameListen(n, t, col, k); break;
+            case 13: arcListen(n, t, col, k); break;
+            case 14: tetListen(n, t, col, k); break;
+            case 15: gearListen(n, t, col, k); break;
+            case 16: neonListen(n, t, col, k); break;
+            case 17: pendListen(n, t, col, k); break;
+            default: garListen(n, t, col, k); break;
         }
     } else if (n == A_THINKING) {
         switch (style) {
@@ -3129,7 +4208,13 @@ static void styleState(uint8_t style, Anim n, int t, uint32_t col, int k) {
             case 9: scanThink(n, t, col, k); break;
             case 10: snowThink(n, t, col, k); break;
             case 11: flyThink(n, t, col, k); break;
-            default: flameThink(n, t, col, k); break;
+            case 12: flameThink(n, t, col, k); break;
+            case 13: arcThink(n, t, col, k); break;
+            case 14: tetThink(n, t, col, k); break;
+            case 15: gearThink(n, t, col, k); break;
+            case 16: neonThink(n, t, col, k); break;
+            case 17: pendThink(n, t, col, k); break;
+            default: garThink(n, t, col, k); break;
         }
     } else {
         switch (style) {
@@ -3141,12 +4226,18 @@ static void styleState(uint8_t style, Anim n, int t, uint32_t col, int k) {
             case 9: scanSpeak(n, t, col, k); break;
             case 10: snowSpeak(n, t, col, k); break;
             case 11: flySpeak(n, t, col, k); break;
-            default: flameSpeak(n, t, col, k); break;
+            case 12: flameSpeak(n, t, col, k); break;
+            case 13: arcSpeak(n, t, col, k); break;
+            case 14: tetSpeak(n, t, col, k); break;
+            case 15: gearSpeak(n, t, col, k); break;
+            case 16: neonSpeak(n, t, col, k); break;
+            case 17: pendSpeak(n, t, col, k); break;
+            default: garSpeak(n, t, col, k); break;
         }
     }
 }
 
-// a one-shot (the wake, done, error, notify) of style 4–12, t = 0 .. du
+// a one-shot (the wake, done, error, notify) of style 4–18, t = 0 .. du
 static void styleShot(uint8_t style, Anim n, int t, int du, uint32_t col) {
     if (n == A_WAKE) {
         switch (style) {
@@ -3158,7 +4249,13 @@ static void styleShot(uint8_t style, Anim n, int t, int du, uint32_t col) {
             case 9: scanWake(n, t, du, col); break;
             case 10: snowWake(n, t, du, col); break;
             case 11: flyWake(n, t, du, col); break;
-            default: flameWake(n, t, du, col); break;
+            case 12: flameWake(n, t, du, col); break;
+            case 13: arcWake(n, t, du, col); break;
+            case 14: tetWake(n, t, du, col); break;
+            case 15: gearWake(n, t, du, col); break;
+            case 16: neonWake(n, t, du, col); break;
+            case 17: pendWake(n, t, du, col); break;
+            default: garWake(n, t, du, col); break;
         }
     } else if (n == A_DONE) {
         switch (style) {
@@ -3170,7 +4267,13 @@ static void styleShot(uint8_t style, Anim n, int t, int du, uint32_t col) {
             case 9: scanDone(n, t, du, col); break;
             case 10: snowDone(n, t, du, col); break;
             case 11: flyDone(n, t, du, col); break;
-            default: flameDone(n, t, du, col); break;
+            case 12: flameDone(n, t, du, col); break;
+            case 13: arcDone(n, t, du, col); break;
+            case 14: tetDone(n, t, du, col); break;
+            case 15: gearDone(n, t, du, col); break;
+            case 16: neonDone(n, t, du, col); break;
+            case 17: pendDone(n, t, du, col); break;
+            default: garDone(n, t, du, col); break;
         }
     } else if (n == A_ERROR) {
         switch (style) {
@@ -3182,7 +4285,13 @@ static void styleShot(uint8_t style, Anim n, int t, int du, uint32_t col) {
             case 9: scanError(n, t, du, col); break;
             case 10: snowError(n, t, du, col); break;
             case 11: flyError(n, t, du, col); break;
-            default: flameError(n, t, du, col); break;
+            case 12: flameError(n, t, du, col); break;
+            case 13: arcError(n, t, du, col); break;
+            case 14: tetError(n, t, du, col); break;
+            case 15: gearError(n, t, du, col); break;
+            case 16: neonError(n, t, du, col); break;
+            case 17: pendError(n, t, du, col); break;
+            default: garError(n, t, du, col); break;
         }
     } else {
         switch (style) {
@@ -3194,14 +4303,20 @@ static void styleShot(uint8_t style, Anim n, int t, int du, uint32_t col) {
             case 9: scanNotify(n, t, du, col); break;
             case 10: snowNotify(n, t, du, col); break;
             case 11: flyNotify(n, t, du, col); break;
-            default: flameNotify(n, t, du, col); break;
+            case 12: flameNotify(n, t, du, col); break;
+            case 13: arcNotify(n, t, du, col); break;
+            case 14: tetNotify(n, t, du, col); break;
+            case 15: gearNotify(n, t, du, col); break;
+            case 16: neonNotify(n, t, du, col); break;
+            case 17: pendNotify(n, t, du, col); break;
+            default: garNotify(n, t, du, col); break;
         }
     }
 }
 
 // ----- the event in its look
 
-// a state in its look; style: kaia_anim (1–12), look: the event's setting, k: how far it shows (255 = all)
+// a state in its look; style: kaia_anim (1–18), look: the event's setting, k: how far it shows (255 = all)
 static void stateLook(uint8_t style, uint8_t look, Anim n, int t, uint32_t col, int k) {
     look = lookOf(style, look);
     if (look < 4) {
@@ -3280,7 +4395,7 @@ static void shotLook(uint8_t style, uint8_t look, Anim n, int t, uint32_t col) {
 
 // ================= the wake with its speed =================
 
-// the wake that plays: kaia_wake, or with 0 the style's own (style_wake: 1–3 theirs, 4–12 their wakes 15–23)
+// the wake that plays: kaia_wake, or with 0 the style's own (style_wake: 1–3 theirs, 4–18 their wakes 15–29)
 static int wakeOf(int style, int wake) {
     return wake ? wake : pgm_read_byte(&style_wake[style]);
 }
@@ -3290,7 +4405,7 @@ static int wakeLength(int id, int speed) {
     return (int)pgm_read_word(&wake_ms[id]) * 100 / speed;
 }
 
-// t: ms since the wake started (real time); style: kaia_anim (1–12); wake: kaia_wake (0 = the style's: wakeOf);
+// t: ms since the wake started (real time); style: kaia_anim (1–18); wake: kaia_wake (0 = the style's: wakeOf);
 // lk: kaia_listen, the look of the listening that fades in under the wake and goes on after it
 static void wakeDraw(uint8_t style, uint8_t wake, uint8_t lk, int speed, int t, uint32_t col) {
     int id = wakeOf(style, wake);
@@ -3836,15 +4951,15 @@ static void handleAnim() {
     long style = 0, wake = -1, speed = 0, look = -1;
     if (!readColor(color, own)) return replyError(400, F("color: RRGGBB"));
     if (!readNum(F("ms"), 100, 60000, ms)) return replyError(400, F("ms: 100-60000"));
-    if (!readNum(F("style"), 1, STYLE_COUNT, style)) return replyError(400, F("style: 1-12"));
-    if (!readNum(F("wake"), 0, WAKE_COUNT - 1, wake)) return replyError(400, F("wake: 0-23"));
+    if (!readNum(F("style"), 1, STYLE_COUNT, style)) return replyError(400, F("style: 1-18"));
+    if (!readNum(F("wake"), 0, WAKE_COUNT - 1, wake)) return replyError(400, F("wake: 0-29"));
     if (!readNum(F("speed"), 50, 200, speed)) return replyError(400, F("speed: 50-200"));
     // look= for every name but off: the event's animation for this call (wake= is its old name for the wake)
     if (n == A_WAKE) {
-        if (!readNum(F("look"), 0, WAKE_COUNT - 1, look)) return replyError(400, F("look: 0-23 for wake"));
+        if (!readNum(F("look"), 0, WAKE_COUNT - 1, look)) return replyError(400, F("look: 0-29 for wake"));
         if (look < 0) look = wake;
     } else if (n != A_OFF) {
-        if (!readNum(F("look"), 0, LOOK_COUNT - 1, look)) return replyError(400, F("look: 0-17"));
+        if (!readNum(F("look"), 0, LOOK_COUNT - 1, look)) return replyError(400, F("look: 0-23"));
     }
 
     ov.text_waits = false;
@@ -3883,7 +4998,7 @@ static void handleAnim() {
 
 // GET /kaia/test (v1.8): every animation drawn off screen once and timed on the real CPU, so a release checks them all
 // without a crash in front of the owner (KAIA-186 was a boot loop from one bad read). Each style's own version of every
-// event (styles 1–12, look 0), every look of listening … notify (1–17) and every wake (1–23), both with style 1; a
+// event (styles 1–18, look 0), every look of listening … notify (1–23) and every wake (1–29), both with style 1; a
 // one-shot at its start, its middle and 50 ms before its end, a state at 0, 15 s, 50 ms before a call's default 30 s,
 // 60 s and 70 min. Drawn into the strip without show(), a yield() after each animation, then the normal frame again.
 // The animations' own state (ov) is not touched. Small frames: it runs inside a web handler on the 4 KB cont stack.
