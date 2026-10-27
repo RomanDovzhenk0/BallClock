@@ -705,7 +705,7 @@ static const char PROGMEM paletteList[] =
     "Linen;"
     "DuskMist";
 
-String getPaletteList() {
+const __FlashStringHelper* getPaletteList() {
     return FPSTR(paletteList);
 }
 

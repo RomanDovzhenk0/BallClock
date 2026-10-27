@@ -79,7 +79,9 @@ took about 4176 bytes (the settings ticker 1296, `build()` 1584, the web server 
 called `__stack_chk_fail`, and the clock restarted before the DB was written.
 
 v1.6.1 keeps the big frames off that path: the ticker's setup block is a function of its own (`settingsBegin`), and
-`build()` calls one function per group, so only one group's frame is live at a time. Measure a build's frames
+`build()` calls one function per group, so only one group's frame is live at a time: the same path takes about
+2144 bytes (the ticker 32, `build()` 240, the deepest group, K.A.I.A., 928 with its widgets), and the palette list
+goes to its Select as a flash Text instead of a 650-byte String. Measure a build's frames
 from the elf (call0 prologues: `addi a1, a1, -N`, or `movi aN, N` + `sub a1, a1, aN`):
 
 ```
