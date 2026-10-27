@@ -1,9 +1,9 @@
-// ?mock: a clock inside the page. It answers the whole v1.6 API from sample data (never the owner's) with a
+// ?mock: a clock inside the page. It answers the whole v1.7 API (v1.6 and the Digit fade keys) from sample data (never the owner's) with a
 // running clock, and draws /kaia/frame with the same renderer, so the page works from disk and in the shots.
 import { hash32, keyId, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, ledsHex } from "./api.js";
 import { A_WAKE, ANIM_NAMES, dimAll, useMatrix } from "./kaia.js";
 import { BallMatrix, gfx_font_3x5 } from "./matrix.js";
-import { duckAfter, playColor, renderFrame, resolvePlay } from "./frame.js";
+import { duckAfter, hideTrack, isPlaying, playColor, renderFrame, resolvePlay } from "./frame.js";
 import { brightNow, isNight } from "./redraw.js";
 import { LOOK_COUNT } from "./looks.js";
 import { DEFAULTS, LOOK_KEYS, TEXT_KEYS } from "./settings.js";
@@ -21,8 +21,9 @@ export function createMock() {
     });
     const M = {
         mode: "ok", update: false, text: false, version: "1.6.0", wifi: { ssid: "HomeNet-2G", ip: "192.168.1.47", rssi: -58 },
-        pass: "", play: null, down: 0, settings: S,
+        pass: "", play: null, down: 0, old: false, settings: S,
     };
+    const hide = { h: 0, t: boot, end: 0, on: 0 };  // the Digit fade's level, stepped by each frame asked for
     const millis = () => boot + Math.floor(performance.now() - t0);
     // 14:32:05.370 at the mock's boot
     const secAt = (ms) => (Math.floor((ms - boot + 52325370) / 1000) % 86400);
@@ -54,7 +55,8 @@ export function createMock() {
     function frameLeds(ms) {
         const m = new BallMatrix(), s = secAt(ms), p = playing(ms), nt = night(ms);
         const on = !!(p && !(nt && S.kaia_night === 2));
-        const c = { millis: ms, synced: synced(), hour: (s / 3600) | 0, minute: ((s % 3600) / 60) | 0, ms: msIn(ms), night: nt, play: p, duck: on ? duckAfter(0, true, (p.t / 50) | 0) : 0 };
+        hideTrack(hide, S, isPlaying(S, nt, p), ms);
+        const c = { millis: ms, synced: synced(), hour: (s / 3600) | 0, minute: ((s % 3600) / 60) | 0, ms: msIn(ms), night: nt, play: p, duck: on ? duckAfter(0, true, (p.t / 50) | 0) : 0, hide: hide.h };
         renderFrame(m, S, c);
         if (M.text) {  // a running text: the clock dims and the digits run by
             useMatrix(m);
@@ -79,7 +81,8 @@ export function createMock() {
                 name: ANIM_NAMES[p.anim], style: p.style, look: p.look, wake: M.play.anim === A_WAKE ? M.play.look : S.kaia_wake, speed: p.speed, t: p.t,
                 color: playColor(S, p).toString(16).padStart(6, "0"),
             } : null,
-            settings: Object.fromEntries(Object.keys(DEFAULTS).filter((k) => !["wifi_ssid", "wifi_pass", "page_pass"].includes(k)).map((k) => [k, S[k]])),
+            // M.old: a clock before v1.7 carries no Digit fade keys
+            settings: Object.fromEntries(Object.keys(DEFAULTS).filter((k) => !["wifi_ssid", "wifi_pass", "page_pass"].includes(k) && !(M.old && k.startsWith("kaia_hide"))).map((k) => [k, S[k]])),
         };
     }
 

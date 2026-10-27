@@ -124,6 +124,17 @@ const STATES = [
     { name: "update", go: "document.querySelector('[data-m=upd]').click()", wait: 900 },
     { name: "text", go: "document.querySelector('[data-m=text]').click(); ballclock.setSrc('now')", wait: 1500 },
     { name: "reduced-motion", go: "", rm: true },
+    // the Digit fade (v1.7): the block on and off, the draft half way through the fade, the way back after a one-shot, a clock without it
+    { name: "hide-on", go: "ballclock.showTab('kaia'); ballclock.play('off')", wait: 4000, el: "#hidebox",
+        expect: "document.querySelectorAll('#hidebox [data-k]').length === 5 && document.querySelector('[data-k=kaia_hide]').checked && /0,6 с/.test(document.querySelector('[data-f=kaia_hide_out] output').textContent) && /1,2 с/.test(document.querySelector('[data-f=kaia_hide_in] output').textContent) && /1,0 с/.test(document.querySelector('[data-f=kaia_hide_hold] output').textContent) && /0 %/.test(document.querySelector('[data-f=kaia_hide_keep] output').textContent)" },
+    { name: "hide-off", go: "ballclock.play('off'); document.querySelector('[data-k=kaia_hide]').click()", wait: 900, el: "#hidebox",
+        expect: "document.querySelectorAll('#hidebox [data-k]').length === 1 && ballclock.S().kaia_hide === 0 && !document.getElementById('sbar').hidden && ballclock.P.hideD.h === 0" },
+    { name: "hide-mid", go: "ballclock.setEvent(1, false); ballclock.P.hideD.h = 20000", wait: 250,
+        expect: "ballclock.P.hideD.h > 20000 && ballclock.P.hideD.h < 65535 && ballclock.P.M && ballclock.P.M.anim === 1" },
+    { name: "hide-return", go: "ballclock.setEvent(4, false)", wait: 6500,
+        expect: "!ballclock.P.M && ballclock.P.hideD.h === 0" },
+    { name: "hide-old-clock", go: "ballclock.mock.M.old = true; ballclock.poll(false)", wait: 900,
+        expect: "!document.getElementById('hidebox') && !document.querySelector('[data-f=kaia_hide]') && !!document.querySelector('[data-f=kaia_color]')" },
     { name: "tiles", go: "ballclock.setEvent(0, true); ballclock.tilesAt(600)", wait: 350, el: ".wg", desk: true },
     // the palette picker: a tap and a step put the palette in the draft and on the preview
     { name: "picker", go: "ballclock.showTab('look'); document.querySelector('[data-pick=\"52\"]').click()", wait: 500, el: "[data-f=back_pal]",

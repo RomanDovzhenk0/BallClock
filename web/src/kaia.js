@@ -2,9 +2,9 @@
 // and kaiaDraw. Integer maths inside a frame: every C++ division is "/ … | 0" here (truncates toward zero),
 // every (uint8_t) cast is "& 255". The tables at boot use floats: each float step is Math.fround.
 import { sin8 } from "./lib8.js";
-import { ledDiag, MX_DIAG_H, MX_DIAG_W, MX_LED_AMOUNT } from "./matrix.js";
+import { ledDiag, mix, MX_DIAG_H, MX_DIAG_W, MX_LED_AMOUNT } from "./matrix.js";
 
-export { sin8 };
+export { mix, sin8 };
 
 export const C_WHITE = 0xffffff, C_VIOLET = 0x965aff, C_GREEN = 0x35e07a, C_RED = 0xff3b30, C_AMBER = 0xffb020;
 
@@ -18,9 +18,10 @@ export const shot_ms = [
     [2000, 1300, 1400, 1600],
 ];
 
-// the matrix being drawn and the per-frame values (fr.sc, fr.dg; fr.lt, fr.ls: the listening after a wake)
+// the matrix being drawn and the per-frame values (fr.sc, fr.dg; fr.lt, fr.ls: the listening after a wake;
+// fr.hd: how much of the time the Digit fade has taken, 0–255, set by kaiaDraw while it draws)
 export let matrix = null;
-export const fr = { sc: 255, dg: 89, lt: 0, ls: 1 };
+export const fr = { sc: 255, dg: 89, lt: 0, ls: 1, hd: 0 };
 export function useMatrix(m) {
     matrix = m;
 }
@@ -197,15 +198,6 @@ export function comet(pos, h, n, tail, back = false) {
     return u * u / 255 | 0;
 }
 
-export function mix(a, b, k) {
-    let out = 0;
-    for (let s = 0; s <= 16; s += 8) {
-        const ca = (a >> s) & 0xff, cb = (b >> s) & 0xff;
-        out |= (ca + ((cb - ca) * k / 255 | 0)) << s;
-    }
-    return out >>> 0;
-}
-
 export function dim(c, k) {
     return mix(0, c, k);
 }
@@ -215,7 +207,7 @@ export function put(i, color, a) {
     if (a <= 0) return;
     if (a > 255) a = 255;
     a = a * fr.sc / 255 | 0;
-    if (matrix.marked(i)) a = a * fr.dg / 255 | 0;
+    if (matrix.marked(i)) a = a * (fr.dg + ((255 - fr.dg) * fr.hd / 255 | 0)) / 255 | 0;
     if (a) matrix.setLED(i, mix(matrix.getLED(i), color, a));
 }
 

@@ -119,6 +119,7 @@ input[type=range]{accent-color:var(--acc);width:100%;min-height:28px}
 .kopts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:0 28px}
 .kopts .fld{border-top:0;border-bottom:1px solid var(--line)}
 .kopts.one{display:block}.kopts.one .fld{border-bottom:0}
+.kopts .hnote{grid-column:1/-1;margin:8px 0 0;color:var(--muted);font-size:13px}
 .stseg{display:flex}.stseg button{flex:1}
 .sub{font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
 .evh{display:flex;flex-direction:column;gap:2px;margin:12px 0 8px}.evh small{color:var(--muted);font-size:13px}
@@ -338,11 +339,20 @@ const font_4x5 = { from: 15, to: 24, width: 4, lineHeight: 5, glyphs: {
 15: [0x03, 0x09, 0x12, 0x18], 16: [0x00, 0x03, 0x0c, 0x10], 17: [0x01, 0x0d, 0x16, 0x10], 18: [0x01, 0x05, 0x16, 0x18], 19: [0x03, 0x04, 0x06, 0x18],
 20: [0x03, 0x05, 0x14, 0x18], 21: [0x03, 0x0d, 0x14, 0x18], 22: [0x01, 0x01, 0x1e, 0x00], 23: [0x03, 0x0d, 0x16, 0x18], 24: [0x03, 0x05, 0x16, 0x18],
 } };
+function mix(a, b, k) {
+let out = 0;
+for (let s = 0; s <= 16; s += 8) {
+const ca = (a >> s) & 0xff, cb = (b >> s) & 0xff;
+out |= (ca + ((cb - ca) * k / 255 | 0)) << s;
+}
+return out >>> 0;
+}
 class BallMatrix {
 constructor() {
 this.leds = new Uint32Array(MX_LED_AMOUNT);
 this.marks = new Uint8Array(MX_LED_AMOUNT);
 this.marking = false;
+this.alpha = 255;  // v1.7: while marking, setXY draws this much of the new colour over what is there (255 = all)
 this.diag = false;
 this.w = MX_XY_W;
 this.h = MX_XY_H;
@@ -365,7 +375,10 @@ return idx >= 0 && idx < MX_LED_AMOUNT ? this.leds[idx] : 0;
 setXY(x, y, color) {
 const led = this.diag ? ledDiag(x, y) : ledXY(x, y);
 if (led < 0) return;
-if (this.marking) this.marks[led] = 1;
+if (this.marking) {
+this.marks[led] = 1;
+if (this.alpha < 255) color = mix(this.getLED(led), color, this.alpha);
+}
 this.setLED(led, color);
 }
 getXY(x, y) {
@@ -462,7 +475,7 @@ const shot_ms = [
 [2000, 1300, 1400, 1600],
 ];
 let matrix = null;
-const fr = { sc: 255, dg: 89, lt: 0, ls: 1 };
+const fr = { sc: 255, dg: 89, lt: 0, ls: 1, hd: 0 };
 function useMatrix(m) {
 matrix = m;
 }
@@ -603,14 +616,6 @@ if (d >= tail) return 0;
 const u = (tail - d) * 255 / tail | 0;
 return u * u / 255 | 0;
 }
-function mix(a, b, k) {
-let out = 0;
-for (let s = 0; s <= 16; s += 8) {
-const ca = (a >> s) & 0xff, cb = (b >> s) & 0xff;
-out |= (ca + ((cb - ca) * k / 255 | 0)) << s;
-}
-return out >>> 0;
-}
 function dim(c, k) {
 return mix(0, c, k);
 }
@@ -618,7 +623,7 @@ function put(i, color, a) {
 if (a <= 0) return;
 if (a > 255) a = 255;
 a = a * fr.sc / 255 | 0;
-if (matrix.marked(i)) a = a * fr.dg / 255 | 0;
+if (matrix.marked(i)) a = a * (fr.dg + ((255 - fr.dg) * fr.hd / 255 | 0)) / 255 | 0;
 if (a) matrix.setLED(i, mix(matrix.getLED(i), color, a));
 }
 function dimAll(k) {
@@ -950,8 +955,10 @@ back_mode: 1, back_pal: 0, back_bright: 200, back_speed: 50, back_scale: 50, bac
 kaia_anim: 1, kaia_wake: 0, kaia_wake_speed: 100,
 kaia_listen: 0, kaia_think: 0, kaia_speak: 0, kaia_done: 0, kaia_error: 0, kaia_notify: 0,
 kaia_color: 0x00d1ff, kaia_bright: 255, kaia_night: 1,
+kaia_hide: 1, kaia_hide_out: 600, kaia_hide_in: 1200, kaia_hide_hold: 1000, kaia_hide_keep: 0,
 page_pass: "", log_host: "",
 };
+const HIDE_RANGES = { kaia_hide: [0, 1], kaia_hide_out: [100, 3000], kaia_hide_in: [100, 5000], kaia_hide_hold: [0, 5000], kaia_hide_keep: [0, 100] };
 const LOOK_KEYS = ["kaia_wake", "kaia_listen", "kaia_think", "kaia_speak", "kaia_done", "kaia_error", "kaia_notify"];
 function normalize(raw) {
 const s = {};
@@ -962,6 +969,8 @@ else {
 const n = typeof v === "boolean" ? +v : Number(v);
 s[k] = v == null || v === "" || !Number.isFinite(n) ? DEFAULTS[k] : Math.trunc(n);
 }
+const r = HIDE_RANGES[k];
+if (r && (s[k] < r[0] || s[k] > r[1])) s[k] = DEFAULTS[k];
 }
 return s;
 }
@@ -2353,6 +2362,37 @@ function duckAfter(d, playing, n) {
 for (let k = 0; k < n && k < 64; k++) d = duckStep(d, playing);
 return d;
 }
+function hideStep(h, dt, playing, sinceEnd, S) {
+if (!S.kaia_hide) return 0;
+if (dt > 60000) dt = 60000;
+if (playing) {
+h += 65535 * dt / S.kaia_hide_out | 0;
+return h > 65535 ? 65535 : h;
+}
+if (sinceEnd >= S.kaia_hide_hold) {
+h -= 65535 * dt / S.kaia_hide_in | 0;
+return h < 0 ? 0 : h;
+}
+return h;
+}
+function digitHide(S, h) {
+if (!S.kaia_hide) return 0;
+return smooth(0, 65535, h) * (100 - S.kaia_hide_keep) / 100 | 0;
+}
+function hideTrack(L, S, playing, now) {
+const dt = now - L.t;
+L.t = now;
+if (playing) L.on = 1;
+else if (L.on) {
+L.on = 0;
+L.end = now;
+}
+L.h = hideStep(L.h, dt, playing, now - L.end, S);
+return L.h;
+}
+function isPlaying(S, night, play) {
+return !!(S.kaia_anim && resolvePlay(play) && !(night && S.kaia_night === 2));
+}
 const isState = (anim) => anim === A_LISTENING || anim === A_THINKING || anim === A_SPEAKING;
 const animOf = (name) => ANIM_NAMES.indexOf(name);
 function resolvePlay(play) {
@@ -2375,19 +2415,22 @@ if (p.anim === A_ERROR) return C_RED;
 if (p.anim === A_NOTIFY) return C_AMBER;
 return S.kaia_color;
 }
-function kaiaDraw(S, night, play) {
+function kaiaDraw(S, night, play, hide) {
 const rule = S.kaia_night;
 const p = resolvePlay(play);
 if (!p || (night && rule === 2)) return false;
 fr.sc = S.kaia_bright * (night && rule === 1 ? 77 : 255) / 255 | 0;
 fr.dg = 89;
+fr.hd = hide || 0;
 const col = playColor(S, p);
 if (isState(p.anim)) stateLook(p.style, p.look, p.anim, p.t, col, 255);
 else if (p.anim === A_WAKE) wakeDraw(p.style, p.look, p.lk || 0, p.speed || 100, p.t, col);
 else shotLook(p.style, p.look, p.anim, p.t, col);
+fr.hd = 0;
 return true;
 }
 function renderFrame(m, S, c) {
+const hd = digitHide(S, c.hide || 0);
 useMatrix(m);
 if (c.night) {
 m.clear();
@@ -2396,10 +2439,12 @@ m.setColor24(S.night_color);
 drawBack(m, S, c.millis, backScale(c.duck || 0));
 m.setColor24(S.clock_color);
 }
+m.alpha = 255 - hd;
 m.beginMarks();
 drawClock(m, S, c);
 m.endMarks();
-kaiaDraw(S, c.night, c.play);
+m.alpha = 255;
+kaiaDraw(S, c.night, c.play, hd);
 return m.leds;
 }
 function frameOf(S, c) {
@@ -2416,8 +2461,9 @@ kaia_anim: 1, kaia_wake: 0, kaia_wake_speed: 100, log_host: "192.168.1.20:9000",
 });
 const M = {
 mode: "ok", update: false, text: false, version: "1.6.0", wifi: { ssid: "HomeNet-2G", ip: "192.168.1.47", rssi: -58 },
-pass: "", play: null, down: 0, settings: S,
+pass: "", play: null, down: 0, old: false, settings: S,
 };
+const hide = { h: 0, t: boot, end: 0, on: 0 };  // the Digit fade's level, stepped by each frame asked for
 const millis = () => boot + Math.floor(performance.now() - t0);
 const secAt = (ms) => (Math.floor((ms - boot + 52325370) / 1000) % 86400);
 const msIn = (ms) => (ms - boot + 52325370) % 1000;
@@ -2445,7 +2491,8 @@ return p;
 function frameLeds(ms) {
 const m = new BallMatrix(), s = secAt(ms), p = playing(ms), nt = night(ms);
 const on = !!(p && !(nt && S.kaia_night === 2));
-const c = { millis: ms, synced: synced(), hour: (s / 3600) | 0, minute: ((s % 3600) / 60) | 0, ms: msIn(ms), night: nt, play: p, duck: on ? duckAfter(0, true, (p.t / 50) | 0) : 0 };
+hideTrack(hide, S, isPlaying(S, nt, p), ms);
+const c = { millis: ms, synced: synced(), hour: (s / 3600) | 0, minute: ((s % 3600) / 60) | 0, ms: msIn(ms), night: nt, play: p, duck: on ? duckAfter(0, true, (p.t / 50) | 0) : 0, hide: hide.h };
 renderFrame(m, S, c);
 if (M.text) {  // a running text: the clock dims and the digits run by
 useMatrix(m);
@@ -2469,7 +2516,7 @@ play: p && !M.text ? {
 name: ANIM_NAMES[p.anim], style: p.style, look: p.look, wake: M.play.anim === A_WAKE ? M.play.look : S.kaia_wake, speed: p.speed, t: p.t,
 color: playColor(S, p).toString(16).padStart(6, "0"),
 } : null,
-settings: Object.fromEntries(Object.keys(DEFAULTS).filter((k) => !["wifi_ssid", "wifi_pass", "page_pass"].includes(k)).map((k) => [k, S[k]])),
+settings: Object.fromEntries(Object.keys(DEFAULTS).filter((k) => !["wifi_ssid", "wifi_pass", "page_pass"].includes(k) && !(M.old && k.startsWith("kaia_hide"))).map((k) => [k, S[k]])),
 };
 }
 function answer(path, q, ms) {
@@ -2719,9 +2766,10 @@ if (store) setUnlit(readUnlit(store));
 let SAVED = normalize(null);
 const DRAFT = {};
 const W = { ssid: "", pass: "" };  // the Wi-Fi fields: applied with «Подключить», not with Save
-let LIVE = null, recvAt = 0, WIFI = null, FRAME = null, everOk = false;
+let LIVE = null, recvAt = 0, WIFI = null, FRAME = null, everOk = false, hideKnown = false;
 const sync = new ClockSync();
-const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, cmp: 0.5, tab: "kaia", saving: false, upd: "", ev: A_WAKE, CL: null, open: false };
+const newHide = () => ({ h: 0, t: performance.now() | 0, end: 0, on: 0 });
+const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, hideD: newHide(), hideN: newHide(), cmp: 0.5, tab: "kaia", saving: false, upd: "", ev: A_WAKE, CL: null, open: false };
 const S = () => Object.assign({}, SAVED, DRAFT);
 const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => [...(r || document).querySelectorAll(s)];
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
@@ -2783,7 +2831,12 @@ const GROUPS = [
 { k: "kaia_wake_speed", t: "spd", l: "Скорость пробуждения" },
 { k: "kaia_color", t: "col", l: "Цвет Каи" },
 { k: "kaia_bright", t: "rng", l: "Яркость Каи", min: 0, max: 255 },
-{ k: "kaia_night", t: "sel", l: "Ночью", o: ["Как обычно", "Тусклее", "Не показывать"] }] },
+{ k: "kaia_night", t: "sel", l: "Ночью", o: ["Как обычно", "Тусклее", "Не показывать"] },
+{ k: "kaia_hide", t: "sw", l: "Прятать цифры" },
+{ k: "kaia_hide_out", t: "rng", l: "Исчезают за", min: 100, max: 3000 },
+{ k: "kaia_hide_in", t: "rng", l: "Появляются за", min: 100, max: 5000 },
+{ k: "kaia_hide_hold", t: "rng", l: "Пауза перед появлением", min: 0, max: 5000 },
+{ k: "kaia_hide_keep", t: "rng", l: "Остаётся от цифр", min: 0, max: 100, u: " %" }] },
 { id: "time", tab: "net", title: "Время", f: [
 { k: "ntp_gmt", t: "num", l: "Часовой пояс", min: -12, max: 14 },
 { k: "ntp_host", t: "txt", l: "NTP-сервер", w: 1 },
@@ -2810,6 +2863,7 @@ const FLD = {};
 GROUPS.forEach((g) => g.f.forEach((f) => (FLD[f.k] = Object.assign({ g: g.title }, f))));
 function fmtVal(k, v) {
 if (k === "kaia_wake_speed") return v + " % · " + String(v / 100).replace(".", ",") + "×";
+if (k === "kaia_hide_out" || k === "kaia_hide_in" || k === "kaia_hide_hold") return fmtS(v);
 return v + ((FLD[k] && FLD[k].u) || "");
 }
 function fmtAny(k, v) {
@@ -2937,8 +2991,21 @@ if (on) {
 h += '<div class="evh"><h3 class="sub">Цвет и яркость Каи</h3></div><div class="kopts">' + fld("kaia_color", "Цвет Каи", "", '<input type="color" data-k="kaia_color" value="' + hexs(s.kaia_color) + '" aria-label="Цвет Каи">') +
 fld("kaia_bright", "Яркость", "", rngCtl("kaia_bright", s.kaia_bright, 0, 255, 0, "Яркость Каи"), 1) +
 fld("kaia_night", "Ночью", "", '<select data-k="kaia_night" aria-label="Ночью">' + opts(FLD.kaia_night.o, s.kaia_night) + "</select>") + "</div>";
+if (hideKnown) h += '<div class="evh"><h3 class="sub">Цифры во время анимации</h3></div><div class="kopts" id="hidebox">' + hideHTML(s) + "</div>";
 }
 return h;
+}
+function hideHTML(s) {
+const sec = (k, lab) => fld(k, lab, "", rngCtl(k, s[k], FLD[k].min, FLD[k].max, k === "kaia_hide_keep" ? 5 : 100, lab), 1);
+return fld("kaia_hide", "Прятать цифры", "Пока играет анимация Каи, время плавно гаснет, после — плавно возвращается",
+'<label class="sw"><input type="checkbox" data-k="kaia_hide"' + (s.kaia_hide ? " checked" : "") + ' aria-label="Прятать цифры"><i></i></label>') +
+(s.kaia_hide ? sec("kaia_hide_out", "Исчезают за") + sec("kaia_hide_in", "Появляются за") + sec("kaia_hide_hold", "Пауза перед появлением") + sec("kaia_hide_keep", "Остаётся от цифр") : "") +
+'<small class="hnote">«Показать на часах» играет с настройками цифр, сохранёнными на часах.</small>';
+}
+function fillHide() {
+const b = $("#hidebox");
+if (b) b.innerHTML = hideHTML(S());
+markDirty();
 }
 function fillEv() {
 const s = S(), n = P.ev;
@@ -3088,15 +3155,18 @@ if (g) g.classList.toggle("hl", !!(WIFI && WIFI.ap));
 let pollT = 0, polling = false;
 const clockMillis = () => (LIVE ? LIVE.ms + (performance.now() - recvAt) : performance.now());
 function takeState(st) {
-const before = SAVED;
+const before = SAVED, had = hideKnown;
 LIVE = st;
+hideKnown = !!(st.settings && "kaia_hide" in st.settings);
 recvAt = performance.now();
 if (st.synced) sync.add(parseTime(st.time), st.ms);
 SAVED = normalize(Object.assign({}, st.settings, { page_pass: "", wifi_pass: "", wifi_ssid: WIFI ? WIFI.ssid : "" }));
 for (const k of Object.keys(DRAFT)) if (k !== "page_pass" && DRAFT[k] === SAVED[k]) delete DRAFT[k];
 const changed = Object.keys(SAVED).filter((k) => SAVED[k] !== before[k]);
 const act = document.activeElement;
-new Set(changed.map(groupOf).filter(Boolean)).forEach((g) => {
+const groups = new Set(changed.map(groupOf).filter(Boolean));
+if (hideKnown !== had) groups.add(groupOf("kaia_anim"));
+groups.forEach((g) => {
 const el = document.getElementById("g-" + g.id);
 if (!el || !el.contains(act) || act === document.body) renderGroup(g);
 });
@@ -3185,9 +3255,10 @@ function frameNow() {
 if (P.conn === "offline" && FRAME) return { leds: FRAME.leds, gain: gainOf(FRAME.bright) * 0.4, mirror: true };
 if ((P.live === "mirror" || textNow()) && FRAME && P.conn === "ok") return { leds: FRAME.leds, gain: gainOf(FRAME.bright), mirror: true, night: FRAME.night };
 const tm = timeNow(), play = playNow(), on = !!resolvePlay(play);
-const leds = renderFrame(work, SAVED, { ...tm, night: LIVE ? !!LIVE.night : false, play, duck: on ? duckSince(play) : 0 });
+const leds = renderFrame(work, hideSet(SAVED), { ...tm, night: LIVE ? !!LIVE.night : false, play, duck: on ? duckSince(play) : 0, hide: P.hideN.h });
 return { leds: Uint32Array.from(leds), gain: gainOf(LIVE ? LIVE.bright : 128) * (P.conn === "offline" ? 0.4 : 1), night: LIVE && LIVE.night };
 }
+const hideSet = (s) => (hideKnown || !s.kaia_hide ? s : { ...s, kaia_hide: 0 });
 function duckSince(play) {
 let d = 0;
 for (let n = Math.min(40, (play.t / 50) | 0); n > 0; n--) d = duckStep(d, true);
@@ -3201,7 +3272,7 @@ P.M = null;
 play = null;
 markKs();
 }
-const leds = renderFrame(work, s, { ...tm, night, play, duck: P.duck });
+const leds = renderFrame(work, hideSet(s), { ...tm, night, play, duck: P.duck, hide: P.hideD.h });
 return { leds: Uint32Array.from(leds), gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1), night, play };
 }
 function playLabel(p) {
@@ -3266,7 +3337,11 @@ $("#badge").textContent = status(shown, P.src);
 $("#pst").textContent = P.src === "cmp" ? "Слева «Сейчас», справа «Черновик»: тяните границу." : P.src === "now" ? (shown.mirror ? "«Сейчас»: кадры часов, 4 раза в секунду." : "«Сейчас»: расчёт на странице по состоянию часов.") : "«Черновик»: расчёт на странице по тем же данным.";
 if (view2 && mini) paint(view2, shown.leds, shown.gain);
 P.night = !!d.night;
-P.duck = duckStep(P.duck, !!(d.play && !(d.night && S().kaia_night === 2) && S().kaia_anim));
+const s = S();
+P.duck = duckStep(P.duck, isPlaying(s, d.night, d.play));
+const now = performance.now() | 0;
+hideTrack(P.hideD, hideSet(s), isPlaying(s, d.night, d.play), now);
+hideTrack(P.hideN, hideSet(SAVED), isPlaying(SAVED, LIVE ? !!LIVE.night : false, playNow()), now);
 }
 function fit() {
 const wall = $("#wall"), cs = getComputedStyle(wall);
@@ -3343,15 +3418,15 @@ tilesTick(true);
 function tileBase() {
 const s0 = S(), s = Object.assign({}, s0, { kaia_anim: s0.kaia_anim || 1, kaia_night: s0.kaia_night === 2 ? 1 : s0.kaia_night });
 const tm = timeNow(), night = nightFor(s, tm);
-const base = new BallMatrix();
-renderFrame(base, s, { ...tm, night, play: null, duck: 255 });
-return { s, night, base, gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1) };
+const base = new BallMatrix(), sh = hideSet(s);
+renderFrame(base, sh, { ...tm, night, play: null, duck: 255, hide: 65535 });  // the time as it looks mid-animation
+return { s: sh, night, base, hd: digitHide(sh, 65535), gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1) };
 }
 function overlayOn(b, play) {
 work.leds.set(b.base.leds);
 work.marks.set(b.base.marks);
 useMatrix(work);
-kaiaDraw(b.s, b.night, play);
+kaiaDraw(b.s, b.night, play, b.hd);
 return work.leds;
 }
 function tilesTick(force, half) {
@@ -3604,8 +3679,9 @@ if (t.type === "range") {
 const o = t.closest(".fld").querySelector("output");
 if (o) o.textContent = fmtVal(k, v);
 }
-if (t.type === "checkbox" || (t.tagName === "SELECT" && !k.startsWith("kaia_"))) renderGroup(groupOf(k));
-if (k === "kaia_color" && !P.M && S().kaia_anim) play(ANIM_NAMES[P.ev]);
+if (k === "kaia_hide") fillHide();
+else if (t.type === "checkbox" || (t.tagName === "SELECT" && !k.startsWith("kaia_"))) renderGroup(groupOf(k));
+if ((k === "kaia_color" || k.startsWith("kaia_hide")) && !P.M && S().kaia_anim) play(ANIM_NAMES[P.ev]);
 });
 document.addEventListener("click", (e) => {
 if (!$("#pop").hidden && !e.target.closest("#pop,#gear")) popOpen(false);
@@ -3775,7 +3851,7 @@ poll(true);
 requestAnimationFrame(loop);
 setTimeout(() => S().kaia_anim && !P.M && play(ANIM_NAMES[P.ev]), 600);
 window.ballclock = {
-P, api, S, play, setSrc, setLive, showTab, setEvent, setSheet, mock, sync, unlit, setU,
+P, api, S, play, poll, setSrc, setLive, showTab, setEvent, setSheet, mock, sync, unlit, setU,
 tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; }, get tiles() { return tiles; },
 };
 })();</script></body></html>

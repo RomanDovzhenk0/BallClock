@@ -3,7 +3,7 @@
 // live thumbnails and a gallery (a sheet on the phone), the try-out on the clock and the save bar.
 import { AuthError, ClockApi, fetchSend, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, keyId, OfflineError, parseLeds, TRY_STATE_MS, tryOut } from "./api.js";
 import { ClockSync, parseTime } from "./clock.js";
-import { animOf, duckStep, isState, kaiaDraw, renderFrame, resolvePlay } from "./frame.js";
+import { animOf, digitHide, duckStep, hideTrack, isPlaying, isState, kaiaDraw, renderFrame, resolvePlay } from "./frame.js";
 import { A_WAKE, ANIM_NAMES, useMatrix } from "./kaia.js";
 import { LOOK_COUNT, LOOK_NAMES, shotLength } from "./looks.js";
 import { BallMatrix } from "./matrix.js";
@@ -50,11 +50,13 @@ if (store) setUnlit(readUnlit(store));
 let SAVED = normalize(null);
 const DRAFT = {};
 const W = { ssid: "", pass: "" };  // the Wi-Fi fields: applied with «Подключить», not with Save
-let LIVE = null, recvAt = 0, WIFI = null, FRAME = null, everOk = false;
+let LIVE = null, recvAt = 0, WIFI = null, FRAME = null, everOk = false, hideKnown = false;
 const sync = new ClockSync();
 // ev: the event in view (anim, A_WAKE … A_NOTIFY): the preview's chips and the Kaya tab's list are the same choice;
 // CL: the try-out on the clock {n, label, t0, dur, done}; open: the gallery's sheet on the phone
-const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, cmp: 0.5, tab: "kaia", saving: false, upd: "", ev: A_WAKE, CL: null, open: false };
+const newHide = () => ({ h: 0, t: performance.now() | 0, end: 0, on: 0 });
+// hideD, hideN: the Digit fade's level of «Черновик» and of «Сейчас» (frame.js hideTrack)
+const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, hideD: newHide(), hideN: newHide(), cmp: 0.5, tab: "kaia", saving: false, upd: "", ev: A_WAKE, CL: null, open: false };
 
 const S = () => Object.assign({}, SAVED, DRAFT);
 const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => [...(r || document).querySelectorAll(s)];
@@ -125,7 +127,12 @@ const GROUPS = [
         { k: "kaia_wake_speed", t: "spd", l: "Скорость пробуждения" },
         { k: "kaia_color", t: "col", l: "Цвет Каи" },
         { k: "kaia_bright", t: "rng", l: "Яркость Каи", min: 0, max: 255 },
-        { k: "kaia_night", t: "sel", l: "Ночью", o: ["Как обычно", "Тусклее", "Не показывать"] }] },
+        { k: "kaia_night", t: "sel", l: "Ночью", o: ["Как обычно", "Тусклее", "Не показывать"] },
+        { k: "kaia_hide", t: "sw", l: "Прятать цифры" },
+        { k: "kaia_hide_out", t: "rng", l: "Исчезают за", min: 100, max: 3000 },
+        { k: "kaia_hide_in", t: "rng", l: "Появляются за", min: 100, max: 5000 },
+        { k: "kaia_hide_hold", t: "rng", l: "Пауза перед появлением", min: 0, max: 5000 },
+        { k: "kaia_hide_keep", t: "rng", l: "Остаётся от цифр", min: 0, max: 100, u: " %" }] },
     { id: "time", tab: "net", title: "Время", f: [
         { k: "ntp_gmt", t: "num", l: "Часовой пояс", min: -12, max: 14 },
         { k: "ntp_host", t: "txt", l: "NTP-сервер", w: 1 },
@@ -155,6 +162,7 @@ GROUPS.forEach((g) => g.f.forEach((f) => (FLD[f.k] = Object.assign({ g: g.title 
 
 function fmtVal(k, v) {
     if (k === "kaia_wake_speed") return v + " % · " + String(v / 100).replace(".", ",") + "×";
+    if (k === "kaia_hide_out" || k === "kaia_hide_in" || k === "kaia_hide_hold") return fmtS(v);
     return v + ((FLD[k] && FLD[k].u) || "");
 }
 
@@ -303,8 +311,25 @@ function kayaHTML(s) {
         h += '<div class="evh"><h3 class="sub">Цвет и яркость Каи</h3></div><div class="kopts">' + fld("kaia_color", "Цвет Каи", "", '<input type="color" data-k="kaia_color" value="' + hexs(s.kaia_color) + '" aria-label="Цвет Каи">') +
             fld("kaia_bright", "Яркость", "", rngCtl("kaia_bright", s.kaia_bright, 0, 255, 0, "Яркость Каи"), 1) +
             fld("kaia_night", "Ночью", "", '<select data-k="kaia_night" aria-label="Ночью">' + opts(FLD.kaia_night.o, s.kaia_night) + "</select>") + "</div>";
+        // the clocks of v1.7 and later carry kaia_hide
+        if (hideKnown) h += '<div class="evh"><h3 class="sub">Цифры во время анимации</h3></div><div class="kopts" id="hidebox">' + hideHTML(s) + "</div>";
     }
     return h;
+}
+
+// the Digit fade: the switch, and while it is on the four sliders
+function hideHTML(s) {
+    const sec = (k, lab) => fld(k, lab, "", rngCtl(k, s[k], FLD[k].min, FLD[k].max, k === "kaia_hide_keep" ? 5 : 100, lab), 1);
+    return fld("kaia_hide", "Прятать цифры", "Пока играет анимация Каи, время плавно гаснет, после — плавно возвращается",
+        '<label class="sw"><input type="checkbox" data-k="kaia_hide"' + (s.kaia_hide ? " checked" : "") + ' aria-label="Прятать цифры"><i></i></label>') +
+        (s.kaia_hide ? sec("kaia_hide_out", "Исчезают за") + sec("kaia_hide_in", "Появляются за") + sec("kaia_hide_hold", "Пауза перед появлением") + sec("kaia_hide_keep", "Остаётся от цифр") : "") +
+        '<small class="hnote">«Показать на часах» играет с настройками цифр, сохранёнными на часах.</small>';
+}
+
+function fillHide() {
+    const b = $("#hidebox");
+    if (b) b.innerHTML = hideHTML(S());
+    markDirty();
 }
 
 // the event's gallery (and the wake's speed under it)
@@ -482,15 +507,18 @@ let pollT = 0, polling = false;
 const clockMillis = () => (LIVE ? LIVE.ms + (performance.now() - recvAt) : performance.now());
 
 function takeState(st) {
-    const before = SAVED;
+    const before = SAVED, had = hideKnown;
     LIVE = st;
+    hideKnown = !!(st.settings && "kaia_hide" in st.settings);
     recvAt = performance.now();
     if (st.synced) sync.add(parseTime(st.time), st.ms);
     SAVED = normalize(Object.assign({}, st.settings, { page_pass: "", wifi_pass: "", wifi_ssid: WIFI ? WIFI.ssid : "" }));
     for (const k of Object.keys(DRAFT)) if (k !== "page_pass" && DRAFT[k] === SAVED[k]) delete DRAFT[k];
     const changed = Object.keys(SAVED).filter((k) => SAVED[k] !== before[k]);
     const act = document.activeElement;
-    new Set(changed.map(groupOf).filter(Boolean)).forEach((g) => {
+    const groups = new Set(changed.map(groupOf).filter(Boolean));
+    if (hideKnown !== had) groups.add(groupOf("kaia_anim"));
+    groups.forEach((g) => {
         const el = document.getElementById("g-" + g.id);
         if (!el || !el.contains(act) || act === document.body) renderGroup(g);
     });
@@ -596,9 +624,12 @@ function frameNow() {
     if (P.conn === "offline" && FRAME) return { leds: FRAME.leds, gain: gainOf(FRAME.bright) * 0.4, mirror: true };
     if ((P.live === "mirror" || textNow()) && FRAME && P.conn === "ok") return { leds: FRAME.leds, gain: gainOf(FRAME.bright), mirror: true, night: FRAME.night };
     const tm = timeNow(), play = playNow(), on = !!resolvePlay(play);
-    const leds = renderFrame(work, SAVED, { ...tm, night: LIVE ? !!LIVE.night : false, play, duck: on ? duckSince(play) : 0 });
+    const leds = renderFrame(work, hideSet(SAVED), { ...tm, night: LIVE ? !!LIVE.night : false, play, duck: on ? duckSince(play) : 0, hide: P.hideN.h });
     return { leds: Uint32Array.from(leds), gain: gainOf(LIVE ? LIVE.bright : 128) * (P.conn === "offline" ? 0.4 : 1), night: LIVE && LIVE.night };
 }
+
+// the settings the Digit fade reads: a clock before v1.7 has none, so its time never fades
+const hideSet = (s) => (hideKnown || !s.kaia_hide ? s : { ...s, kaia_hide: 0 });
 
 // the duck as it stands t ms into a play (it eases in over about 0.25 s)
 function duckSince(play) {
@@ -615,7 +646,7 @@ function frameDraft() {
         play = null;
         markKs();
     }
-    const leds = renderFrame(work, s, { ...tm, night, play, duck: P.duck });
+    const leds = renderFrame(work, hideSet(s), { ...tm, night, play, duck: P.duck, hide: P.hideD.h });
     return { leds: Uint32Array.from(leds), gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1), night, play };
 }
 
@@ -687,7 +718,12 @@ function draw() {
     if (view2 && mini) paint(view2, shown.leds, shown.gain);
     P.night = !!d.night;
     // the duck of the draft: one step a frame
-    P.duck = duckStep(P.duck, !!(d.play && !(d.night && S().kaia_night === 2) && S().kaia_anim));
+    const s = S();
+    P.duck = duckStep(P.duck, isPlaying(s, d.night, d.play));
+    // the Digit fade's levels, by the real ms: «Черновик» from the event pressed, «Сейчас» from what the clock plays
+    const now = performance.now() | 0;
+    hideTrack(P.hideD, hideSet(s), isPlaying(s, d.night, d.play), now);
+    hideTrack(P.hideN, hideSet(SAVED), isPlaying(SAVED, LIVE ? !!LIVE.night : false, playNow()), now);
 }
 
 function fit() {
@@ -777,16 +813,16 @@ function sizeTiles() {
 function tileBase() {
     const s0 = S(), s = Object.assign({}, s0, { kaia_anim: s0.kaia_anim || 1, kaia_night: s0.kaia_night === 2 ? 1 : s0.kaia_night });
     const tm = timeNow(), night = nightFor(s, tm);
-    const base = new BallMatrix();
-    renderFrame(base, s, { ...tm, night, play: null, duck: 255 });
-    return { s, night, base, gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1) };
+    const base = new BallMatrix(), sh = hideSet(s);
+    renderFrame(base, sh, { ...tm, night, play: null, duck: 255, hide: 65535 });  // the time as it looks mid-animation
+    return { s: sh, night, base, hd: digitHide(sh, 65535), gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1) };
 }
 
 function overlayOn(b, play) {
     work.leds.set(b.base.leds);
     work.marks.set(b.base.marks);
     useMatrix(work);
-    kaiaDraw(b.s, b.night, play);
+    kaiaDraw(b.s, b.night, play, b.hd);
     return work.leds;
 }
 
@@ -1077,8 +1113,10 @@ document.addEventListener("input", (e) => {
         const o = t.closest(".fld").querySelector("output");
         if (o) o.textContent = fmtVal(k, v);
     }
-    if (t.type === "checkbox" || (t.tagName === "SELECT" && !k.startsWith("kaia_"))) renderGroup(groupOf(k));
-    if (k === "kaia_color" && !P.M && S().kaia_anim) play(ANIM_NAMES[P.ev]);
+    if (k === "kaia_hide") fillHide();
+    else if (t.type === "checkbox" || (t.tagName === "SELECT" && !k.startsWith("kaia_"))) renderGroup(groupOf(k));
+    // a colour or a fade time changed: play the event so the change is seen at once
+    if ((k === "kaia_color" || k.startsWith("kaia_hide")) && !P.M && S().kaia_anim) play(ANIM_NAMES[P.ev]);
 });
 
 document.addEventListener("click", (e) => {
@@ -1260,6 +1298,6 @@ poll(true);
 requestAnimationFrame(loop);
 setTimeout(() => S().kaia_anim && !P.M && play(ANIM_NAMES[P.ev]), 600);
 window.ballclock = {
-    P, api, S, play, setSrc, setLive, showTab, setEvent, setSheet, mock, sync, unlit, setU,
+    P, api, S, play, poll, setSrc, setLive, showTab, setEvent, setSheet, mock, sync, unlit, setU,
     tilesAt: (ms) => tiles.forEach((t) => (t.t0 = performance.now() - ms)), get LIVE() { return LIVE; }, get tiles() { return tiles; },
 };

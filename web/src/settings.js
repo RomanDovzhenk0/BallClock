@@ -1,4 +1,4 @@
-// The settings of build() in firmware/src/settings.cpp (plus kaia_wake and kaia_wake_speed of v1.5, and the looks per event of v1.6):
+// The settings of build() in firmware/src/settings.cpp (plus kaia_wake and kaia_wake_speed of v1.5, the looks per event of v1.6 and the Digit fade of v1.7):
 // their kinds, ranges and the defaults of db.init(). Text keys stay strings, every other one is a number.
 
 export const TEXT_KEYS = ["ntp_host", "log_host", "wifi_ssid", "wifi_pass", "page_pass"];
@@ -15,8 +15,12 @@ export const DEFAULTS = {
     kaia_anim: 1, kaia_wake: 0, kaia_wake_speed: 100,
     kaia_listen: 0, kaia_think: 0, kaia_speak: 0, kaia_done: 0, kaia_error: 0, kaia_notify: 0,
     kaia_color: 0x00d1ff, kaia_bright: 255, kaia_night: 1,
+    kaia_hide: 1, kaia_hide_out: 600, kaia_hide_in: 1200, kaia_hide_hold: 1000, kaia_hide_keep: 0,
     page_pass: "", log_host: "",
 };
+
+// Digit fade (v1.7): the keys with their ranges, [min, max]; a value out of range reads as its default (as savedLook in kaia.cpp)
+export const HIDE_RANGES = { kaia_hide: [0, 1], kaia_hide_out: [100, 3000], kaia_hide_in: [100, 5000], kaia_hide_hold: [0, 5000], kaia_hide_keep: [0, 100] };
 
 // the look of each event, by anim (A_WAKE … A_NOTIFY): 0 = as the style, 1–3 the style versions, 4 and up the new ones
 export const LOOK_KEYS = ["kaia_wake", "kaia_listen", "kaia_think", "kaia_speak", "kaia_done", "kaia_error", "kaia_notify"];
@@ -31,6 +35,8 @@ export function normalize(raw) {
             const n = typeof v === "boolean" ? +v : Number(v);
             s[k] = v == null || v === "" || !Number.isFinite(n) ? DEFAULTS[k] : Math.trunc(n);
         }
+        const r = HIDE_RANGES[k];
+        if (r && (s[k] < r[0] || s[k] > r[1])) s[k] = DEFAULTS[k];
     }
     return s;
 }
