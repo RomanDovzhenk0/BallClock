@@ -29,8 +29,13 @@ extern const char kaia_notify_names[] PROGMEM;
 // settings server, and the auth check of /settings set and click: before the Settings library's begin()
 void kaiaBegin(KaiaServer& server);
 
-// draw one 50 ms frame over the clock; night = night mode is on
-void kaiaDraw(bool night);
+// draw one 50 ms frame over the clock; night = night mode is on; hide = kaiaDigitScale() of this frame: the digit
+// balls take the overlay that much more. It also steps the Digit fade's level
+void kaiaDraw(bool night, uint8_t hide);
 
 // 255 = the background as set, less while the overlay plays
 uint8_t kaiaBackScale();
+
+// the Digit fade (v1.7): how much of the time to take away, 0..255 (0 = all of it shown), for the redraw before the
+// clock; the level kaiaDraw stepped in the frame before
+uint8_t kaiaDigitScale();
