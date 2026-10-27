@@ -661,24 +661,31 @@ static void shotDraw(uint8_t style, Anim n, int t, int du, uint32_t col) {
 
 // ================= the wakes of v1.5 (web/src/wakes.js, line by line) =================
 // kaia_wake picks one apart from the style: 0 the style's own (1 ripple, 2 orbit, 3 sparks), 1–3 those three with
-// any style, 4–14 the new ones below, 15–20 (v1.8) those of styles 4–9 (Kaya's styles). kaia_wake_speed (50–200 %):
+// any style, 4–14 the new ones below, 15–20 (v1.8) those of styles 4–9 (Kaya's styles), 21–23 (v1.9) those of styles
+// 10–12; which wake is which style's is the table wake_style (style_wake the other way). kaia_wake_speed (50–200 %):
 // the wake runs on u = t·speed/100 and lasts du·100/speed; the listening of the style that fades in under it, and that
 // takes over after it, keeps real time.
 
 // ids in the site's order (the names: kaia_wake_names); base lengths at 100 %, ms (1–3 = shot_ms[style - 1][0])
-// 15–20 (v1.8): the wakes of styles 4–9 (Kaya's styles), wake = style + 11
-static const uint16_t wake_ms[WAKE_COUNT] PROGMEM = {0, 1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000, 1800, 2000, 2200, 1800, 2000, 2000, 1900, 2000, 2000};
+// 15–20 (v1.8): the wakes of styles 4–9 (Kaya's styles); 21–23 (v1.9): styles 10–12
+static const uint16_t wake_ms[WAKE_COUNT] PROGMEM = {0, 1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000, 1800, 2000, 2200, 1800, 2000, 2000, 1900, 2000, 2000,
+                                                     2000, 2000, 2000};
+// which style each wake is the wake of (0: none; 1–3 are drawn by wakeDraw's own switch), by wake id
+static const uint8_t wake_style[WAKE_COUNT] PROGMEM = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+// and the wake of each style, by style id (1–3 their own)
+static const uint8_t style_wake[STYLE_COUNT + 1] PROGMEM = {0, 1, 2, 3, 15, 16, 17, 18, 19, 20, 21, 22, 23};
 // when the listening starts to fade in under wakes 1–3 (the new ones: du - 800)
 static const uint16_t wake_from[4] = {0, 1100, 1500, 1600};
 
 const char kaia_wake_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Рассвет;Радар;Спираль;Сердцебиение;Глаз;Звёзды;Салют;Дождь;Включение;Зайчик;«КАЯ»;"
-                                       "Пинг-понг;Калейдоскоп;Лава-лампа;Мордашка;Галактика;Сканер";
+                                       "Пинг-понг;Калейдоскоп;Лава-лампа;Мордашка;Галактика;Сканер;Снежинка;Светлячки;Пламя";
 
 // kaia_anim (web/src/styles.js STYLE_NAMES), 0..STYLE_COUNT
-const char kaia_style_names[] PROGMEM = "Выкл;Рябь;Орбита;Искры;Пинг-понг;Калейдоскоп;Лава-лампа;Мордашка;Галактика;Сканер";
+const char kaia_style_names[] PROGMEM = "Выкл;Рябь;Орбита;Искры;Пинг-понг;Калейдоскоп;Лава-лампа;Мордашка;Галактика;Сканер;Снежинка;Светлячки;Пламя";
 
-// the looks per event of v1.6 (web/src/looks.js LOOK_NAMES), 0..LOOK_COUNT - 1; 9–14 the versions of styles 4–9 (v1.8)
-#define STYLE_LOOK_NAMES ";Пинг-понг;Калейдоскоп;Лава-лампа;Мордашка;Галактика;Сканер"
+// the looks per event of v1.6 (web/src/looks.js LOOK_NAMES), 0..LOOK_COUNT - 1; 9–14 the versions of styles 4–9 (v1.8),
+// 15–17 those of styles 10–12 (v1.9)
+#define STYLE_LOOK_NAMES ";Пинг-понг;Калейдоскоп;Лава-лампа;Мордашка;Галактика;Сканер;Снежинка;Светлячки;Пламя"
 const char kaia_listen_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Эхо;Прилив;Сияние;Взгляд;Пузырьки" STYLE_LOOK_NAMES;
 const char kaia_think_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Змейка;Нейроны;Песочные часы;Три точки;Атом" STYLE_LOOK_NAMES;
 const char kaia_speak_names[] PROGMEM = "Как у стиля;Рябь;Орбита;Искры;Эквалайзер;Осциллограф;Лучи;Динамики;Губы" STYLE_LOOK_NAMES;
@@ -1017,13 +1024,19 @@ static void nameWake(Anim, int t, int, uint32_t col) {
 // with any style; 4 and up: the new ones below. The listening after a wake (and under its end) is the listening's look.
 // The small tables are in PROGMEM.
 
-// v1.8: 9–14 are the versions of styles 4–9 (Kaya's styles below), look = style + 5, and look 0 with style 4–9 plays its
-// version
+// v1.8: 9–14 are the versions of styles 4–9 (Kaya's styles below); v1.9: 15–17 those of styles 10–12. Look 0 with style
+// 4 or later plays its version. Which look is which style's version is the table look_style (style_look the other way),
+// so later ids can be appended anywhere.
 
-// the look an event plays: look 0 with style 4–9 is that style's version (9–14); with 1–3 it stays 0 (stateDraw and
-// shotDraw take the style)
+// which style each look is the version of (0: none; 1–3 go through stateDraw / shotDraw with the style), by look id
+static const uint8_t look_style[LOOK_COUNT] PROGMEM = {0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+// and the look of each style's version, by style id (0 for 0–3)
+static const uint8_t style_look[STYLE_COUNT + 1] PROGMEM = {0, 0, 0, 0, 9, 10, 11, 12, 13, 14, 15, 16, 17};
+
+// the look an event plays: look 0 with style 4 or later is that style's version (style_look); with 1–3 it stays 0
+// (stateDraw and shotDraw take the style)
 static uint8_t lookOf(uint8_t style, uint8_t look) {
-    return look || style <= 3 ? look : style + 5;
+    return look || style <= 3 ? look : pgm_read_byte(&style_look[style]);
 }
 
 // the base length of the new one-shots (4–8), ms: done, error, notify
@@ -1033,20 +1046,24 @@ static const uint16_t look_ms[3][5] PROGMEM = {
     {1500, 1500, 1600, 1700, 1600},
 };
 
-// the one-shot lengths of styles 4–9 (styles.js fam_ms), ms: done, error, notify (their wakes are wake_ms[15..20])
-static const uint16_t fam_ms[6][3] PROGMEM = {
+// the one-shot lengths of styles 4–12 (styles.js fam_ms, row style − 4), ms: done, error, notify (their wakes:
+// wake_ms[style_wake[style]])
+static const uint16_t fam_ms[9][3] PROGMEM = {
     {1500, 1600, 1600},
     {1600, 1600, 1700},
     {1600, 1600, 1600},
     {1700, 1600, 1500},
     {1700, 1700, 1500},
     {1500, 1600, 1500},
+    {1800, 1800, 1600},  // 10 Снежинка
+    {1700, 1500, 1400},  // 11 Светлячки
+    {1800, 2000, 1500},  // 12 Пламя
 };
 
-// a one-shot's length, ms: look 0 = the style's version, 1–3 that style's version, 4–8 the new ones, 9–14 styles 4–9
+// a one-shot's length, ms: look 0 = the style's version, 1–3 that style's version, 4–8 the new ones, 9–17 styles 4–12
 static int shotLength(Anim n, uint8_t look, uint8_t style) {
     look = lookOf(style, look);
-    if (look >= 9) return pgm_read_word(&fam_ms[look - 9][n - A_DONE]);
+    if (pgm_read_byte(&look_style[look])) return pgm_read_word(&fam_ms[pgm_read_byte(&look_style[look]) - 4][n - A_DONE]);
     if (look >= 4) return pgm_read_word(&look_ms[n - A_DONE][look - 4]);
     return shot_ms[(look ? look : style) - 1][n - A_DONE + 1];
 }
@@ -1620,7 +1637,8 @@ static void badgeNotify(Anim, int t, int du, uint32_t col) {
 // ================= Kaya's styles of v1.8 (KAIA-195: web/src/styles.js, line by line) =================
 // A style is a whole visual language: its own version of all 7 events. kaia_anim 4–9 picks one as the style, and every
 // event with look 0 «Как у стиля» plays its version; the versions also join every event's list as looks 9–14 and wakes
-// 15–20, so any event can take them with any style, as 1–3 do. Style s is look s + 5 and wake s + 11.
+// 15–20, so any event can take them with any style, as 1–3 do. Which look and wake is which style's version is a table
+// (look_style / style_look, wake_style / style_wake), not arithmetic.
 //   4 Пинг-понг, 5 Калейдоскоп, 6 Лава-лампа, 7 Мордашка, 8 Галактика, 9 Сканер
 // The wakes fade out over their last 400 ms (wakeDraw fades the listening in under their last 800), the other
 // one-shots over their last 300 ms; the states loop. The small tables are in PROGMEM.
@@ -2543,9 +2561,551 @@ static void scanNotify(Anim, int t, int du, uint32_t col) {
     }
 }
 
+// ================= Kaya's styles of v1.9, part 1 (KAIA-201's catalog A: web/src/nature.js, line by line) =================
+// As the styles of v1.8: a style is a whole visual language, its own version of all 7 events; kaia_anim 10–12 picks one
+// as the style, and its versions join every event's list (looks 15–17, wakes 21–23; look_style, wake_style).
+//   10 Снежинка, 11 Светлячки, 12 Пламя (the catalog's default: the cold flame in Kaya's colour)
+// The wakes fade out over their last 400 ms (wakeDraw fades the listening in under their last 800), the other
+// one-shots over their last 300 ms; the states loop. The small tables are in PROGMEM; the arrays of a frame are on the
+// stack, sized as the loop that fills them.
+// p = 4·(x − 19), q = 7·(row − 3): a ball from the middle in 1/8 balls (p to the right, q down), as in KAIA-173 and KAIA-195
+
+// a soft falloff: 255 at x = 0, easing down to 0 at |x| = w (a smoothstep of tent)
+static int bell(int x, int w) {
+    int u = tent(x, w);
+    if (!u) return 0;
+    return u * u * (765 - 2 * u) / 65025;
+}
+
+// a slow glitter of ball i, 0..255: sin² at its own pace (rate + 0..63, 256 = a turn a second) from its own phase
+static int glint(uint8_t i, int t, int rate) {
+    int s = sin8((h2(i) + (t * (rate + (h3(i) & 63)) / 1000)) & 255);
+    return s * s / 255;
+}
+
+// ----- 10 · Снежинка: a flake on the balls' own lattice; frost that grows, glitters and thaws
+// u, v: the ball's place in the diagonal grid from the flake's centre (col 10, row 3). The six arms run along the grid's
+// own lines (v = 0, u = 0, u = v), so every arm is a straight line of three balls; round each tip, two balls of frost.
+
+// the ball's place on the flake: D | s << 2 | k << 3, or −1 off it. D: the hex distance from the centre (0..3); s = 1 on
+// the frost round a tip (D = 3, one off an arm), 0 on an arm; k: the arm (0 at 1 o'clock, clockwise) or, for the frost,
+// the gap after arm k
+static int flakeGeo(uint8_t i) {
+    int u = b_col(i) - 10, v = b_row(i) - 3, w = u - v;
+    int D = imax(abs(u), imax(abs(v), abs(w))), s = imin(abs(u), imin(abs(v), abs(w)));
+    if (D > 3 || (s && D < 3)) return -1;
+    int k;
+    if (!s) k = !v ? (u > 0 ? 1 : 4) : !u ? (v < 0 ? 0 : 3) : u > 0 ? 2 : 5;
+    else k = u > 0 ? (v < 0 ? 0 : v < u ? 1 : 2) : v > 0 ? 3 : v > u ? 4 : 5;
+    return D | (s ? 4 : 0) | (k << 3);
+}
+
+// how lit a flake ball is, 0..255: the arms grown out to la (1/16 ball from the centre: 48 = three balls) and in from the
+// tips to li (64 = all the way in); the frost of gap k grown to lb[k] (16 = all of it), fainter than the arms
+static int flakeLit(int g, int la, int li, const int* lb) {
+    int D = g & 3, s = (g >> 2) & 1, b = D - s;
+    int a = imin(255, imax(0, (la - b * 16 + 8) * 16));
+    a = imin(a, imin(255, imax(0, (li - (3 - b) * 16 + 8) * 16)));
+    if (s) a = imin(a, imin(255, imax(0, lb[(g >> 3) & 7] * 16))) * 150 / 255;
+    return a;
+}
+
+// frost on the rim: about one ball in five glittering slowly, the rest dark
+static int rime(uint8_t i, int t) {
+    if (ringOf(i) || h1(i) >= 50) return 0;
+    return 10 + (110 * glint(i, t, 60) / 255);
+}
+
+// Пробуждение · Иней: frost creeps in from the rim towards the middle, then melts back out and leaves the flake, grown in
+// from its tips; its centre flashes as the arms meet
+static void snowWake(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 400, t);
+    uint32_t wc = mix(col, C_WHITE, 200);
+    int f = smooth(0, 750, t) * 60 / 255, mb = smooth(650, 1350, t) * 60 / 255;  // the frost's front in, and how far it has melted back
+    int li = smooth(700, 1350, t) * 64 / 255, fl = tent(t - 1400, 260), rm = smooth(900, 1600, t), lb[6] = {0, 0, 0, 0, 0, 0};
+    for (int j = 0; j < 6; j++) lb[j] = 16 - (smooth(1300, 1700, t) * 16 / 255);  // the tips keep their frost a moment
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int r = ringOf(i), g = flakeGeo(i);
+        int a = (imin(255, imax(0, (f - r * 16) * 16)) * (40 + (h1(i) >> 1)) / 255) * (255 - imin(255, imax(0, (mb - (3 - r) * 16) * 16))) / 255;
+        uint32_t c = mix(col, wc, h2(i) >> 2);
+        if (!r) a = imax(a, rime(i, t) * rm / 255);
+        if (g >= 0) {
+            int fa = flakeLit(g, 48, li, lb);
+            if (fa > a) {
+                a = fa;
+                c = mix(col, wc, tent(li - (3 - (g & 3) + ((g >> 2) & 1)) * 16, 16));  // the growing tips white
+            }
+            if (fl) {
+                a = imax(a, fl);
+                c = mix(col, wc, fl);
+            }
+        }
+        if (a) put(i, c, a * fo / 255);
+    }
+}
+
+// Слушает · Блеск: the flake hangs still and glitters: a glint runs out along one arm after another, clockwise, 0.8 s each;
+// a little snow falls at the sides, and frost glitters here and there on the rim
+static const int8_t snow_fx[4] PROGMEM = {-60, -38, 42, 64};  // where the snow falls, 1/8 ball
+static void snowListen(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int lb[6] = {0, 0, 0, 0, 0, 0};
+    uint32_t wc = mix(col, C_WHITE, 210);
+    int br = 200 + (wave(t, 45) * 40 / 128), fx[4], fy[4];
+    int ph = posMod(t, 4800), ga = ph / 800, gp = ((ph - ga * 800) * 72 / 800) - 8;  // the glint: on arm ga, gp/16 ball out
+    for (int j = 0; j < 4; j++) {  // the snow: four flakes falling slowly, each at its own pace
+        int per = 5200 + j * 700;
+        fx[j] = (int8_t)pgm_read_byte(&snow_fx[j]) + (wave(t + j * 600, 60) * 4 / 128);
+        fy[j] = -26 + (posMod(t + j * 1900, per) * 54 / per);
+    }
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3), g = flakeGeo(i);
+        int a = rime(i, t);
+        uint32_t c = col;
+        for (int j = 0; j < 4; j++) {
+            if (abs(p - fx[j]) >= 8 || abs(q - fy[j]) >= 8) continue;
+            int v = bell(oct(p - fx[j], q - fy[j]), 8) * 120 / 255;
+            if (v > a) {
+                a = v;
+                c = wc;
+            }
+        }
+        if (g >= 0 && !((g >> 2) & 1)) {
+            int D = g & 3;
+            a = imax(a, flakeLit(g, 48, 64, lb) * br / 255);
+            c = col;
+            if (!D || ((g >> 3) & 7) == ga) {
+                int v = tent(D * 16 - gp, 20);
+                a = imax(a, v);
+                c = mix(col, wc, v);
+            }
+        }
+        if (a) put(i, c, a * k / 255);
+    }
+}
+
+// Думает · Иней на кончиках: the frost round the tips grows and melts gap after gap round the flake, 1.2 s a round, and a
+// soft light circles with it; half violet
+static void snowThink(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    uint32_t c0 = mix(col, C_VIOLET, 128), wc = mix(c0, C_WHITE, 180);
+    int G = t * 256 / 1200, lb[6] = {0, 0, 0, 0, 0, 0};
+    for (int j = 0; j < 6; j++) {
+        int u = posMod(t - j * 200, 1200);
+        lb[j] = (u < 600 ? smooth(0, 500, u) : 255 - smooth(600, 1100, u)) * 16 / 255;
+    }
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int g = flakeGeo(i);
+        int a = rime(i, t) >> 1;
+        uint32_t c = c0;
+        if (g >= 0) {
+            int fa = flakeLit(g, 48, 64, lb);
+            if (fa) {
+                int d = (G - ((((g >> 3) & 7) * 2 + ((g >> 2) & 1)) * 256 / 12)) & 255, v = d < 90 ? (90 - d) * 255 / 90 : 0;
+                a = imax(a, fa * (140 + (v * 115 / 255)) / 255);
+                c = mix(c0, wc, v * v / 510);
+            }
+        }
+        if (a) put(i, c, a * k / 255);
+    }
+}
+
+// Говорит · Рост голосом: the arms reach out with the voice, the frost at the tips follows a beat later; loud, the tips go white
+static void snowSpeak(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int v = voice(t), v2 = voice(t - 110), la = 18 + (v * 30 / 255);
+    uint32_t wc = mix(col, C_WHITE, 200);
+    int lb[6] = {0, 0, 0, 0, 0, 0};
+    for (int j = 0; j < 6; j++) lb[j] = v2 * 16 / 255;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int g = flakeGeo(i);
+        int a = rime(i, t) >> 1;
+        uint32_t c = col;
+        if (g >= 0) {
+            int fa = flakeLit(g, la, 64, lb);
+            if (fa > a) {
+                a = fa;
+                c = mix(col, wc, tent(la - ((g & 3) - ((g >> 2) & 1)) * 16 - 8, 14) * v / 255);  // the tips
+            }
+        }
+        if (a) put(i, c, a * k / 255);
+    }
+}
+
+// Готово · Идеальная снежинка: the flake grows whole with its frost in half a second, flashes white, and a ring of glitter
+// runs out over the display
+static void snowDone(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t);
+    uint32_t wc = mix(col, C_WHITE, 210);
+    int la = smooth(0, 450, t) * 48 / 255, lb[6] = {0, 0, 0, 0, 0, 0};
+    for (int j = 0; j < 6; j++) lb[j] = smooth(250, 600, t) * 16 / 255;
+    int fl = tent(t - 650, 260), age = t - 650, rr = age * 640 / 1000, rf = age > 0 ? imax(0, 255 - (age * 255 / 900)) : 0;
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int g = flakeGeo(i);
+        int a = 0;
+        uint32_t c = col;
+        if (rf && h1(i) < 150) {  // the ring of glitter
+            a = (tent(b_dist[i] * 16 - rr, 70) * rf / 255) * (60 + (h1(i) >> 1)) / 255;
+            c = mix(col, wc, h2(i) >> 1);
+        }
+        if (g >= 0) {
+            int fa = flakeLit(g, la, 64, lb);
+            if (fa && fa >= a) {
+                a = fa;
+                c = mix(col, wc, fl);
+            }
+        }
+        if (a) put(i, c, a * fo / 255);
+    }
+}
+
+// Ошибка · Оттепель: the frost melts off the tips, the arms shrink back to the centre, and drops run off them and fall
+static const int8_t snow_dx[4] PROGMEM = {28, -20, 12, -4}, snow_dq[4] PROGMEM = {0, 0, 14, 14};  // where the drops fall from (1/8 ball)
+static const int16_t snow_dt[4] PROGMEM = {350, 500, 650, 800};                                     // and when (ms)
+static void snowError(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), la = 48 - (smooth(300, 1300, t) * 48 / 255), g0 = 255 - (smooth(200, 1300, t) * 90 / 255);
+    int lb[6] = {0, 0, 0, 0, 0, 0}, dy[4] = {0, 0, 0, 0}, da[4] = {0, 0, 0, 0};
+    uint32_t wc = mix(col, C_WHITE, 110);
+    for (int j = 0; j < 6; j++) lb[j] = 16 - (smooth(100, 550, t) * 16 / 255);
+    for (int j = 0; j < 4; j++) {
+        int u = imax(0, t - (int16_t)pgm_read_word(&snow_dt[j]));
+        dy[j] = (int8_t)pgm_read_byte(&snow_dq[j]) + (u * u / 7000);
+        da[j] = u > 0 ? imax(0, 255 - (u * 255 / 900)) : 0;
+    }
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3), g = flakeGeo(i);
+        int a = g >= 0 ? flakeLit(g, la, 64, lb) * g0 / 255 : 0;
+        uint32_t c = col;
+        for (int j = 0; j < 4; j++) {
+            if (!da[j] || abs(p - (int8_t)pgm_read_byte(&snow_dx[j])) >= 6 || abs(q - dy[j]) >= 11) continue;
+            int v = bell(oct((p - (int8_t)pgm_read_byte(&snow_dx[j])) * 2, q - dy[j]), 11) * da[j] / 255;  // a drop, taller than wide
+            if (v > a) {
+                a = v;
+                c = wc;
+            }
+        }
+        if (a) put(i, c, a * fo / 255);
+    }
+}
+
+// Уведомление · Блик по кругу: a bright glint runs round the six arms twice with a short trail, then the whole flake flashes
+static void snowNotify(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t);
+    uint32_t wc = mix(col, C_WHITE, 200);
+    int G = t * 512 / 1300, all = tent(t - 1420, 200), lb[6];
+    for (int j = 0; j < 6; j++) lb[j] = 16;  // {16, …} as a loop: an initializer would be a copy in .rodata, which is RAM
+    fr.dg = 128;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int g = flakeGeo(i);
+        int a = rime(i, t) >> 1;
+        uint32_t c = col;
+        if (g >= 0) {
+            int e = G - ((((g >> 3) & 7) * 2 + ((g >> 2) & 1)) * 256 / 12);
+            int v = t < 1300 && e >= 0 && (e & 255) < 80 ? (80 - (e & 255)) * 255 / 80 : 0;
+            a = imax(a, flakeLit(g, 48, 64, lb) * (70 + (imax(v, all) * 185 / 255)) / 255);
+            c = mix(col, wc, imax(v * v / 255, all));
+        }
+        if (a) put(i, c, a * fo / 255);
+    }
+}
+
+// ----- 11 · Светлячки: soft lights that drift, circle and gather; each glows up and down at its own pace
+
+static const int8_t ff_bx[6] PROGMEM = {-54, -32, -10, 12, 34, 56};  // where each one drifts about, 1/8 ball
+static const int8_t ff_wx[6] PROGMEM = {9, 13, 7, 11, 15, 8}, ff_wy[6] PROGMEM = {17, 12, 21, 15, 10, 19};  // each one's slow drift, 256 = a turn a second
+
+// where firefly j drifts at t (while Kaya listens), 1/8 ball: round its own place, a slow wave and a small quicker one each way
+static int flyX(int j, int t) {
+    return (int8_t)pgm_read_byte(&ff_bx[j]) + (wave(t + j * 1700, (int8_t)pgm_read_byte(&ff_wx[j])) * 24 / 128) + (wave(t + j * 900, 41 + j * 7) * 8 / 128);
+}
+
+static int flyY(int j, int t) {
+    return (wave(t + j * 1100, (int8_t)pgm_read_byte(&ff_wy[j])) * 13 / 128) + (wave(t + j * 500, 53 + j * 9) * 4 / 128);
+}
+
+// how bright firefly j glows at t: up and down, each at its own pace (2.6–4.1 s)
+static int flyGlow(int j, int t) {
+    int s = sin8(((t * (62 + j * 7) / 1000) + j * 43) & 255);
+    return 60 + (195 * (s * s / 255) / 255);
+}
+
+// m lights (at most 18) at (px[j], py[j]), each as bright as gl[j]: a soft glow a ball and a quarter across that whitens
+// at its core; where two meet, their light adds up
+static void flies(int m, const int* px, const int* py, const int* gl, uint32_t col, int g) {
+    uint32_t wc = mix(col, C_WHITE, 170);
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), q = 7 * (b_row(i) - 3);
+        int a = 0, w = 0;
+        for (int j = 0; j < m; j++) {
+            int dx = p - px[j], dy = q - py[j];
+            if (!gl[j] || dx >= 10 || dx <= -10 || dy >= 10 || dy <= -10) continue;
+            int d = oct(dx, dy);
+            if (d >= 10) continue;
+            int v = bell(d, 10) * gl[j] / 255;
+            a += v;
+            if (d < 5) w = imax(w, v);
+        }
+        if (a) put(i, mix(col, wc, w), imin(255, a) * g / 255);
+    }
+}
+
+// Пробуждение · Слетаются: the fireflies fly in from beyond the edges one after another and settle into their drift
+static const int8_t ff_in[12] PROGMEM = {-104, -16, -40, -44, -16, 44, 20, -44, 100, 12, 104, -20};  // where each comes from, (p, q)
+static void flyWake(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 400, t), lt = t - du, px[12], py[12], gl[12];
+    fr.dg = 128;
+    for (int j = 0; j < 6; j++) {
+        int u0 = smooth(j * 130, j * 130 + 1000, t), u1 = smooth(j * 130, j * 130 + 1000, t - 80), x0 = (int8_t)pgm_read_byte(&ff_in[2 * j]), y0 = (int8_t)pgm_read_byte(&ff_in[2 * j + 1]);
+        int dx = flyX(j, lt) - x0, dy = flyY(j, lt) - y0;
+        px[2 * j] = x0 + (dx * u0 / 255);
+        py[2 * j] = y0 + (dy * u0 / 255);
+        px[2 * j + 1] = x0 + (dx * u1 / 255);
+        py[2 * j + 1] = y0 + (dy * u1 / 255);
+        gl[2 * j] = 120 + (135 * smooth(j * 130, j * 130 + 300, t) / 255);
+        gl[2 * j + 1] = imin(110, (u0 - u1) * 4);  // the trail, only while it flies
+    }
+    flies(12, px, py, gl, col, fo);
+}
+
+// Слушает · Огоньки: six fireflies drift slowly about the display, each glowing up and down at its own pace
+static void flyListen(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int px[6], py[6], gl[6];
+    for (int j = 0; j < 6; j++) {
+        px[j] = flyX(j, t);
+        py[j] = flyY(j, t);
+        gl[j] = flyGlow(j, t);
+    }
+    flies(6, px, py, gl, col, k);
+}
+
+// Думает · Хоровод: the six circle the middle one after another (3 s a turn), each with a short trail; half violet
+static void flyThink(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int px[18], py[18], gl[18];
+    for (int j = 0; j < 6; j++) {
+        int rad = 44 + (wave(t + j * 400, 90) * 8 / 128);
+        for (int m = 0; m < 3; m++) {
+            int th = ((t - m * 60) * 256 / 3000) + j * 43, e = j * 3 + m;
+            px[e] = (sin8((th + 64) & 255) - 128) * rad / 128;
+            py[e] = (sin8(th & 255) - 128) * 13 / 128;
+            gl[e] = m ? 100 - m * 30 : 170 + (flyGlow(j, t) * 85 / 255);
+        }
+    }
+    flies(18, px, py, gl, mix(col, C_VIOLET, 128), k);
+}
+
+// Говорит · Хор: the fireflies hang in a loose row and glow with the voice two by two, each pair a beat after the last
+static void flySpeak(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int px[6], py[6], gl[6], v[3] = {voice(t), voice(t - 90), voice(t - 180)};
+    for (int j = 0; j < 6; j++) {
+        px[j] = -55 + j * 22 + (wave(t + j * 800, 37) * 6 / 128);
+        py[j] = (j & 1 ? 5 : -5) + (wave(t + j * 600, 29) * 6 / 128);
+        gl[j] = 45 + (v[j >> 1] * 210 / 255);
+    }
+    flies(6, px, py, gl, col, k);
+}
+
+// Готово · Рой: the fireflies gather into one bright cluster in the middle, flare up together, and it glows and turns
+static void flyDone(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), u = smooth(0, 650, t), fl = tent(t - 780, 320), px[6], py[6], gl[6];
+    fr.dg = 128;
+    for (int j = 0; j < 6; j++) {
+        int th = (t * 256 / 1400) + j * 43, x0 = flyX(j, 0), y0 = flyY(j, 0);
+        px[j] = x0 + ((((sin8((th + 64) & 255) - 128) * 8 / 128) - x0) * u / 255);
+        py[j] = y0 + ((((sin8(th & 255) - 128) * 4 / 128) - y0) * u / 255);
+        gl[j] = 150 + (105 * imax(u, fl) / 255);
+    }
+    flies(6, px, py, gl, mix(col, C_WHITE, fl * 160 / 255), fo);
+    if (fl) {
+        for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+            int p = 4 * (b_x(i) - 19);
+            if (abs(p) < 40) put(i, col, (bell(oct(p, 14 * (b_row(i) - 3)), 40) * fl / 255) * fo / 400);  // its halo
+        }
+    }
+}
+
+// Ошибка · Разлетелись: the fireflies startle and scatter out past the edges, going out one after another
+static void flyError(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), st = tent(t - 60, 140), px[12], py[12], gl[12];
+    fr.dg = 128;
+    for (int j = 0; j < 6; j++) {
+        int x0 = flyX(j, 0), y0 = flyY(j, 0), dx = x0 * 2 + (x0 < 0 ? -70 : 70), dy = y0 * 2 + (y0 < 0 ? -22 : 22);
+        int u0 = smooth(120 + j * 40, 1000 + j * 40, t), u1 = smooth(120 + j * 40, 1000 + j * 40, t - 60), out = 255 - smooth(350 + j * 90, 950 + j * 90, t);
+        px[2 * j] = x0 + (dx * u0 / 255);
+        py[2 * j] = y0 + (dy * u0 / 255);
+        px[2 * j + 1] = x0 + (dx * u1 / 255);
+        py[2 * j + 1] = y0 + (dy * u1 / 255);
+        gl[2 * j] = (200 + (st * 55 / 255)) * out / 255;
+        gl[2 * j + 1] = imin(110, (u0 - u1) * 4) * out / 255;
+    }
+    flies(12, px, py, gl, col, fo);
+}
+
+// Уведомление · Вспышка: the fireflies hang where they are and all flash together, twice
+static void flyNotify(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), fl = imax(tent(t - 200, 230), tent(t - 760, 230)), px[6], py[6], gl[6];
+    fr.dg = 128;
+    for (int j = 0; j < 6; j++) {
+        px[j] = flyX(j, t);
+        py[j] = flyY(j, t);
+        gl[j] = 50 + (fl * 205 / 255);
+    }
+    flies(6, px, py, gl, mix(col, C_WHITE, fl * 130 / 255), fo);
+}
+
+// ----- 12 · Пламя: a flame on the bottom row whose tongues lick upwards; embers rise from it
+// The cold flame in Kaya's colour (the catalog's default); its warm variant was not taken.
+
+// the flame: w wide each side at its foot (1/8 ball), up to h high over the bottom row; its tongues lick at the phase ph
+// (two waves across it going opposite ways, so they rise and fall in place); light runs up through it; the tips whiten,
+// and the core at its foot a little; g: how bright
+static void flame(int w, int h, int ph, uint32_t col, int g) {
+    if (w <= 0 || h <= 0 || g <= 0) return;
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), z = 21 - 7 * (b_row(i) - 3), ax = abs(p);  // z: the height over the bottom row
+        if (ax >= w) continue;
+        int env = 255 - (ax * ax * 255 / (w * w));
+        int tg = ((sin8((p * 6 + ph) & 255) + sin8((p * 13 - ph * 2 + 90) & 255)) >> 1) - 128;  // the tongues, −128..127
+        int e = ((h * env / 255) * (150 + (tg * 105 / 128)) / 255) - z;                       // how far under the flame's edge
+        if (e <= -6) continue;
+        int a = e < 0 ? (6 + e) * 25 : 150 + imin(105, e * 5);
+        a = a * (175 + (sin8((z * 9 - ph * 3) & 255) * 80 / 255)) / 255;  // light running up through it
+        int wh = imax(tent(e, 16) * imin(255, z * 18) / 255, tent(ax, w >> 1) * tent(z, 18) / 400);
+        put(i, wh ? mix(col, C_WHITE, wh * 180 / 255) : col, a * g / 255);
+    }
+}
+
+// nm embers (at most 8), one every per / nm ms, each rising for 1.2 s from z0 (1/8 ball over the bottom row), drifting
+// and fading
+static const int8_t em_x[8] PROGMEM = {-10, 14, -22, 4, 24, -4, 18, -16};  // where the embers start, 1/8 ball
+static void embers(int nm, int t, int per, int z0, uint32_t col, int g) {
+    if (g <= 0) return;
+    uint32_t wc = mix(col, C_WHITE, 200);
+    int ex[8], ez[8], ea[8];
+    for (int j = 0; j < nm; j++) {
+        int u = posMod(t + (j * per / nm), per);
+        ex[j] = (int8_t)pgm_read_byte(&em_x[j]) + ((int8_t)pgm_read_byte(&em_x[j]) * u / 1500) + (wave(u + j * 300, 220) * 6 / 128);
+        ez[j] = z0 + (u * 40 / 1000);
+        ea[j] = u < 250 ? u * 255 / 250 : u < 1200 ? (1200 - u) * 255 / 950 : 0;
+    }
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), z = 21 - 7 * (b_row(i) - 3);
+        int a = 0;
+        for (int j = 0; j < nm; j++) if (ea[j] && abs(p - ex[j]) < 8 && abs(z - ez[j]) < 8) a = imax(a, bell(oct(p - ex[j], z - ez[j]), 8) * ea[j] / 255);
+        if (a) put(i, wc, a * g / 255);
+    }
+}
+
+// Пробуждение · Розжиг: a spark glints at the foot, catches, and the flame rises, leaps once and settles
+static void flameWake(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 400, t), u = smooth(250, 1100, t), up = tent(t - 750, 450), sp = tent(t - 200, 260);
+    fr.dg = 128;
+    flame(u * 40 / 255, (u * 30 / 255) + (up * 16 / 255), t * 160 / 1000, col, 240 * fo / 255);
+    if (sp) {
+        uint32_t wc = mix(col, C_WHITE, 220);
+        for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+            int p = 4 * (b_x(i) - 19), z = 21 - 7 * (b_row(i) - 3);
+            if (abs(p) < 10 && z < 13) put(i, wc, bell(oct(p, z - 3), 10) * sp / 255);
+        }
+    }
+}
+
+// Слушает · Тихий огонь: a calm low flame, its tongues licking slowly; now and then an ember rises
+static void flameListen(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    flame(40 + (wave(t, 30) * 3 / 128), 30 + (wave(t, 70) * 4 / 128), t * 90 / 1000, col, 235 * k / 255);
+    embers(2, t, 3400, 16, col, 170 * k / 255);
+}
+
+// Думает · Пляска: the flame dances higher and quicker, and embers fly up from it; half violet
+static void flameThink(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    uint32_t c = mix(col, C_VIOLET, 128);
+    flame(44, 46 + (wave(t, 180) * 6 / 128), t * 240 / 1000, c, 240 * k / 255);
+    embers(5, t, 1500, 22, c, 210 * k / 255);
+}
+
+// Говорит · Голос огня: the flame's height follows the voice; loud, it widens a little
+static void flameSpeak(Anim, int t, uint32_t col, int k) {
+    if (k <= 0) return;
+    int v = voice(t);
+    flame(36 + (v * 10 / 255), 18 + (v * 36 / 255), t * 150 / 1000, col, (190 + (v * 65 / 255)) * k / 255);
+}
+
+// Готово · Костёр: the flame flares up to the top, brighter and whiter, and a shower of embers rises from it
+static const int8_t fl_bv[16] PROGMEM = {-30, 70, 24, 84, -12, 92, 40, 66, -44, 60, 8, 96, -22, 78, 32, 74};  // the embers' speeds (p, z), 1/8 ball a second
+static void flameDone(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), up = smooth(0, 300, t) * (255 - smooth(700, 1500, t)) / 255;
+    uint32_t wc = mix(col, C_WHITE, 210);
+    int ex[8], ez[8], ea[8];
+    fr.dg = 128;
+    flame(40 + (up * 22 / 255), 30 + (up * 34 / 255), t * 200 / 1000, mix(col, C_WHITE, up * 90 / 255), (210 + (up * 45 / 255)) * fo / 255);
+    for (int j = 0; j < 8; j++) {
+        int u = t - 250 - j * 50;
+        ex[j] = (int8_t)pgm_read_byte(&fl_bv[2 * j]) * u / 1000;
+        ez[j] = 14 + ((int8_t)pgm_read_byte(&fl_bv[2 * j + 1]) * u / 1000) - (30 * (u * u / 1000) / 1000);
+        ea[j] = u > 0 && u < 1100 ? (u < 150 ? u * 255 / 150 : (1100 - u) * 255 / 950) : 0;
+    }
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), z = 21 - 7 * (b_row(i) - 3);
+        int a = 0;
+        for (int j = 0; j < 8; j++) if (ea[j] && abs(p - ex[j]) < 8 && abs(z - ez[j]) < 8) a = imax(a, bell(oct(p - ex[j], z - ez[j]), 8) * ea[j] / 255);
+        if (a) put(i, wc, a * fo / 255);
+    }
+}
+
+// Ошибка · Угасание: the flame sputters (two dips), sinks and goes out; smoke curls up from where it was
+static void flameError(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), s = smooth(200, 1100, t), dip = imax(tent(t - 380, 140), tent(t - 700, 140)) * 90 / 255;
+    uint32_t sc = mix(col, 0x9a9a94, 170);  // smoke: grey with a little of the flame's colour
+    int cx[3], cz[3], cr[3], ca[3];
+    for (int j = 0; j < 3; j++) {  // the smoke: three puffs, rising and spreading
+        int u = t - 700 - j * 200;
+        cx[j] = (j - 1) * 8 + (wave(u + j * 500, 150) * 6 / 128);
+        cz[j] = 6 + (u * 28 / 1000);
+        cr[j] = 9 + (imax(0, u) * 10 / 1000);
+        ca[j] = u > 0 ? 150 - imin(150, u * 150 / 1200) : 0;
+    }
+    fr.dg = 128;
+    flame(40 - (s * 14 / 255), (30 * (255 - s) / 255) * (255 - dip) / 255, t * 120 / 1000, col, 235 * fo / 255);
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), z = 21 - 7 * (b_row(i) - 3);
+        int a = 0;
+        for (int j = 0; j < 3; j++) if (ca[j] && abs(p - cx[j]) < cr[j] && abs(z - cz[j]) < cr[j]) a = imax(a, bell(oct(p - cx[j], z - cz[j]), cr[j]) * ca[j] / 255);
+        if (a) put(i, sc, a * fo / 255);
+    }
+}
+
+// Уведомление · Треск: a log pops: the flame jumps and a burst of sparks flies out in arcs to both sides
+static const int8_t fl_sv[20] PROGMEM = {-70, 60, 64, 70, -40, 90, 46, 84, -90, 40, 86, 46, -20, 100, 22, 96, -56, 76, 58, 66};  // the sparks' speeds (p, z)
+static void flameNotify(Anim, int t, int du, uint32_t col) {
+    int fo = smooth(du, du - 300, t), up = tent(t - 120, 260);
+    uint32_t wc = mix(col, C_WHITE, 200);
+    int ex[10], ez[10], ea[10];
+    fr.dg = 128;
+    flame(40, 30 + (up * 16 / 255), t * 160 / 1000, col, (170 + (up * 85 / 255)) * fo / 255);
+    for (int j = 0; j < 10; j++) {
+        int u = t - 80 - (j % 3) * 40;
+        ex[j] = (int8_t)pgm_read_byte(&fl_sv[2 * j]) * u / 1000;
+        ez[j] = 12 + ((int8_t)pgm_read_byte(&fl_sv[2 * j + 1]) * u / 1000) - (90 * (u * u / 1000) / 1000);
+        ea[j] = u > 0 && u < 1200 ? (1200 - u) * 255 / 1200 : 0;
+    }
+    for (uint8_t i = 0; i < MX_LED_AMOUNT; i++) {
+        int p = 4 * (b_x(i) - 19), z = 21 - 7 * (b_row(i) - 3);
+        int a = 0;
+        for (int j = 0; j < 10; j++) if (ea[j] && abs(p - ex[j]) < 9 && abs(z - ez[j]) < 9) a = imax(a, bell(oct(p - ex[j], z - ez[j]), 9) * ea[j] / 255);
+        if (a) put(i, wc, a * fo / 255);
+    }
+}
+
 // ----- the event in a new style
 
-// a state (listening, thinking, speaking) of style 4–9; k: how far it shows (255 = all)
+// a state (listening, thinking, speaking) of style 4–12; k: how far it shows (255 = all)
 static void styleState(uint8_t style, Anim n, int t, uint32_t col, int k) {
     if (n == A_LISTENING) {
         switch (style) {
@@ -2554,7 +3114,10 @@ static void styleState(uint8_t style, Anim n, int t, uint32_t col, int k) {
             case 6: lavaListen(n, t, col, k); break;
             case 7: faceListen(n, t, col, k); break;
             case 8: galListen(n, t, col, k); break;
-            default: scanListen(n, t, col, k); break;
+            case 9: scanListen(n, t, col, k); break;
+            case 10: snowListen(n, t, col, k); break;
+            case 11: flyListen(n, t, col, k); break;
+            default: flameListen(n, t, col, k); break;
         }
     } else if (n == A_THINKING) {
         switch (style) {
@@ -2563,7 +3126,10 @@ static void styleState(uint8_t style, Anim n, int t, uint32_t col, int k) {
             case 6: lavaThink(n, t, col, k); break;
             case 7: faceThink(n, t, col, k); break;
             case 8: galThink(n, t, col, k); break;
-            default: scanThink(n, t, col, k); break;
+            case 9: scanThink(n, t, col, k); break;
+            case 10: snowThink(n, t, col, k); break;
+            case 11: flyThink(n, t, col, k); break;
+            default: flameThink(n, t, col, k); break;
         }
     } else {
         switch (style) {
@@ -2572,12 +3138,15 @@ static void styleState(uint8_t style, Anim n, int t, uint32_t col, int k) {
             case 6: lavaSpeak(n, t, col, k); break;
             case 7: faceSpeak(n, t, col, k); break;
             case 8: galSpeak(n, t, col, k); break;
-            default: scanSpeak(n, t, col, k); break;
+            case 9: scanSpeak(n, t, col, k); break;
+            case 10: snowSpeak(n, t, col, k); break;
+            case 11: flySpeak(n, t, col, k); break;
+            default: flameSpeak(n, t, col, k); break;
         }
     }
 }
 
-// a one-shot (the wake, done, error, notify) of style 4–9, t = 0 .. du
+// a one-shot (the wake, done, error, notify) of style 4–12, t = 0 .. du
 static void styleShot(uint8_t style, Anim n, int t, int du, uint32_t col) {
     if (n == A_WAKE) {
         switch (style) {
@@ -2586,7 +3155,10 @@ static void styleShot(uint8_t style, Anim n, int t, int du, uint32_t col) {
             case 6: lavaWake(n, t, du, col); break;
             case 7: faceWake(n, t, du, col); break;
             case 8: galWake(n, t, du, col); break;
-            default: scanWake(n, t, du, col); break;
+            case 9: scanWake(n, t, du, col); break;
+            case 10: snowWake(n, t, du, col); break;
+            case 11: flyWake(n, t, du, col); break;
+            default: flameWake(n, t, du, col); break;
         }
     } else if (n == A_DONE) {
         switch (style) {
@@ -2595,7 +3167,10 @@ static void styleShot(uint8_t style, Anim n, int t, int du, uint32_t col) {
             case 6: lavaDone(n, t, du, col); break;
             case 7: faceDone(n, t, du, col); break;
             case 8: galDone(n, t, du, col); break;
-            default: scanDone(n, t, du, col); break;
+            case 9: scanDone(n, t, du, col); break;
+            case 10: snowDone(n, t, du, col); break;
+            case 11: flyDone(n, t, du, col); break;
+            default: flameDone(n, t, du, col); break;
         }
     } else if (n == A_ERROR) {
         switch (style) {
@@ -2604,7 +3179,10 @@ static void styleShot(uint8_t style, Anim n, int t, int du, uint32_t col) {
             case 6: lavaError(n, t, du, col); break;
             case 7: faceError(n, t, du, col); break;
             case 8: galError(n, t, du, col); break;
-            default: scanError(n, t, du, col); break;
+            case 9: scanError(n, t, du, col); break;
+            case 10: snowError(n, t, du, col); break;
+            case 11: flyError(n, t, du, col); break;
+            default: flameError(n, t, du, col); break;
         }
     } else {
         switch (style) {
@@ -2613,22 +3191,25 @@ static void styleShot(uint8_t style, Anim n, int t, int du, uint32_t col) {
             case 6: lavaNotify(n, t, du, col); break;
             case 7: faceNotify(n, t, du, col); break;
             case 8: galNotify(n, t, du, col); break;
-            default: scanNotify(n, t, du, col); break;
+            case 9: scanNotify(n, t, du, col); break;
+            case 10: snowNotify(n, t, du, col); break;
+            case 11: flyNotify(n, t, du, col); break;
+            default: flameNotify(n, t, du, col); break;
         }
     }
 }
 
 // ----- the event in its look
 
-// a state in its look; style: kaia_anim (1–9), look: the event's setting, k: how far it shows (255 = all)
+// a state in its look; style: kaia_anim (1–12), look: the event's setting, k: how far it shows (255 = all)
 static void stateLook(uint8_t style, uint8_t look, Anim n, int t, uint32_t col, int k) {
     look = lookOf(style, look);
     if (look < 4) {
         stateDraw(look ? look : style, n, t, col, k);
         return;
     }
-    if (look >= 9) {
-        styleState(look - 5, n, t, col, k);
+    if (pgm_read_byte(&look_style[look])) {
+        styleState(pgm_read_byte(&look_style[look]), n, t, col, k);
         return;
     }
     if (n == A_LISTENING) {
@@ -2666,8 +3247,8 @@ static void shotLook(uint8_t style, uint8_t look, Anim n, int t, uint32_t col) {
         shotDraw(look ? look : style, n, t, du, col);
         return;
     }
-    if (look >= 9) {
-        styleShot(look - 5, n, t, du, col);
+    if (pgm_read_byte(&look_style[look])) {
+        styleShot(pgm_read_byte(&look_style[look]), n, t, du, col);
         return;
     }
     if (n == A_DONE) {
@@ -2699,9 +3280,9 @@ static void shotLook(uint8_t style, uint8_t look, Anim n, int t, uint32_t col) {
 
 // ================= the wake with its speed =================
 
-// the wake that plays: kaia_wake, or with 0 the style's own (1–3 theirs, 4–9 their wakes 15–20)
+// the wake that plays: kaia_wake, or with 0 the style's own (style_wake: 1–3 theirs, 4–12 their wakes 15–23)
 static int wakeOf(int style, int wake) {
-    return wake ? wake : style <= 3 ? style : style + 11;
+    return wake ? wake : pgm_read_byte(&style_wake[style]);
 }
 
 // the wake's real length at the speed, ms
@@ -2709,7 +3290,7 @@ static int wakeLength(int id, int speed) {
     return (int)pgm_read_word(&wake_ms[id]) * 100 / speed;
 }
 
-// t: ms since the wake started (real time); style: kaia_anim (1–9); wake: kaia_wake (0 = the style's: wakeOf);
+// t: ms since the wake started (real time); style: kaia_anim (1–12); wake: kaia_wake (0 = the style's: wakeOf);
 // lk: kaia_listen, the look of the listening that fades in under the wake and goes on after it
 static void wakeDraw(uint8_t style, uint8_t wake, uint8_t lk, int speed, int t, uint32_t col) {
     int id = wakeOf(style, wake);
@@ -2719,7 +3300,7 @@ static void wakeDraw(uint8_t style, uint8_t wake, uint8_t lk, int speed, int t, 
     fr.lt = t - wakeLength(id, speed);  // the listening's time: it goes on at its own pace after the wake
     fr.ls = lk >= 4 ? 0 : lk ? lk : style <= 3 ? style : 0;  // the listening's style (0: a new look or a new style)
 
-    if (id >= 15) styleShot(id - 11, A_WAKE, u, du, col);
+    if (pgm_read_byte(&wake_style[id])) styleShot(pgm_read_byte(&wake_style[id]), A_WAKE, u, du, col);
     else switch (id) {
         case 1: rippleShot(A_WAKE, u, du, col); break;
         case 2: orbitShot(A_WAKE, u, du, col); break;
@@ -3255,15 +3836,15 @@ static void handleAnim() {
     long style = 0, wake = -1, speed = 0, look = -1;
     if (!readColor(color, own)) return replyError(400, F("color: RRGGBB"));
     if (!readNum(F("ms"), 100, 60000, ms)) return replyError(400, F("ms: 100-60000"));
-    if (!readNum(F("style"), 1, STYLE_COUNT, style)) return replyError(400, F("style: 1-9"));
-    if (!readNum(F("wake"), 0, WAKE_COUNT - 1, wake)) return replyError(400, F("wake: 0-20"));
+    if (!readNum(F("style"), 1, STYLE_COUNT, style)) return replyError(400, F("style: 1-12"));
+    if (!readNum(F("wake"), 0, WAKE_COUNT - 1, wake)) return replyError(400, F("wake: 0-23"));
     if (!readNum(F("speed"), 50, 200, speed)) return replyError(400, F("speed: 50-200"));
     // look= for every name but off: the event's animation for this call (wake= is its old name for the wake)
     if (n == A_WAKE) {
-        if (!readNum(F("look"), 0, WAKE_COUNT - 1, look)) return replyError(400, F("look: 0-20 for wake"));
+        if (!readNum(F("look"), 0, WAKE_COUNT - 1, look)) return replyError(400, F("look: 0-23 for wake"));
         if (look < 0) look = wake;
     } else if (n != A_OFF) {
-        if (!readNum(F("look"), 0, LOOK_COUNT - 1, look)) return replyError(400, F("look: 0-14"));
+        if (!readNum(F("look"), 0, LOOK_COUNT - 1, look)) return replyError(400, F("look: 0-17"));
     }
 
     ov.text_waits = false;
@@ -3302,7 +3883,7 @@ static void handleAnim() {
 
 // GET /kaia/test (v1.8): every animation drawn off screen once and timed on the real CPU, so a release checks them all
 // without a crash in front of the owner (KAIA-186 was a boot loop from one bad read). Each style's own version of every
-// event (styles 1–9, look 0), every look of listening … notify (1–14) and every wake (1–20), both with style 1; a
+// event (styles 1–12, look 0), every look of listening … notify (1–17) and every wake (1–23), both with style 1; a
 // one-shot at its start, its middle and 50 ms before its end, a state at 0, 15 s, 50 ms before a call's default 30 s,
 // 60 s and 70 min. Drawn into the strip without show(), a yield() after each animation, then the normal frame again.
 // The animations' own state (ov) is not touched. Small frames: it runs inside a web handler on the 4 KB cont stack.
