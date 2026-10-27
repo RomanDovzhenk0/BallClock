@@ -2,8 +2,8 @@
 //   0 «Как у стиля»: the style's own wake (1 ripple, 2 orbit, 3 sparks); 1–3 those three with any style;
 //   4 and up: the new ones below; 15–20 (v1.8) the wakes of styles 4–9 (styles.js), 21–23 (v1.9) those of styles 10–12
 //   (nature.js), 24–29 those of styles 13–18 (games.js): which wake is which style's is the table wake_style (style_wake
-//   the other way). v1.9 fixes 30–33 for catalog C's wakes, valid only once their drawing is in (WAKE_COUNT). wakeDraw
-//   (looks.js) plays them with the listening's look after them.
+//   the other way); 30–33 catalog C's single wakes (singles.js singleWake). wakeDraw (looks.js) plays them with the
+//   listening's look after them.
 // kaia_wake_speed (50–200 %): the wake runs on u = t·speed/100 and lasts du·100/speed; the listening of the
 // style that fades in under it, and that takes over after it, keeps real time.
 //
@@ -19,13 +19,14 @@ import { ledDiag, MX_DIAG_H, MX_DIAG_W, MX_LED_AMOUNT } from "./matrix.js";
 // ids and Russian names in the site's order; base lengths at 100 %, ms (1–3 = shot_ms[style - 1][0])
 export const WAKE_NAMES = ["Как у стиля", "Рябь", "Орбита", "Искры", "Рассвет", "Радар", "Спираль", "Сердцебиение", "Глаз", "Звёзды", "Салют", "Дождь",
     "Включение", "Зайчик", "«КАЯ»", "Пинг-понг", "Калейдоскоп", "Лава-лампа", "Мордашка", "Галактика", "Сканер",
-    "Снежинка", "Светлячки", "Пламя", "Аркада", "Тетрис", "Механизм", "Неон", "Маятник", "Гирлянда"];
-// 15–20 (v1.8): the wakes of styles 4–9 (styles.js); 21–23 (v1.9): styles 10–12 (nature.js); 24–29: styles 13–18 (games.js)
+    "Снежинка", "Светлячки", "Пламя", "Аркада", "Тетрис", "Механизм", "Неон", "Маятник", "Гирлянда", "Занавес", "Кофе", "Будильник", "Спидометр"];
+// 15–20 (v1.8): the wakes of styles 4–9 (styles.js); 21–23 (v1.9): styles 10–12 (nature.js); 24–29: styles 13–18 (games.js);
+// 30–33: catalog C's (singles.js)
 export const wake_ms = [0, 1900, 2000, 2000, 2000, 1800, 2000, 1900, 2200, 2000, 2200, 2000, 1800, 2000, 2200, 1800, 2000, 2000, 1900, 2000, 2000,
-    2000, 2000, 2000, 1800, 2000, 2000, 2000, 2000, 2000];
-export const WAKE_COUNT = 30;
-// which style each wake is the wake of (0: none; 1–3 are drawn by wakeDraw's own switch), by wake id
-export const wake_style = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+    2000, 2000, 2000, 1800, 2000, 2000, 2000, 2000, 2000, 2000, 2200, 2000, 2000];
+export const WAKE_COUNT = 34;
+// which style each wake is the wake of (0: none; 1–3 are drawn by wakeDraw's own switch, 30–33 by singleWake), by wake id
+export const wake_style = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 0, 0, 0, 0];
 // and the wake of each style, by style id (1–3 their own)
 export const style_wake = [0, 1, 2, 3, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29];
 // when the listening starts to fade in under wakes 1–3 (the new ones: du - 800)

@@ -4,7 +4,7 @@
 // «Стиль» picker by sight for styles 0–9, and every event's gallery lists the new styles' versions. v1.9 (KAIA-201's
 // design): the picker in groups with chips (one group on the phone, the chosen style's by default) and «Сейчас выбран»
 // under them; catalog A's Снежинка, Светлячки and Пламя (10–12); catalog B's Аркада, Тетрис, Механизм, Неон, Маятник and
-// Гирлянда (13–18).
+// Гирлянда (13–18); catalog C's single animations in every event's gallery, group «Новые анимации» (looks 24–27, wakes 30–33).
 import { AuthError, ClockApi, fetchSend, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, keyId, OfflineError, parseLeds, TRY_STATE_MS, tryOut } from "./api.js";
 import { ClockSync, parseTime } from "./clock.js";
 import { animOf, digitHide, duckStep, hideTrack, isPlaying, isState, kaiaDraw, renderFrame, resolvePlay } from "./frame.js";
@@ -353,8 +353,12 @@ function galleryHTML(n, s) {
     if (n === A_WAKE) h += gh("Тематические пробуждения", "4–11") + tilesFor(n, 4, 11, s) + gh("Новые пробуждения", "12–14") + tilesFor(n, 12, 14, s);
     else h += gh("Новые по теме", "4–8 · " + EV[n][2]) + tilesFor(n, 4, 8, s);
     // v1.8, v1.9: the versions of styles 4–18, appended (the ids the tables give a style)
-    const vs = n === A_WAKE ? wake_style : look_style, b = vs.findIndex((x) => x), e = Math.min(vs.length, looksOf(n)) - 1;
+    const vs = n === A_WAKE ? wake_style : look_style, b = vs.findIndex((x) => x);
+    let e = vs.length - 1;
+    while (!vs[e]) e--;
     h += gh("Версии новых стилей", b + "–" + e + " · любое событие может взять их при любом стиле, как 1–3") + tilesFor(n, b, e, s);
+    // v1.9 part 3: catalog C's singles, after the styles' versions to the last id
+    h += '<div id="gnew">' + gh("Новые анимации", e + 1 + "–" + (looksOf(n) - 1) + " · отдельные, не из стиля: с любым стилем") + tilesFor(n, e + 1, looksOf(n) - 1, s) + "</div>";
     return h + "</div>";
 }
 

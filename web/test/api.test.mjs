@@ -158,9 +158,14 @@ test("the mock clock answers the whole API", async () => {
     assert.deepEqual([q.name, q.style, q.look], ["done", 2, 5]);
     await api.anim("notify", {});
     assert.equal((await api.state()).play.look, 0, "absent = the saved key");
-    // v1.9 (parts 1 and 2): looks to 23, wakes to 29; the ids fixed for part 3 are 400 until their drawings are in
-    await assert.rejects(api.anim("done", { look: 24 }), /HTTP 400/);
-    await assert.rejects(api.anim("wake", { look: 30 }), /HTTP 400/);
+    // v1.9 at its end (part 3): looks to 27, wakes to 33 (catalog C's singles); past them 400
+    await api.anim("error", { style: 4, look: 27 });
+    q = (await api.state()).play;
+    assert.deepEqual([q.name, q.style, q.look], ["error", 4, 27]);
+    await api.anim("wake", { style: 13, look: 33, speed: 100 });
+    assert.deepEqual([(await api.state()).play.style, (await api.state()).play.look], [13, 33]);
+    await assert.rejects(api.anim("done", { look: 28 }), /HTTP 400/);
+    await assert.rejects(api.anim("wake", { look: 34 }), /HTTP 400/);
     // v1.8: styles 1–9 and the looks they append; v1.9: 10–18; another style is 400, as on the clock
     await api.anim("done", { style: 7, look: 11 });
     q = (await api.state()).play;

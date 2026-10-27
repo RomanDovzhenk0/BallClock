@@ -2,7 +2,7 @@
 // they dominate), the voice() and hash8() calls and the put() calls, with every loop multiplied by its bound and every
 // helper the function calls counted in. Worst case: both sides of an if count. Not a test file: styles.test.mjs uses it.
 // v1.9 adds styleDivs, the divisions a frame really runs (nature.test.mjs, games.test.mjs; `node test/cost.mjs --divs 4 5 …`
-// prints them).
+// prints them), and singleDivs for catalog C's singles (singles.test.mjs; `node test/cost.mjs --singles`).
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { Session } from "node:inspector/promises";
@@ -15,7 +15,7 @@ const src = join(dirname(fileURLToPath(import.meta.url)), "..", "src");
 const CONST = { MX_LED_AMOUNT: 128, SPARKS: 18, SPARK_LEN: 12, len: 12, nt: 32, w: 11, m: 18, nm: 8, n: 12 };
 
 // every top-level function of the drawing's modules: name → its body (comments out)
-export function functions(files = ["lib8.js", "matrix.js", "kaia.js", "wakes.js", "looks.js", "styles.js", "nature.js", "games.js"]) {
+export function functions(files = ["lib8.js", "matrix.js", "kaia.js", "wakes.js", "looks.js", "styles.js", "nature.js", "games.js", "singles.js"]) {
     const fns = new Map();
     for (const f of files) {
         const text = readFileSync(join(src, f), "utf8").replace(/\r\n/g, "\n").replace(/\/\/[^\n]*/g, "");
@@ -91,7 +91,9 @@ export function costOf(fns, name, memo = new Map()) {
 // that bound says little there. This one runs the frame under V8's block coverage and adds up every "/" of src/ (not a
 // comment) times the count of the innermost block holding it: helpers, put() and its mix included. A child process
 // measures, so that V8 compiles every drawing function with its block counters: a function compiled before the coverage
-// starts only counts its calls.
+// starts only counts its calls. The child runs without the optimising compilers (--no-opt --no-maglev): optimised code
+// drops some block counters, and when a function was optimised depended on the timing, so the counts moved by a few
+// from run to run (v1.9 part 3 found it; parts 1 and 2's tables were taken that way and are the exact counts now).
 const SRC = pathToFileURL(src).href + "/";
 let session = null;
 const slashes = new Map();  // url → the offsets of its division slashes
@@ -141,12 +143,22 @@ async function divsRun(draw, ts) {
 // the most divisions a frame of each style's 7 events runs over 2 s of frames (the states from t = 5 s), as
 // {style: [wake, listening, thinking, speaking, done, error, notify]}
 export function styleDivs(styles) {
-    const r = spawnSync(process.execPath, [fileURLToPath(import.meta.url), "--divs", ...styles.map(String)], { encoding: "utf8" });
-    if (r.status !== 0) throw new Error("cost.mjs --divs: " + r.stderr);
+    return child("--divs", ...styles.map(String));
+}
+
+// the same for the singles of catalog C (looks 24–27, wakes 30–33), as {wake: [30, 31, 32, 33], listening: [24, …], …}
+// by event name; the frames carry the digit marks of 14:32 (Обвал drops them), and collapseNoDigits is Обвал without any
+export function singleDivs() {
+    return child("--singles");
+}
+
+function child(...args) {
+    const r = spawnSync(process.execPath, ["--no-opt", "--no-maglev", fileURLToPath(import.meta.url), ...args], { encoding: "utf8" });
+    if (r.status !== 0) throw new Error("cost.mjs " + args[0] + ": " + r.stderr);
     return JSON.parse(r.stdout);
 }
 
-if (process.argv[2] === "--divs" && process.argv[1] === fileURLToPath(import.meta.url)) {
+if ((process.argv[2] === "--divs" || process.argv[2] === "--singles") && process.argv[1] === fileURLToPath(import.meta.url)) {
     session = new Session();
     session.connect();
     await session.post("Profiler.enable");
@@ -162,6 +174,25 @@ if (process.argv[2] === "--divs" && process.argv[1] === fileURLToPath(import.met
         K.fr.hd = 0;
         draw(t);
     };
+    if (process.argv[2] === "--singles") {
+        const [SG, LK, { renderFrame }, { DEFAULTS }] = await Promise.all([mod("singles.js"), mod("looks.js"), mod("frame.js"), mod("settings.js")]);
+        // the digit marks of 14:32 in font 1, kept through m.clear()
+        renderFrame(m, { ...DEFAULTS, back_mode: 0 }, { millis: 250000, synced: true, hour: 14, minute: 32, ms: 300, night: false, duck: 255, play: null });
+        const marks = Uint8Array.from(m.marks);
+        out.wake = [];
+        for (let id = 30; id <= 33; id++) out.wake.push(await divsRun(frame((t) => SG.singleWake(id, K.A_WAKE, t, WK.wake_ms[id], col)), [...Array(44).keys()].map((k) => k * 50)));
+        for (let n = K.A_LISTENING; n <= K.A_NOTIFY; n++) {
+            const row = [];
+            for (let look = 24; look <= 27; look++) {
+                if (n <= K.A_SPEAKING) row.push(await divsRun(frame((t) => SG.singleState(look, n, t + 5000, col, 255)), ts));
+                else row.push(await divsRun(frame((t) => SG.singleShot(look, n, t, LK.shotLength(n, look, 1), col)), [...Array(39).keys()].map((k) => k * 50)));
+            }
+            out[K.ANIM_NAMES[n]] = row;
+        }
+        m.marks.fill(0);
+        out.collapseNoDigits = await divsRun(frame((t) => SG.singleShot(24, K.A_ERROR, t, 1700, col)), [...Array(34).keys()].map((k) => k * 50));
+        m.marks.set(marks);
+    }
     for (const style of process.argv.slice(3).map(Number)) {
         const row = [await divsRun(frame((t) => ST.styleShot(style, K.A_WAKE, t, WK.wake_ms[WK.style_wake[style]], col)), ts)];
         for (const n of [K.A_LISTENING, K.A_THINKING, K.A_SPEAKING]) row.push(await divsRun(frame((t) => ST.styleState(style, n, t + 5000, col, 255)), ts));
