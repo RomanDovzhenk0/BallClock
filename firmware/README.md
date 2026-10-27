@@ -147,3 +147,80 @@ Sizes (d1_mini, -Og), v1.6.2 → v1.7.0:
 The timer lambda (96), `drawClock`, `drawTime` and `dots` (112 each) keep their frames; `kaiaDigitScale()` (48, with
 `hideSet` 16 and `savedHide` 80 under it) runs before the clock, not under the looks. The new code reads its flash
 tables only through `pgm_read_*` (no `l8ui` / `l16ui` on a 0x402… address, KAIA-186).
+
+## Kaya's styles (v1.8)
+
+Six new styles beyond Рябь, Орбита and Искры (KAIA-195's catalog, all six kept), each a whole visual language with
+its own version of all 7 events. A line by line copy of `../web/src/styles.js` (and the dispatch in `looks.js`,
+`wakes.js`); `../web/README.md` «Changes the firmware task copies into kaia.cpp (v1.8)» is the spec and lists every
+animation with its name and length.
+
+The ids are appended, the old ones never move:
+
+| setting | v1.7 | appended in v1.8 |
+|---|---|---|
+| `kaia_anim` (classic page «Анимации») | 0 Выкл, 1 Рябь, 2 Орбита, 3 Искры | 4 Пинг-понг, 5 Калейдоскоп, 6 Лава-лампа, 7 Мордашка, 8 Галактика, 9 Сканер (`STYLE_COUNT` 9) |
+| `kaia_listen` … `kaia_notify` | 0–8 | 9–14: the versions of styles 4–9, look = style + 5 (`LOOK_COUNT` 15) |
+| `kaia_wake` | 0–14 | 15–20: the wakes of styles 4–9, wake = style + 11 (`WAKE_COUNT` 21) |
+
+- **Dispatch**: `lookOf(style, look)` (look 0 with style 4–9 is that style's version) at the top of `stateLook`,
+  `shotLook` and `shotLength`; 9–14 go to `styleState` / `styleShot` with `look - 5`. `wakeOf(style, wake)` picks the
+  wake in `wakeDraw` and in `playLength` (the wake → listening switch); 15–20 go to `styleShot(id - 11, A_WAKE, …)`
+  with the listening fading in over the last 800 ms, as under every themed wake. `fr.ls` is 0 after a new style's
+  wake, so with `kaia_listen` 0 the style's own listening takes over.
+- **Tables** in PROGMEM, read with `pgm_read_*`: `pp_bt`, `pp_bh`, `pp_smash`, `kal_sp`, `lava_from`, `drip_x`,
+  `drip_t`, `scan_row`, `fam_ms` (the one-shot lengths), `wake_ms[15..20]`; no per-ball tables (`b_cr`, `b_dist`,
+  `b_ang` and the hashes of the boot).
+- **Settings**: `savedStyle()` reads `kaia_anim` 0–9 (out of range: the default 1, as `savedLook` does) for the
+  frame, `/kaia/anim` and `/kaia/state`; `savedLook` follows the new counts. The classic page's «Анимации» lists the
+  ten names of `STYLE_NAMES` (`kaia_style_names`, in flash through `FPSTR`; before, a RAM literal with longer names),
+  every event's list and «Пробуждение» append the six names.
+- **API**: `/kaia/anim` `style=1–9`, `look=0–14` for listening … notify, `look=` / `wake=` `0–20` for the wake; past
+  them 400 (`style: 1-9`, `wake: 0-20`, `look: 0-14`, `look: 0-20 for wake`). `/kaia/state` `play.style` 1–9.
+- **Deliberate differences from the JS**: Галактика · Комета passes its tail segment as a stack `int[4]` (its ends run
+  past an `int8_t`), so `segDist` has an overload for a segment in RAM next to v1.6's PROGMEM one; declarations of
+  mixed types are split (`uint32_t` colours apart), which moves a few of them in the token order. Nothing else.
+- **Port check** (KAIA-175's method, no host C++ compiler): normalized token streams of the 56 functions of
+  `styles.js` and of `lookOf`, `shotLength`, `stateLook`, `shotLook`, `wakeDraw`, `wakeOf`, `wakeLength`: 48 match
+  as they are; the other 15 differ only by the declaration order above, the `tl` array, and grouping parentheses that
+  the JS needs for its `| 0` and C++ keeps (the same truncation: `88 * (t * (2800 - t) / 1400) / 1400`). The tables
+  and the name lists equal the JS ones.
+
+### GET /kaia/test
+
+A self-test, so a release can check every animation on the real CPU before the owner meets a crash (KAIA-186 was a
+boot loop from one bad read). With a page password it takes `auth=` like every `/kaia/*` call. It draws, into the
+strip without `show()`:
+
+- each style's own version of every event (styles 1–9, look 0): 9 × 7;
+- every look of listening … notify (1–14, with style 1): 14 × 6;
+- every wake (1–20, with style 1);
+
+a one-shot (a wake at 100 %) at its start, its middle and 50 ms before its end, a state at 0, 15 s, 29.95 s (the end of
+a call's default 30 s), 60 s and 70 min: 639 draws. Each is timed with `micros()`, a `yield()` follows every
+animation (the network and the watchdog get their turn), and at the end `redrawFrame()` (the redraw timer's body, now
+a function of its own) draws and shows the normal frame. Kaya's own state (`ov`) is not touched; `fr` is set per draw
+as `kaiaDraw` sets it. The answer, and one log line `kaia test n=… slowest="…" us=… ms=…`:
+
+```
+{"ok":true,"n":639,"slowest":{"name":"<the slowest draw>","us":<its µs>},"ms":<the whole run>}
+```
+
+`name` is `style=<1–9> <event> t=<ms>`, `look=<1–14> <event> t=<ms>` or `wake=<1–20> t=<ms>`. The clock draws a frame
+every 50 ms, so `slowest.us` well under 50,000 is the check; `ms` is the whole run (the LEDs hold their last frame
+meanwhile). The numbers come from the clock: nothing here was run on it.
+
+Sizes (d1_mini, -Og), v1.7.0 → v1.8.0:
+
+| | v1.7.0 | v1.8.0 |
+|---|---|---|
+| static RAM (.data + .rodata + .bss) | 40,188 B | 40,104 B (−84: the old «Анимации» literal left `.rodata`; no new RAM symbols) |
+| flash used / bin | 704,629 B / 708,784 B | 739,325 B / 743,472 B (+25.8 KB the 77 new functions and tables, +8.9 KB the v1.8 site page of KAIA-196) |
+| `/settings` build chain | 1,200 B (`build` 240, `buildKaia` 400, `buildKaiaHide` 224) | the same |
+| redraw path, deepest | 544 B (the timer 96, `kaiaDraw` 144, `wakeDraw` 48, …) | 608 B (the timer 16, `redrawFrame` 96, `kaiaDraw` 128, `wakeDraw` 64, `styleShot` 16, `faceDone` 80, `face` 96, `put` 48, …) |
+| `/kaia/test` under the web server | – | 832 B deepest (`handleTest` 32, `testReply` 208, the log's UDP send); the draws 560 B (`testAnim` 48, `testDraw` 112, then the redraw path's looks); about 300 B of web server and Looper below it |
+
+The new frames: `ppWake` and `ppRally` 112–128, `face` 96, the rest 64–96. Every flash table is read through
+`pgm_read_*`: the elf has no `l8ui` / `l16ui` from a 0x402… address in the new code (the loads the disassembly shows
+there are literal-pool bytes decoded as code, as in v1.7.0, or the RAM tables). The flash layout is 4m1m, so an update
+over the air has 3 MB below the file system for the running image and the new one.
