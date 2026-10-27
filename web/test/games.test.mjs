@@ -32,13 +32,13 @@ const diff = (a, b) => Math.max(...[...a].map((v, i) => Math.max(Math.abs(((v >>
 const PFX = ["arc", "tet", "gear", "neon", "pend", "gar"], EVS = ["Wake", "Listen", "Think", "Speak", "Done", "Error", "Notify"];
 const src = () => readFileSync(join(here, "..", "src", "games.js"), "utf8").replace(/\r\n/g, "\n");
 
-test("ids: styles 13–18 appended, their looks and wakes by table, nothing past what parts 1 and 2 draw", () => {
+test("ids: styles 13–18 appended, their looks and wakes by table", () => {
     assert.equal(STYLE_COUNT, 18);
     assert.deepEqual(STYLE_NAMES.slice(13), NAMES);
-    assert.equal(LOOK_COUNT, 24);
-    assert.equal(WAKE_COUNT, 30);
-    for (const n of [...STATES, ...SHOTS]) assert.deepEqual(LOOK_NAMES[n].slice(18), NAMES, K.ANIM_NAMES[n]);
-    assert.deepEqual(WAKE_NAMES.slice(24), NAMES);
+    assert.ok(LOOK_COUNT >= 24);
+    assert.ok(WAKE_COUNT >= 30);
+    for (const n of [...STATES, ...SHOTS]) assert.deepEqual(LOOK_NAMES[n].slice(18, 24), NAMES, K.ANIM_NAMES[n]);
+    assert.deepEqual(WAKE_NAMES.slice(24, 30), NAMES);
     // the catalog's lengths (wake, done, error, notify)
     assert.deepEqual(STYLES.map((st) => [wake_ms[style_wake[st]], ...fam_ms[st - 4]]), [
         [1800, 1700, 1700, 1500],
@@ -71,9 +71,7 @@ test("ids: styles 13–18 appended, their looks and wakes by table, nothing past
             assert.equal(shotLength(n, style + 5, 2), fam_ms[style - 4][n - K.A_DONE]);
         }
     }
-    // an id of part 3 is not valid yet: the play clamps it to the last one drawn, the style is refused
-    assert.equal(resolvePlay({ anim: K.A_DONE, style: 1, look: 25, t: 10 }).look, LOOK_COUNT - 1);
-    assert.equal(resolvePlay({ anim: K.A_WAKE, style: 1, look: 32, speed: 100, t: 10 }).look, WAKE_COUNT - 1);
+    // a style past 18 is refused (part 3 adds looks and wakes, no style: singles.test.mjs)
     assert.equal(resolvePlay({ anim: K.A_DONE, style: 19, t: 10 }), null);
 });
 
@@ -197,14 +195,14 @@ test("the cost per frame: within KAIA-202's rule of about 3× v1.8's heaviest fr
             assert.ok(c.put <= 256, p + e + ": " + c.put + " put()");
         }
     }
-    // the README's table (V8's coverage moves a count by a few when other styles share the process: always this set)
+    // the README's table (exact since part 3: cost.mjs counts without the optimising compilers)
     assert.deepEqual(rows, {
-        arc: [370, 300, 375, 299, 958, 567, 1247],
-        tet: [350, 426, 434, 438, 449, 1546, 415],
-        gear: [904, 899, 773, 911, 1403, 1084, 1144],
-        neon: [489, 519, 1897, 476, 1166, 653, 1596],
-        pend: [1101, 1109, 716, 2185, 4317, 968, 1020],
-        gar: [855, 803, 837, 810, 842, 1244, 834],
+        arc: [371, 302, 383, 302, 959, 573, 1247],
+        tet: [350, 426, 434, 444, 449, 1546, 415],
+        gear: [904, 900, 773, 913, 1403, 1085, 1144],
+        neon: [489, 520, 1897, 480, 1166, 653, 1596],
+        pend: [1102, 1112, 716, 2191, 4317, 968, 1020],
+        gar: [855, 803, 837, 816, 842, 1244, 834],
     });
     assert.deepEqual([wn, worst], ["pendDone", 4317], "Маятник · В такт is the heaviest of part 2 (the README says so)");
     assert.deepEqual(over.sort(), ["pendDone", "pendSpeak"]);

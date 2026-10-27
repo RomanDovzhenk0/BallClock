@@ -12,6 +12,7 @@ import { LOOK_COUNT, LOOK_NAMES, look_ms, shotLength } from "../src/looks.js";
 import * as LK from "../src/looks.js";
 import { BallMatrix } from "../src/matrix.js";
 import { DEFAULTS, LOOK_KEYS, normalize } from "../src/settings.js";
+import * as SG from "../src/singles.js";
 import * as ST from "../src/styles.js";
 import * as WK from "../src/wakes.js";
 
@@ -84,6 +85,7 @@ test("every one-shot look ends within its length", () => {
 test("every wake ends within its length at its speed", () => {
     const fns = { 4: WK.dawnShot, 5: WK.radarShot, 6: WK.spiralShot, 7: WK.heartShot, 8: WK.eyeShot, 9: WK.starsShot, 10: WK.fireworkShot, 11: WK.rainShot, 12: WK.powerOnWake, 13: WK.bunnyWake, 14: WK.nameWake };
     for (let id = 15; id < WK.WAKE_COUNT; id++) fns[id] = (n, t, du, col) => ST.styleShot(WK.wake_style[id], n, t, du, col);  // v1.8, v1.9: the styles' wakes
+    for (let id = 30; id < WK.WAKE_COUNT; id++) fns[id] = (n, t, du, col) => SG.singleWake(id, n, t, du, col);  // v1.9: catalog C's
     for (let id = 4; id < WK.WAKE_COUNT; id++) {
         for (const sp of [50, 75, 100, 150, 200]) {
             const len = WK.wakeLength(id, sp), du = WK.wake_ms[id];

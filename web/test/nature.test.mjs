@@ -183,9 +183,9 @@ test("the cost per frame stays within v1.8's: no frame divides more than v1.8's 
     }
     // the README's table
     assert.deepEqual(rows, {
-        snow: [1447, 300, 439, 367, 807, 257, 432],
-        fly: [487, 392, 731, 413, 598, 481, 368],
-        flame: [1216, 1217, 1454, 1435, 1933, 1219, 1554],
+        snow: [1447, 305, 439, 381, 807, 257, 442],
+        fly: [511, 416, 737, 431, 646, 529, 416],
+        flame: [1216, 1221, 1460, 1437, 1933, 1222, 1554],
     });
     assert.deepEqual([wn, worst], ["flameDone", 1933], "Пламя · Костёр is the heaviest of part 1 (the README says so)");
     assert.doesNotMatch(readFileSync(join(here, "..", "src", "nature.js"), "utf8"), /inoise16|hash8/);

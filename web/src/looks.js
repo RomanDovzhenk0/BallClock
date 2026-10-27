@@ -4,8 +4,8 @@
 //   4–8: the new ones below; 9–14 (v1.8): the versions of styles 4–9 (styles.js); 15–17 (v1.9): the versions of
 //   styles 10–12 (nature.js), 18–23 those of styles 13–18 (games.js). Look 0 with style 4 or later plays its version.
 //   Which look is which style's version is the table look_style (style_look the other way), so later ids can be
-//   appended anywhere: v1.9 fixes looks 24–27 for the singles of catalog C, valid only once their drawing is in
-//   (LOOK_COUNT). The wake keeps its ids (wakes.js: 0–11, 12–14 of v1.6, 15–20 of v1.8, 21–29 of v1.9; wake_style).
+//   appended anywhere: looks 24–27 are catalog C's singles (singles.js, v1.9 part 3), four for each event.
+//   The wake keeps its ids (wakes.js: 0–11, 12–14 of v1.6, 15–20 of v1.8, 21–29 and 30–33 of v1.9; wake_style).
 // The listening after a wake (and under its end) is the listening's look.
 //
 // For the firmware: as wakes.js, every function here is meant to be copied line by line into kaia.cpp.
@@ -18,28 +18,30 @@ import {
     smooth, SPARK_LEN, SPARKS, spark, sparksShot, stateDraw, tent, track, tracks, voice, wave,
 } from "./kaia.js";
 import { MX_LED_AMOUNT } from "./matrix.js";
+import { single_ms, SINGLE_NAMES, singleShot, singleState, singleWake } from "./singles.js";
 import { fam_ms, STYLE_NAMES, styleShot, styleState } from "./styles.js";
 import {
     b_row, b_x, bunnyWake, dawnShot, eyeShot, fireworkShot, h1, heartShot, nameWake, powerOnWake, radarShot, rainShot, spiralShot,
     starsShot, wake_from, wake_ms, wake_style, wakeLength, wakeOf, WAKE_NAMES,
 } from "./wakes.js";
 
-// ids and Russian names per event, by anim (A_WAKE … A_NOTIFY); the wake's are wakes.js's; 9–23 are the styles' names
+// ids and Russian names per event, by anim (A_WAKE … A_NOTIFY); the wake's are wakes.js's; 9–23 are the styles' names,
+// 24–27 catalog C's singles
 const SN = STYLE_NAMES.slice(4);
 export const LOOK_NAMES = [
     WAKE_NAMES,
-    ["Как у стиля", "Рябь", "Орбита", "Искры", "Эхо", "Прилив", "Сияние", "Взгляд", "Пузырьки", ...SN],
-    ["Как у стиля", "Рябь", "Орбита", "Искры", "Змейка", "Нейроны", "Песочные часы", "Три точки", "Атом", ...SN],
-    ["Как у стиля", "Рябь", "Орбита", "Искры", "Эквалайзер", "Осциллограф", "Лучи", "Динамики", "Губы", ...SN],
-    ["Как у стиля", "Рябь", "Орбита", "Искры", "Галочка", "Шкала", "Конфетти", "Кольцо", "«ОК»", ...SN],
-    ["Как у стиля", "Рябь", "Орбита", "Искры", "Нет-нет", "Крест", "Сбой", "Сирена", "Отключение", ...SN],
-    ["Как у стиля", "Рябь", "Орбита", "Искры", "«!»", "Тук-тук", "Маяк", "Конверт", "Значок", ...SN],
+    ["Как у стиля", "Рябь", "Орбита", "Искры", "Эхо", "Прилив", "Сияние", "Взгляд", "Пузырьки", ...SN, ...SINGLE_NAMES[1]],
+    ["Как у стиля", "Рябь", "Орбита", "Искры", "Змейка", "Нейроны", "Песочные часы", "Три точки", "Атом", ...SN, ...SINGLE_NAMES[2]],
+    ["Как у стиля", "Рябь", "Орбита", "Искры", "Эквалайзер", "Осциллограф", "Лучи", "Динамики", "Губы", ...SN, ...SINGLE_NAMES[3]],
+    ["Как у стиля", "Рябь", "Орбита", "Искры", "Галочка", "Шкала", "Конфетти", "Кольцо", "«ОК»", ...SN, ...SINGLE_NAMES[4]],
+    ["Как у стиля", "Рябь", "Орбита", "Искры", "Нет-нет", "Крест", "Сбой", "Сирена", "Отключение", ...SN, ...SINGLE_NAMES[5]],
+    ["Как у стиля", "Рябь", "Орбита", "Искры", "«!»", "Тук-тук", "Маяк", "Конверт", "Значок", ...SN, ...SINGLE_NAMES[6]],
 ];
-// looks per event but the wake: 0–23
-export const LOOK_COUNT = 24;
+// looks per event but the wake: 0–27
+export const LOOK_COUNT = 28;
 
 // which style each look is the version of (0: none; 1–3 go through stateDraw / shotDraw with the style), by look id
-export const look_style = [0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18];
+export const look_style = [0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 0, 0, 0, 0];
 // and the look of each style's version, by style id (0 for 0–3)
 export const style_look = [0, 0, 0, 0, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23];
 
@@ -56,10 +58,12 @@ export const look_ms = [
     [1500, 1500, 1600, 1700, 1600],
 ];
 
-// a one-shot's length, ms: look 0 = the style's version, 1–3 that style's version, 4–8 the new ones, 9–23 styles 4–18
+// a one-shot's length, ms: look 0 = the style's version, 1–3 that style's version, 4–8 the new ones, 9–23 styles 4–18,
+// 24–27 catalog C's singles
 export function shotLength(n, look, style) {
     look = lookOf(style, look);
     if (look_style[look]) return fam_ms[look_style[look] - 4][n - A_DONE];
+    if (look >= 24) return single_ms[n - A_DONE][look - 24];
     if (look >= 4) return look_ms[n - A_DONE][look - 4];
     return shot_ms[(look ? look : style) - 1][n - A_DONE + 1];
 }
@@ -625,6 +629,10 @@ export function stateLook(style, look, n, t, col, k) {
         styleState(look_style[look], n, t, col, k);
         return;
     }
+    if (look >= 24) {
+        singleState(look, n, t, col, k);
+        return;
+    }
     if (n === A_LISTENING) {
         switch (look) {
             case 4: echoListen(n, t, col, k); break;
@@ -662,6 +670,10 @@ export function shotLook(style, look, n, t, col) {
     }
     if (look_style[look]) {
         styleShot(look_style[look], n, t, du, col);
+        return;
+    }
+    if (look >= 24) {
+        singleShot(look, n, t, du, col);
         return;
     }
     if (n === A_DONE) {
@@ -703,6 +715,7 @@ export function wakeDraw(style, wake, lk, speed, t, col) {
     fr.ls = lk >= 4 ? 0 : lk ? lk : style <= 3 ? style : 0;  // the listening's style (0: a new look or a new style)
 
     if (wake_style[id]) styleShot(wake_style[id], A_WAKE, u, du, col);
+    else if (id >= 30) singleWake(id, A_WAKE, u, du, col);
     else switch (id) {
         case 1: rippleShot(A_WAKE, u, du, col); break;
         case 2: orbitShot(A_WAKE, u, du, col); break;
