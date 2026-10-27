@@ -123,7 +123,8 @@ SETS_GROUP buildWifi(sets::Builder& b) {
     }
 }
 
-// Kaya's look per event (v1.6), the labels in flash too: every byte of RAM counts for the update boot
+// Kaya's look per event (v1.6; v1.9: 0–27, catalog C's singles as 24–27), the labels in flash too: every byte of RAM
+// counts for the update boot
 SETS_GROUP buildKaiaLooks(sets::Builder& b) {
     b.Select(kk::kaia_listen, F("Слушает"), FPSTR(kaia_listen_names));
     b.Select(kk::kaia_think, F("Думает"), FPSTR(kaia_think_names));
