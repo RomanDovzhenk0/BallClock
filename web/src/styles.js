@@ -4,7 +4,8 @@
 // any style, as 1–3 do. Ids are appended; which look and wake is which style's version is a table (looks.js
 // look_style / style_look, wakes.js wake_style / style_wake), not arithmetic.
 //   4 Пинг-понг, 5 Калейдоскоп, 6 Лава-лампа, 7 Мордашка, 8 Галактика, 9 Сканер
-// v1.9 appends 10 Снежинка, 11 Светлячки, 12 Пламя (nature.js, catalog A); styleState and styleShot dispatch them too.
+// v1.9 appends 10 Снежинка, 11 Светлячки, 12 Пламя (nature.js, catalog A) and 13 Аркада, 14 Тетрис, 15 Механизм, 16 Неон,
+// 17 Маятник, 18 Гирлянда (games.js, catalog B); styleState and styleShot dispatch them too.
 // The wakes fade out over their last 400 ms (wakeDraw fades the listening in under their last 800), the other
 // one-shots over their last 300 ms; the states loop.
 //
@@ -16,6 +17,12 @@ import {
     A_DONE, A_ERROR, A_LISTENING, A_THINKING, A_WAKE, abs, b_ang, b_dist, C_VIOLET, C_WHITE, dimAll, fr, hash8, imax, imin,
     mix, oct, posMod, put, segDist, sin8, smooth, tent, voice, wave,
 } from "./kaia.js";
+import {
+    arcDone, arcError, arcListen, arcNotify, arcSpeak, arcThink, arcWake, garDone, garError, garListen, garNotify, garSpeak, garThink, garWake,
+    gearDone, gearError, gearListen, gearNotify, gearSpeak, gearThink, gearWake, neonDone, neonError, neonListen, neonNotify, neonSpeak, neonThink,
+    neonWake, pendDone, pendError, pendListen, pendNotify, pendSpeak, pendThink, pendWake, tetDone, tetError, tetListen, tetNotify, tetSpeak,
+    tetThink, tetWake,
+} from "./games.js";
 import { MX_LED_AMOUNT } from "./matrix.js";
 import {
     flameDone, flameError, flameListen, flameNotify, flameSpeak, flameThink, flameWake, flyDone, flyError, flyListen, flyNotify, flySpeak,
@@ -23,13 +30,13 @@ import {
 } from "./nature.js";
 import { b_row, b_x, h1, h2, h3 } from "./wakes.js";
 
-// kaia_anim: 0 Выкл, 1–3 the styles of v1.4, 4–9 these, 10–12 v1.9's (nature.js); the classic page's «Стиль» lists
-// them in this order
+// kaia_anim: 0 Выкл, 1–3 the styles of v1.4, 4–9 these, 10–18 v1.9's (nature.js, games.js); the classic page's «Стиль»
+// lists them in this order
 export const STYLE_NAMES = ["Выкл", "Рябь", "Орбита", "Искры", "Пинг-понг", "Калейдоскоп", "Лава-лампа", "Мордашка", "Галактика", "Сканер",
-    "Снежинка", "Светлячки", "Пламя"];
-export const STYLE_COUNT = 12;  // the last style id
+    "Снежинка", "Светлячки", "Пламя", "Аркада", "Тетрис", "Механизм", "Неон", "Маятник", "Гирлянда"];
+export const STYLE_COUNT = 18;  // the last style id
 
-// the one-shot lengths of styles 4–12 (row style − 4), ms: done, error, notify (their wakes: wake_ms[style_wake[style]])
+// the one-shot lengths of styles 4–18 (row style − 4), ms: done, error, notify (their wakes: wake_ms[style_wake[style]])
 export const fam_ms = [
     [1500, 1600, 1600],
     [1600, 1600, 1700],
@@ -40,6 +47,12 @@ export const fam_ms = [
     [1800, 1800, 1600],  // 10 Снежинка
     [1700, 1500, 1400],  // 11 Светлячки
     [1800, 2000, 1500],  // 12 Пламя
+    [1700, 1700, 1500],  // 13 Аркада
+    [1600, 1800, 1500],  // 14 Тетрис
+    [1600, 1600, 1600],  // 15 Механизм
+    [1600, 1700, 1500],  // 16 Неон
+    [1600, 1700, 1400],  // 17 Маятник
+    [1700, 1700, 1500],  // 18 Гирлянда
 ];
 
 // ================= the helpers of the new styles =================
@@ -911,7 +924,7 @@ export function scanNotify(n, t, du, col) {
 
 // ================= the event in a new style =================
 
-// a state (listening, thinking, speaking) of style 4–12; k: how far it shows (255 = all)
+// a state (listening, thinking, speaking) of style 4–18; k: how far it shows (255 = all)
 export function styleState(style, n, t, col, k) {
     if (n === A_LISTENING) {
         switch (style) {
@@ -923,7 +936,13 @@ export function styleState(style, n, t, col, k) {
             case 9: scanListen(n, t, col, k); break;
             case 10: snowListen(n, t, col, k); break;
             case 11: flyListen(n, t, col, k); break;
-            default: flameListen(n, t, col, k); break;
+            case 12: flameListen(n, t, col, k); break;
+            case 13: arcListen(n, t, col, k); break;
+            case 14: tetListen(n, t, col, k); break;
+            case 15: gearListen(n, t, col, k); break;
+            case 16: neonListen(n, t, col, k); break;
+            case 17: pendListen(n, t, col, k); break;
+            default: garListen(n, t, col, k); break;
         }
     } else if (n === A_THINKING) {
         switch (style) {
@@ -935,7 +954,13 @@ export function styleState(style, n, t, col, k) {
             case 9: scanThink(n, t, col, k); break;
             case 10: snowThink(n, t, col, k); break;
             case 11: flyThink(n, t, col, k); break;
-            default: flameThink(n, t, col, k); break;
+            case 12: flameThink(n, t, col, k); break;
+            case 13: arcThink(n, t, col, k); break;
+            case 14: tetThink(n, t, col, k); break;
+            case 15: gearThink(n, t, col, k); break;
+            case 16: neonThink(n, t, col, k); break;
+            case 17: pendThink(n, t, col, k); break;
+            default: garThink(n, t, col, k); break;
         }
     } else {
         switch (style) {
@@ -947,12 +972,18 @@ export function styleState(style, n, t, col, k) {
             case 9: scanSpeak(n, t, col, k); break;
             case 10: snowSpeak(n, t, col, k); break;
             case 11: flySpeak(n, t, col, k); break;
-            default: flameSpeak(n, t, col, k); break;
+            case 12: flameSpeak(n, t, col, k); break;
+            case 13: arcSpeak(n, t, col, k); break;
+            case 14: tetSpeak(n, t, col, k); break;
+            case 15: gearSpeak(n, t, col, k); break;
+            case 16: neonSpeak(n, t, col, k); break;
+            case 17: pendSpeak(n, t, col, k); break;
+            default: garSpeak(n, t, col, k); break;
         }
     }
 }
 
-// a one-shot (the wake, done, error, notify) of style 4–12, t = 0 .. du
+// a one-shot (the wake, done, error, notify) of style 4–18, t = 0 .. du
 export function styleShot(style, n, t, du, col) {
     if (n === A_WAKE) {
         switch (style) {
@@ -964,7 +995,13 @@ export function styleShot(style, n, t, du, col) {
             case 9: scanWake(n, t, du, col); break;
             case 10: snowWake(n, t, du, col); break;
             case 11: flyWake(n, t, du, col); break;
-            default: flameWake(n, t, du, col); break;
+            case 12: flameWake(n, t, du, col); break;
+            case 13: arcWake(n, t, du, col); break;
+            case 14: tetWake(n, t, du, col); break;
+            case 15: gearWake(n, t, du, col); break;
+            case 16: neonWake(n, t, du, col); break;
+            case 17: pendWake(n, t, du, col); break;
+            default: garWake(n, t, du, col); break;
         }
     } else if (n === A_DONE) {
         switch (style) {
@@ -976,7 +1013,13 @@ export function styleShot(style, n, t, du, col) {
             case 9: scanDone(n, t, du, col); break;
             case 10: snowDone(n, t, du, col); break;
             case 11: flyDone(n, t, du, col); break;
-            default: flameDone(n, t, du, col); break;
+            case 12: flameDone(n, t, du, col); break;
+            case 13: arcDone(n, t, du, col); break;
+            case 14: tetDone(n, t, du, col); break;
+            case 15: gearDone(n, t, du, col); break;
+            case 16: neonDone(n, t, du, col); break;
+            case 17: pendDone(n, t, du, col); break;
+            default: garDone(n, t, du, col); break;
         }
     } else if (n === A_ERROR) {
         switch (style) {
@@ -988,7 +1031,13 @@ export function styleShot(style, n, t, du, col) {
             case 9: scanError(n, t, du, col); break;
             case 10: snowError(n, t, du, col); break;
             case 11: flyError(n, t, du, col); break;
-            default: flameError(n, t, du, col); break;
+            case 12: flameError(n, t, du, col); break;
+            case 13: arcError(n, t, du, col); break;
+            case 14: tetError(n, t, du, col); break;
+            case 15: gearError(n, t, du, col); break;
+            case 16: neonError(n, t, du, col); break;
+            case 17: pendError(n, t, du, col); break;
+            default: garError(n, t, du, col); break;
         }
     } else {
         switch (style) {
@@ -1000,7 +1049,13 @@ export function styleShot(style, n, t, du, col) {
             case 9: scanNotify(n, t, du, col); break;
             case 10: snowNotify(n, t, du, col); break;
             case 11: flyNotify(n, t, du, col); break;
-            default: flameNotify(n, t, du, col); break;
+            case 12: flameNotify(n, t, du, col); break;
+            case 13: arcNotify(n, t, du, col); break;
+            case 14: tetNotify(n, t, du, col); break;
+            case 15: gearNotify(n, t, du, col); break;
+            case 16: neonNotify(n, t, du, col); break;
+            case 17: pendNotify(n, t, du, col); break;
+            default: garNotify(n, t, du, col); break;
         }
     }
 }

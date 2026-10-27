@@ -1,7 +1,8 @@
 // The cost of one frame of an animation, read from the source: the integer divisions (the ESP8266 has no divider, so
 // they dominate), the voice() and hash8() calls and the put() calls, with every loop multiplied by its bound and every
 // helper the function calls counted in. Worst case: both sides of an if count. Not a test file: styles.test.mjs uses it.
-// v1.9 adds styleDivs, the divisions a frame really runs (nature.test.mjs; `node test/cost.mjs --divs 4 5 …` prints them).
+// v1.9 adds styleDivs, the divisions a frame really runs (nature.test.mjs, games.test.mjs; `node test/cost.mjs --divs 4 5 …`
+// prints them).
 import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { Session } from "node:inspector/promises";
@@ -10,11 +11,11 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const src = join(dirname(fileURLToPath(import.meta.url)), "..", "src");
 // loop bounds by name; len (a spark path), nt (the mark's track) and w (a pictogram's width) at their largest; v1.9:
-// m (the lights flies() draws) and nm (embers()) at theirs
-const CONST = { MX_LED_AMOUNT: 128, SPARKS: 18, SPARK_LEN: 12, len: 12, nt: 32, w: 11, m: 18, nm: 8 };
+// m (the lights flies() draws), nm (embers()) and n (the blocks tetAt() looks at) at theirs
+const CONST = { MX_LED_AMOUNT: 128, SPARKS: 18, SPARK_LEN: 12, len: 12, nt: 32, w: 11, m: 18, nm: 8, n: 12 };
 
 // every top-level function of the drawing's modules: name → its body (comments out)
-export function functions(files = ["lib8.js", "matrix.js", "kaia.js", "wakes.js", "looks.js", "styles.js", "nature.js"]) {
+export function functions(files = ["lib8.js", "matrix.js", "kaia.js", "wakes.js", "looks.js", "styles.js", "nature.js", "games.js"]) {
     const fns = new Map();
     for (const f of files) {
         const text = readFileSync(join(src, f), "utf8").replace(/\r\n/g, "\n").replace(/\/\/[^\n]*/g, "");
@@ -29,6 +30,9 @@ function bound(h) {
     const m = h.match(/let (\w+) = ([^;]+); \1 (<=|<|>=|>) ([^;&|]+?)(?: &&[^;]*)?; \1(\+\+|--|\s*[+-]= (\d+))/);
     if (!m) throw new Error("a loop the cost cannot read: for (" + h + ")");
     const num = (s) => (s.trim() in CONST ? CONST[s.trim()] : Number(s.trim()));
+    // "let m = j; m <= j + 1": a window of fixed width over a variable start
+    const w = m[4].trim().match(/^(\w+) \+ (\d+)$/);
+    if (w && w[1] === m[2].trim()) return (m[3] === "<=" ? 1 : 0) + +w[2];
     const a = num(m[2]), b = num(m[4]), step = m[6] ? +m[6] : 1;
     if (!Number.isFinite(a) || !Number.isFinite(b)) throw new Error("a loop bound the cost cannot read: for (" + h + ")");
     const span = m[3] === "<" ? b - a : m[3] === "<=" ? b - a + 1 : m[3] === ">=" ? a - b + 1 : a - b;

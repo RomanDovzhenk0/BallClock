@@ -158,10 +158,10 @@ test("the mock clock answers the whole API", async () => {
     assert.deepEqual([q.name, q.style, q.look], ["done", 2, 5]);
     await api.anim("notify", {});
     assert.equal((await api.state()).play.look, 0, "absent = the saved key");
-    // v1.9 (part 1): looks to 17, wakes to 23; the ids fixed for parts 2 and 3 are 400 until their drawings are in
-    await assert.rejects(api.anim("done", { look: 18 }), /HTTP 400/);
-    await assert.rejects(api.anim("wake", { look: 24 }), /HTTP 400/);
-    // v1.8: styles 1–9 and the looks they append; v1.9: 10–12; another style is 400, as on the clock
+    // v1.9 (parts 1 and 2): looks to 23, wakes to 29; the ids fixed for part 3 are 400 until their drawings are in
+    await assert.rejects(api.anim("done", { look: 24 }), /HTTP 400/);
+    await assert.rejects(api.anim("wake", { look: 30 }), /HTTP 400/);
+    // v1.8: styles 1–9 and the looks they append; v1.9: 10–18; another style is 400, as on the clock
     await api.anim("done", { style: 7, look: 11 });
     q = (await api.state()).play;
     assert.deepEqual([q.name, q.style, q.look], ["done", 7, 11]);
@@ -172,7 +172,12 @@ test("the mock clock answers the whole API", async () => {
     assert.deepEqual([q.name, q.style, q.look], ["notify", 12, 16]);
     await api.anim("wake", { style: 10, look: 23, speed: 100 });
     assert.deepEqual([(await api.state()).play.style, (await api.state()).play.look], [10, 23]);
-    for (const style of [0, 13, "x"]) await assert.rejects(api.anim("listening", { style }), /HTTP 400/);
+    await api.anim("error", { style: 17, look: 22 });
+    q = (await api.state()).play;
+    assert.deepEqual([q.name, q.style, q.look], ["error", 17, 22]);
+    await api.anim("wake", { style: 18, look: 24, speed: 150 });
+    assert.deepEqual([(await api.state()).play.style, (await api.state()).play.look], [18, 24]);
+    for (const style of [0, 19, "x"]) await assert.rejects(api.anim("listening", { style }), /HTTP 400/);
     await assert.rejects(api.anim("error", { look: "x" }), /HTTP 400/);
     await api.anim("wake", { wake: 14 });  // the old name of look for the wake
     assert.equal((await api.state()).play.look, 14);
