@@ -116,7 +116,7 @@ input[type=range]{accent-color:var(--acc);width:100%;min-height:28px}
 .kopts.one{display:block}.kopts.one .fld{border-bottom:0}
 .kopts .hnote{grid-column:1/-1;margin:8px 0 0;color:var(--muted);font-size:13px}
 .sth{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin:0 0 8px}
-.gch{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1 1 320px;min-width:0;padding-bottom:2px}.gch::-webkit-scrollbar{display:none}
+.gch{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1 1 320px;min-width:0;padding-bottom:2px}.gch::-webkit-scrollbar{display:none}.gch .chip{flex:none}
 .chip small{opacity:.75;margin-left:4px}
 .thm{display:inline-flex;align-items:center;gap:10px}
 .cur{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:2px 0 0}.cur b{color:var(--text);font-weight:600}
