@@ -46,7 +46,7 @@ DB_KEYS(
     back_scale,
     back_bright,
 
-    kaia_anim,    // 0 off, 1 ripple, 2 orbit, 3 sparks
+    kaia_anim,    // 0 off, 1 ripple, 2 orbit, 3 sparks, 4..STYLE_COUNT Kaya's styles (kaia.h)
     kaia_color,
     kaia_bright,
     kaia_night,   // 0 as usual, 1 dimmer, 2 none

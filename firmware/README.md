@@ -224,3 +224,57 @@ The new frames: `ppWake` and `ppRally` 112–128, `face` 96, the rest 64–96. E
 `pgm_read_*`: the elf has no `l8ui` / `l16ui` from a 0x402… address in the new code (the loads the disassembly shows
 there are literal-pool bytes decoded as code, as in v1.7.0, or the RAM tables). The flash layout is 4m1m, so an update
 over the air has 3 MB below the file system for the running image and the new one.
+
+## Kaya's styles of v1.9, part 1 (catalog A)
+
+Three more styles, the owner's picks from KAIA-201's catalog A: 10 Снежинка, 11 Светлячки and 12 Пламя (the cold flame
+in Kaya's colour), each a whole visual language with its own version of all 7 events. A line by line copy of
+`../web/src/nature.js` and of the id tables in `looks.js` / `wakes.js`; `../web/README.md` «Changes the firmware task
+copies (v1.9, part 1)» is the spec, and «The ids of v1.9» fixes the ids of all three parts (styles 13–18, looks 18–27
+and wakes 24–33 come with parts 2 and 3).
+
+| setting | v1.8 | appended in v1.9 part 1 |
+|---|---|---|
+| `kaia_anim` (classic page «Анимации») | 0 Выкл, 1–9 | 10 Снежинка, 11 Светлячки, 12 Пламя (`STYLE_COUNT` 12) |
+| `kaia_listen` … `kaia_notify` | 0–14 | 15–17: the versions of styles 10–12 (`LOOK_COUNT` 18) |
+| `kaia_wake` | 0–20 | 21–23: the wakes of styles 10–12 (`WAKE_COUNT` 24) |
+
+- **Dispatch through tables** (PROGMEM `uint8_t`, read with `pgm_read_byte`), in place of v1.8's `style + 5` /
+  `style + 11`: `look_style[LOOK_COUNT]` and `style_look[STYLE_COUNT + 1]`, `wake_style[WAKE_COUNT]` and
+  `style_wake[STYLE_COUNT + 1]`. `lookOf`, `wakeOf`, `shotLength` (`fam_ms[look_style[look] - 4]`), `stateLook`,
+  `shotLook` and `wakeDraw` read them, so a later id can go anywhere. `styleState` / `styleShot` gain `case 9`
+  (Сканер, was the default), `case 10`, `case 11` and the default Пламя.
+- **Lengths**: `fam_ms` gains three rows (10 {1800, 1800, 1600}, 11 {1700, 1500, 1400}, 12 {1800, 2000, 1500}),
+  `wake_ms[21..23]` 2000 each; the listening fades in over a wake's last 800 ms, as in v1.8.
+- **Tables** in PROGMEM (94 B): `snow_fx`, `snow_dx`, `snow_dq`, `snow_dt`, `ff_bx`, `ff_wx`, `ff_wy`, `ff_in`, `em_x`,
+  `fl_bv`, `fl_sv`; no per-ball tables. The arrays of a frame are on the stack, sized as the loop that fills them (at
+  most three `int[18]`, Светлячки · Хоровод).
+- **Settings and API**: `savedStyle()` reads `kaia_anim` 0–12, `savedLook` 0–17 and the wake 0–23 (out of range: the
+  default). The classic page's «Анимации» lists 13 names, each event's Select 18, «Пробуждение» 24 (the names in flash
+  through `FPSTR`). `/kaia/anim` `style=1–12`, `look=0–17`, `look=` / `wake=` `0–23` for the wake; past them 400
+  (`style: 1-12`, `wake: 0-23`, `look: 0-17`, `look: 0-23 for wake`). `/kaia/state` `play.style` 1–12.
+- **`GET /kaia/test`** draws the new ones too, by the same loops: styles 1–12 × 7 events, looks 1–17 × 6, wakes 1–23:
+  12 × 27 + 17 × 24 + 23 × 3 = **801 draws** (v1.8: 639). `name` is `style=<1–12> …`, `look=<1–17> …` or
+  `wake=<1–23> …`. The times come from the clock: nothing here was run on it.
+- **Deliberate differences from the JS**: Снежинка · Блик по кругу fills its `lb` (six 16s) with a loop: an `int[6]`
+  initializer that is not all zeros is copied from `.rodata`, and `.rodata` is RAM on the ESP8266 (24 B). Declarations
+  of mixed types are split (`uint32_t` colours apart) and the JS `[]` arrays are sized stack arrays. Nothing else.
+- **Port check** (KAIA-175's method, no host C++ compiler): normalized token streams of the 32 functions of
+  `nature.js` and of `lookOf`, `shotLength`, `stateLook`, `shotLook`, `wakeDraw`, `wakeOf`, `wakeLength`, `styleState`,
+  `styleShot`: 22 match as they are; the other 19 differ only by the declarations above (and `shotLength` by a nested
+  `pgm_read_*` the normalizer does not unwrap). The tables and the name lists equal the JS ones.
+
+Sizes (d1_mini, -Og), v1.8.0 → v1.9.0 part 1 (frames from the elf's call0 prologues, the calls followed through
+`l32r` + `callx0`):
+
+| | v1.8.0 | v1.9.0 (part 1) |
+|---|---|---|
+| static RAM (.data + .rodata + .bss) | 40,104 B | 40,104 B (no new RAM symbols; the tables and names are in flash) |
+| flash used / bin | 739,325 B / 743,472 B | 761,645 B / 765,792 B of 1,044,464 (+16.8 KB the 32 new functions and their tables, +5.5 KB the v1.9 site page of KAIA-204) |
+| `/settings` build chain | 1,216 B (`build` 240, `buildKaia` 400, `buildKaiaHide` 224, …) | the same |
+| redraw path, deepest | 608 B (the timer 16, `redrawFrame` 96, `kaiaDraw` 128, `wakeDraw` 64, `styleShot` 16, `faceDone` 80, `face` 96, `put` 48, …) | 720 B (… `wakeDraw` 64, `stateLook` 48, `styleState` 16, `flySpeak` 144, `flies` 96, `put` 48, …) |
+| `/kaia/test` draws | 528 B (`testAnim` 48, `testDraw` 112, then the redraw path's looks) | 640 B (the same, then `flySpeak` and `flies`) |
+
+The new frames: `flyThink` 272 (three `int[18]`), `flyWake` and `flyError` 224, `flameNotify` 192, the rest 160 or
+less. Every flash table is read through `pgm_read_*` (aligned `l32i` + shift): no `l8ui` / `l16ui` / `l16si` in the
+new functions loads from a 0x402… address.
