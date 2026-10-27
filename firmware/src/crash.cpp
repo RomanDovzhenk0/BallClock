@@ -8,8 +8,14 @@ extern "C" {
 #define RTC_OFFSET_WORDS 32
 #define CRASH_MAGIC 0x4b414941  // "KAIA"
 
+// the reasons core 3.1.2's postmortem passes to custom_crash_callback for a crash it raised itself
+// (core_esp8266_postmortem.cpp); the next boot reads those as REASON_SOFT_RESTART, "Software/System restart"
+#define CRASH_STACK_SMASH 253  // cont_check found the cont stack's guard overwritten: a stack overflow
+#define CRASH_PANIC 254        // panic(), abort(), a failed assert, a failed new
+
 struct CrashRecord {
     uint32_t magic;
+    uint32_t reason;  // rst_info->reason: 1 hardware watchdog, 2 exception, 3 software watchdog, 253, 254
     uint32_t cause, epc1, epc2, epc3, excvaddr, depc;
     uint32_t up;    // ms
     uint32_t heap;  // free heap of the last heap line
@@ -34,12 +40,13 @@ static inline bool isCode(uint32_t v) {
     return (v >= 0x40100000 && v < 0x40110000) || (v >= 0x40200000 && v < 0x40300000);
 }
 
-// the ESP8266 core calls this (a weak C symbol) on an exception and on the software watchdog, right before it
-// restarts the chip: nothing here may allocate or take a lock
+// the ESP8266 core calls this (a weak C symbol) on an exception, a watchdog, a stack overflow and a panic, right
+// before it restarts the chip: nothing here may allocate or take a lock. ESP.restart() does not call it
 extern "C" void custom_crash_callback(struct rst_info* rst_info, uint32_t stack, uint32_t stack_end) {
     CrashRecord r;
     memset(&r, 0, sizeof(r));
     r.magic = CRASH_MAGIC;
+    r.reason = rst_info->reason;
     r.cause = rst_info->exccause;
     r.epc1 = rst_info->epc1;
     r.epc2 = rst_info->epc2;
@@ -71,8 +78,11 @@ void crashBegin() {
     CrashRecord r;
     if (ESP.rtcUserMemoryRead(RTC_OFFSET_WORDS, (uint32_t*)&r, sizeof(r)) && r.magic == CRASH_MAGIC && r.sum == checksum(r) && r.nbt <= CRASH_BT_MAX) {
         uint32_t why = ESP.getResetInfoPtr()->reason;
-        if (why == REASON_WDT_RST || why == REASON_EXCEPTION_RST || why == REASON_SOFT_WDT_RST) {
+        // a panic restarts through system_restart: this boot sees a software restart, the record says what it was
+        bool panic = why == REASON_SOFT_RESTART && (r.reason == CRASH_STACK_SMASH || r.reason == CRASH_PANIC);
+        if (why == REASON_WDT_RST || why == REASON_EXCEPTION_RST || why == REASON_SOFT_WDT_RST || panic) {
             info.valid = true;
+            info.reason = r.reason;
             info.cause = r.cause;
             info.epc1 = r.epc1;
             info.excvaddr = r.excvaddr;
@@ -95,6 +105,17 @@ const CrashInfo& crashInfo() {
     return info;
 }
 
+const char* crashKind() {
+    switch (info.reason) {
+        case REASON_WDT_RST: return PSTR("hw_wdt");
+        case REASON_EXCEPTION_RST: return PSTR("exception");
+        case REASON_SOFT_WDT_RST: return PSTR("soft_wdt");
+        case CRASH_STACK_SMASH: return PSTR("stack");
+        case CRASH_PANIC: return PSTR("panic");
+    }
+    return PSTR("unknown");
+}
+
 void crashNoteHeap(uint32_t freeHeap) {
     last_heap = freeHeap;
 }
@@ -105,7 +126,9 @@ void crashJson(String& s) {
         return;
     }
     char hex[16];
-    s += F("{\"cause\":");
+    s += F("{\"reason\":\"");
+    s += FPSTR(crashKind());
+    s += F("\",\"cause\":");
     s += info.cause;
     snprintf_P(hex, sizeof(hex), PSTR("0x%08x"), (unsigned)info.epc1);
     s += F(",\"epc1\":\"");

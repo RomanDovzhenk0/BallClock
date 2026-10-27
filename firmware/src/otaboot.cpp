@@ -7,7 +7,7 @@
 #include "log.h"
 #include "settings.h"
 
-// RTC user memory is 512 bytes in 4-byte words: eboot has words 0-31, the crash record 32-58 (crash.cpp)
+// RTC user memory is 512 bytes in 4-byte words: eboot has words 0-31, the crash record 32-59 (crash.cpp)
 #define OTA_RTC_WORDS 64
 #define OTA_MAGIC 0x4b4f5441  // "KOTA"
 
