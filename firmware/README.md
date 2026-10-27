@@ -278,3 +278,64 @@ Sizes (d1_mini, -Og), v1.8.0 → v1.9.0 part 1 (frames from the elf's call0 prol
 The new frames: `flyThink` 272 (three `int[18]`), `flyWake` and `flyError` 224, `flameNotify` 192, the rest 160 or
 less. Every flash table is read through `pgm_read_*` (aligned `l32i` + shift): no `l8ui` / `l16ui` / `l16si` in the
 new functions loads from a 0x402… address.
+
+## Kaya's styles of v1.9, part 2 (catalog B)
+
+Six more styles, all of KAIA-202's catalog B as the owner took it: 13 Аркада, 14 Тетрис, 15 Механизм, 16 Неон,
+17 Маятник and 18 Гирлянда, each with its own version of all 7 events. A line by line copy of `../web/src/games.js`
+(KAIA-205); `../web/README.md` «Changes the firmware task copies (v1.9, part 2)» is the spec. The version stays 1.9.0
+(part 3, catalog C's singles, comes before the release).
+
+| setting | v1.9 part 1 | appended in v1.9 part 2 |
+|---|---|---|
+| `kaia_anim` (classic page «Анимации») | 0 Выкл, 1–12 | 13 Аркада, 14 Тетрис, 15 Механизм, 16 Неон, 17 Маятник, 18 Гирлянда (`STYLE_COUNT` 18) |
+| `kaia_listen` … `kaia_notify` | 0–17 | 18–23: the versions of styles 13–18 (`LOOK_COUNT` 24) |
+| `kaia_wake` | 0–23 | 24–29: the wakes of styles 13–18 (`WAKE_COUNT` 30) |
+
+- **Dispatch**: only the tables grow: `look_style` appends 13–18, `style_look` 18–23, `wake_style` 13–18,
+  `style_wake` 24–29. `styleState` / `styleShot` gain `case 12` (Пламя, was the default), `case 13` … `case 17` and
+  the default Гирлянда.
+- **Lengths** (wake, done, error, notify): Аркада 1800, 1700, 1700, 1500; Тетрис 2000, 1600, 1800, 1500; Механизм
+  2000, 1600, 1600, 1600; Неон 2000, 1600, 1700, 1500; Маятник 2000, 1600, 1700, 1400; Гирлянда 2000, 1700, 1700, 1500
+  (`fam_ms` 15 rows, `wake_ms[24..29]`).
+- **Helpers**: `psin`, `pcos`, `pang`; `chomp`, `ghost`, `arcDot`; `tetStack`, `tetQ`, `tetPlace`, `tetAt`; `gear`,
+  `gears`; `neon`, `neonTrace`; `pendX`, `pendY`; `garCol`, `garPut`. Colours `C_STEM`, `C_PINK`, `C_WIRE`, `C_WARM`.
+- **Tables** in PROGMEM (149 B): `arc_ch`, `tet_st`, `tet_sh`, `tet_pc`, `tet_dt`, `tet_cx`, `tet_lx`, `tet_la`,
+  `neon_pt`, `neon_len`, `neon_ck`, `neon_ar`, `gar_b`, `gar_pal`, `gar_ph`, `gar_sp`, read with `pgm_read_*`; no
+  per-ball tables. The arrays of a frame are on the stack, sized as the loop that fills them (at most `int[11]` and
+  `uint32_t[11]`, every Гирлянда, or two `int[12]`, Тетрис · Ливень). The segment arrays with constants in them
+  (`{0, -45, bx, by}` …) are built at run time, so nothing new lands in `.rodata`.
+- **Arithmetic right shifts**: `tetPlace`'s `(… + 64) >> 7`, `tetStack`'s `(p + 76 - 4 * (r - 3)) >> 3` and Маятник ·
+  Обрыв's `sx >> 1` and `(sy - 45) >> 1` stay `>>` on `int`: GCC shifts a negative `int` arithmetically (rounds down),
+  as the JS does; `/ 2` or `/ 8` would round towards 0 and move those balls by one.
+- **Long states**: the JS already takes Аркада · Погоня's and Гирлянда · Бегущие огни's t modulo their periods; the
+  largest factor of t in a state is `voice`'s 469 (`wave(t, 384)` in Аркада · Патруль is the next), so the 70-minute
+  state of `GET /kaia/test` stays inside a 32-bit `int`.
+- **Settings and API**: `savedStyle()` reads `kaia_anim` 0–18, `savedLook` 0–23 and the wake 0–29. The classic page's
+  «Анимации» lists 19 names, each event's Select 24, «Пробуждение» 30 (the names in flash through `FPSTR`).
+  `/kaia/anim` `style=1–18`, `look=0–23`, `look=` / `wake=` `0–29` for the wake; past them 400 (`style: 1-18`,
+  `wake: 0-29`, `look: 0-23`, `look: 0-29 for wake`). `/kaia/state` `play.style` 1–18.
+- **`GET /kaia/test`** draws the new ones by the same loops: styles 1–18 × 7 events, looks 1–23 × 6, wakes 1–29:
+  18 × 27 + 23 × 24 + 29 × 3 = **1125 draws** (part 1: 801). The heaviest new frame by divisions is Маятник · В такт
+  (4317 a frame, about 4.5 × Мордашка's wake, 3.2 ms on v1.8.0), well inside the 50 ms frame; the real times come
+  from the clock, nothing here was run on it.
+- **Deliberate differences from the JS**: none in the code. Declarations of mixed types are split (`uint32_t` colours
+  apart) and the JS `[]` arrays are sized stack arrays.
+- **Port check** (KAIA-175's method): the normalized token streams of the 60 functions of `games.js` (the 42
+  animations and 18 helpers) equal the C++ ones, once a split declaration (`;` for `,`) and a sized array
+  (`x[N] = {…}` for `x = […]`) are read as the same; the 16 tables, `fam_ms`, `wake_ms`, the four id tables, the colours
+  and the name lists equal the JS ones.
+
+Sizes (d1_mini, -Og), v1.9.0 part 1 → part 2 (frames as in part 1):
+
+| | v1.9.0 part 1 (KAIA-206) | v1.9.0 part 2 |
+|---|---|---|
+| static RAM (.data + .rodata + .bss) | 40,104 B | 40,104 B (the tables and names are in flash) |
+| flash used / bin | 761,645 B / 765,792 B | 800,141 B / 804,288 B of 1,044,464 (+9.0 KB KAIA-205's site page, +29.5 KB the 60 new functions and their tables) |
+| `/settings` build chain | 1,216 B | the same |
+| redraw path, deepest | 720 B (… `styleState` 16, `flySpeak` 144, `flies` 96, `put` 48, …) | 736 B (the timer 16, `redrawFrame` 96, `kaiaDraw` 128, `wakeDraw` 64, `stateLook` 48, `styleState` 16, `garSpeak` 176, `garPut` 80, `put` 48, …) |
+| `/kaia/test` draws | 640 B | 656 B (`testAnim` 48, `testDraw` 112, then `garSpeak` and `garPut`) |
+
+The new frames: `garError` 192, the other Гирлянда animations and `tetThink` 160–176, the rest 128 or less. No `l8ui` /
+`l16ui` / `l16si` in the new functions loads from a 0x402… address (the ones the disassembly shows read `b_cr`,
+FastLED's `sin8` table in RAM, or are literal-pool bytes decoded as code).
