@@ -65,12 +65,23 @@ export const font_4x5 = { from: 15, to: 24, width: 4, lineHeight: 5, glyphs: {
     20: [0x03, 0x05, 0x14, 0x18], 21: [0x03, 0x0d, 0x14, 0x18], 22: [0x01, 0x01, 0x1e, 0x00], 23: [0x03, 0x0d, 0x16, 0x18], 24: [0x03, 0x05, 0x16, 0x18],
 } };
 
+// kaia.cpp's mix(): each channel from a towards b by k / 255, truncating toward zero
+export function mix(a, b, k) {
+    let out = 0;
+    for (let s = 0; s <= 16; s += 8) {
+        const ca = (a >> s) & 0xff, cb = (b >> s) & 0xff;
+        out |= (ca + ((cb - ca) * k / 255 | 0)) << s;
+    }
+    return out >>> 0;
+}
+
 // the strip and the GFX state of BallMatrix
 export class BallMatrix {
     constructor() {
         this.leds = new Uint32Array(MX_LED_AMOUNT);
         this.marks = new Uint8Array(MX_LED_AMOUNT);
         this.marking = false;
+        this.alpha = 255;  // v1.7: while marking, setXY draws this much of the new colour over what is there (255 = all)
         this.diag = false;
         this.w = MX_XY_W;
         this.h = MX_XY_H;
@@ -98,7 +109,10 @@ export class BallMatrix {
     setXY(x, y, color) {
         const led = this.diag ? ledDiag(x, y) : ledXY(x, y);
         if (led < 0) return;
-        if (this.marking) this.marks[led] = 1;
+        if (this.marking) {
+            this.marks[led] = 1;
+            if (this.alpha < 255) color = mix(this.getLED(led), color, this.alpha);
+        }
         this.setLED(led, color);
     }
 
