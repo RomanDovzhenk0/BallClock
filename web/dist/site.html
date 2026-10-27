@@ -5803,8 +5803,11 @@ if (!s.kaia_anim) h += '<p class="note">Анимации Каи выключен
 h += gh("Как у стиля и версии стиля", "0 — следует за стилем · 1 Рябь · 2 Орбита · 3 Искры") + tilesFor(n, 0, 3, s);
 if (n === A_WAKE) h += gh("Тематические пробуждения", "4–11") + tilesFor(n, 4, 11, s) + gh("Новые пробуждения", "12–14") + tilesFor(n, 12, 14, s);
 else h += gh("Новые по теме", "4–8 · " + EV[n][2]) + tilesFor(n, 4, 8, s);
-const vs = n === A_WAKE ? wake_style : look_style, b = vs.findIndex((x) => x), e = Math.min(vs.length, looksOf(n)) - 1;
+const vs = n === A_WAKE ? wake_style : look_style, b = vs.findIndex((x) => x);
+let e = vs.length - 1;
+while (!vs[e]) e--;
 h += gh("Версии новых стилей", b + "–" + e + " · любое событие может взять их при любом стиле, как 1–3") + tilesFor(n, b, e, s);
+h += '<div id="gnew">' + gh("Новые анимации", e + 1 + "–" + (looksOf(n) - 1) + " · отдельные, не из стиля: с любым стилем") + tilesFor(n, e + 1, looksOf(n) - 1, s) + "</div>";
 return h + "</div>";
 }
 function speedHTML(s) {
