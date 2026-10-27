@@ -711,7 +711,7 @@ export function birdNotify(n, t, du, col) {
         const d = imin(imin(segDist(p, q, s1, 256), segDist(p, q, s2, 256)), imin(segDist(p, q, s3, 256), segDist(p, q, s4, 256)));
         let a = imax(soft(d, 7, 4), soft(oct(p - bx + 20, q - by), 12, 12) * 45 / 255 | 0), c = col;  // the wings, a faint trail
         const b = soft(oct(p - bx - 2, q - by), 8, 5);  // the body
-        if (b > a * 3 / 4) { a = imax(a, b); c = wc; }
+        if (b > (a * 3 / 4 | 0)) { a = imax(a, b); c = wc; }  // the catalog: b > a * 3 / 4, the same for an int b
         put(i, c, a * fo / 255 | 0);
     }
 }
