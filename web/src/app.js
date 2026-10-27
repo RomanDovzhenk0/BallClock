@@ -1,6 +1,7 @@
 // The page (KAIA-161 variant B «Сцена», v1.6 as KAIA-172 variant b): a big preview with «Сейчас» / «Черновик» /
 // «Сравнить», Kaya's events beside it, the settings in tabs under it, the palette picker, Kaya's look per event with
-// live thumbnails and a gallery (a sheet on the phone), the try-out on the clock and the save bar.
+// live thumbnails and a gallery (a sheet on the phone), the try-out on the clock and the save bar. v1.8 (KAIA-195): the
+// «Стиль» picker by sight for styles 0–9, and every event's gallery lists the new styles' versions.
 import { AuthError, ClockApi, fetchSend, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, keyId, OfflineError, parseLeds, TRY_STATE_MS, tryOut } from "./api.js";
 import { ClockSync, parseTime } from "./clock.js";
 import { animOf, digitHide, duckStep, hideTrack, isPlaying, isState, kaiaDraw, renderFrame, resolvePlay } from "./frame.js";
@@ -12,7 +13,8 @@ import { fitCanvas, IVORY, paint, readUnlit, setUnlit, unlit } from "./paint.js"
 import { PAL_GROUP, PAL_GROUPS, PAL_NAMES, PAL_ORDER, PAL_RU, PALETTES } from "./palettes.js";
 import { brightNow, isNight } from "./redraw.js";
 import { LOOK_KEYS, normalize, rawOf } from "./settings.js";
-import { WAKE_COUNT, wakeLength } from "./wakes.js";
+import { STYLE_COUNT, STYLE_NAMES } from "./styles.js";
+import { WAKE_COUNT, wakeLength, wakeOf } from "./wakes.js";
 
 const QS = new URLSearchParams(location.search);
 const MOCK = QS.has("mock");
@@ -56,7 +58,8 @@ const sync = new ClockSync();
 // CL: the try-out on the clock {n, label, t0, dur, done}; open: the gallery's sheet on the phone
 const newHide = () => ({ h: 0, t: performance.now() | 0, end: 0, on: 0 });
 // hideD, hideN: the Digit fade's level of «Черновик» and of «Сейчас» (frame.js hideTrack)
-const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, hideD: newHide(), hideN: newHide(), cmp: 0.5, tab: "kaia", saving: false, upd: "", ev: A_WAKE, CL: null, open: false };
+const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, hideD: newHide(), hideN: newHide(), cmp: 0.5, tab: "kaia", saving: false, upd: "", ev: A_WAKE, CL: null, open: false, thumb: 0 };
+// thumb: what the style tiles show, 0 the style's listening, 1 all 7 events in a row
 
 const S = () => Object.assign({}, SAVED, DRAFT);
 const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => [...(r || document).querySelectorAll(s)];
@@ -71,7 +74,24 @@ const unhm = (s) => {
 };
 const rgb = (c) => ((c >> 16) & 255) + "," + ((c >> 8) & 255) + "," + (c & 255);
 const palCss = (p) => "linear-gradient(90deg," + PALETTES[p].map((c) => "rgb(" + rgb(c) + ")").join(",") + ")";
-const STY = ["Выкл", "Рябь", "Орбита", "Искры"];
+const STY = STYLE_NAMES;
+// the «Стиль» picker (v1.8, KAIA-195): a line under each style, what it is, and the versions of styles 4–9 by event
+const STY_SUB = ["анимаций нет", "кольца из центра", "кометы по ободу", "знак в середине", "розыгрыш через сетку", "шестикратный узор", "мягкие капли", "лицо: глаза и рот", "спираль и звёзды", "бегущий луч"];
+const STY_IDEA = ["", "Кольца расходятся из центра и сходятся к нему.", "Кометы бегут по ободу шестиугольника.", "Искры собираются в знак посередине.",
+    "Часы сами из мячиков для пинг-понга, значит — розыгрыш: мяч, сетка в середине нижних рядов, ракетки по краям, стол — нижний ряд.",
+    "Шестикратная симметрия самого шестиугольника: узор из шести зеркальных секторов.",
+    "Мягкие капли, как в лава-лампе: сливаются и делятся сами.",
+    "Кая — крошечное лицо: два глаза и рот, никакого текста. Лицо берёт табло целиком, время отступает.",
+    "Двурукая спираль вокруг ядра, мерцающие звёзды.",
+    "Свет «Рыцаря дорожного»: полоса через все ряды, ярче в среднем, со следом."];
+const STY_EV = [
+    ["Подача", "Розыгрыш", "Быстрый розыгрыш", "Подскоки", "Смэш", "В сетку", "Мячик"],
+    ["Мандала", "Вращение", "Узоры", "Дыхание лепестков", "Цветок", "Осколки", "Лепестки по кругу"],
+    ["Всплытие", "Дрейф", "Слияния", "Пульс", "Слияние", "Стекает", "Пузырь"],
+    ["Просыпается", "Смотрит", "Задумалась", "Говорит", "Подмигивает", "Огорчение", "Удивление"],
+    ["Большой взрыв", "Спираль", "Вихрь ядра", "Пульс ядра", "Сверхновая", "Чёрная дыра", "Комета"],
+    ["Запуск", "Луч", "Два луча", "Ширина голосом", "Проход", "Сбой", "Три прохода"],
+];
 
 // the 7 events by anim: name, when it plays, its theme
 const EV = [
@@ -85,9 +105,9 @@ const EV = [
 ];
 const looksOf = (n) => (n === A_WAKE ? WAKE_COUNT : LOOK_COUNT);
 const lookName = (n, c) => LOOK_NAMES[n][c] || LOOK_NAMES[n][0];
-// the style a look stands for (look 0 = the saved style); the wake's id
-const styOf = (s, c) => (c >= 1 && c <= 3 ? c : s.kaia_anim || 1);
-const wakeIdOf = (s, c) => (c ? c : s.kaia_anim || 1);
+// the event's look that is style st's version (1–3 theirs; 4–9: looks 9–14, wakes 15–20); the wake's id
+const verOf = (n, st) => (st <= 3 ? st : st + (n === A_WAKE ? 11 : 5));
+const wakeIdOf = (s, c) => wakeOf(s.kaia_anim || 1, c);
 // a one-shot's or the wake's length with the draft (0 for a state)
 const lenOf = (n, c, s) => (n === A_WAKE ? wakeLength(wakeIdOf(s, c), s.kaia_wake_speed) : isState(n) ? 0 : shotLength(n, c, s.kaia_anim || 1));
 
@@ -264,13 +284,15 @@ function rowText(n, s) {
 // «0 → Рябь» or «13 · Зайчик»
 function choiceLabel(n, s) {
     const c = s[LOOK_KEYS[n]];
-    return c ? c + " · " + lookName(n, c) : "0 → " + LOOK_NAMES[n][s.kaia_anim || 1];
+    return c ? c + " · " + lookName(n, c) : "0 → " + LOOK_NAMES[n][verOf(n, s.kaia_anim || 1)];
 }
 
 function tileSub(n, id, s) {
-    const st = s.kaia_anim || 1, now = id ? "" : "сейчас: " + LOOK_NAMES[n][styOf(s, 0)] + " · ";
-    if (isState(n)) return id ? "непрерывно" : "сейчас: " + STY[st];
-    return now + fmtS(lenOf(n, id, s));
+    const st = s.kaia_anim || 1, now = id ? "" : "сейчас: " + LOOK_NAMES[n][verOf(n, st)] + " · ";
+    // a new style's version: its name for this event
+    const fam = id >= (n === A_WAKE ? 15 : 9) ? STY_EV[id - (n === A_WAKE ? 15 : 9)][n] + " · " : "";
+    if (isState(n)) return id ? fam + "непрерывно" : "сейчас: " + STY[st];
+    return now + fam + fmtS(lenOf(n, id, s));
 }
 
 function tileHTML(n, id, s) {
@@ -287,10 +309,13 @@ const tilesFor = (n, a, b, s) => {
 
 function galleryHTML(n, s) {
     let h = '<div class="gal' + (s.kaia_anim ? "" : " dis") + '">';
-    if (!s.kaia_anim) h += '<p class="note">Анимации Каи выключены в стиле. Выберите Рябь, Орбиту или Искры, и здесь можно выбирать анимацию для события.</p>';
+    if (!s.kaia_anim) h += '<p class="note">Анимации Каи выключены в стиле. Выберите стиль, и здесь можно выбирать анимацию для события.</p>';
     h += gh("Как у стиля и версии стиля", "0 — следует за стилем · 1 Рябь · 2 Орбита · 3 Искры") + tilesFor(n, 0, 3, s);
-    if (n === A_WAKE) h += gh("Тематические пробуждения", "4–11") + tilesFor(n, 4, 11, s) + gh("Новые пробуждения", "12–" + (WAKE_COUNT - 1)) + tilesFor(n, 12, WAKE_COUNT - 1, s);
-    else h += gh("Новые по теме", "4–" + (LOOK_COUNT - 1) + " · " + EV[n][2]) + tilesFor(n, 4, LOOK_COUNT - 1, s);
+    if (n === A_WAKE) h += gh("Тематические пробуждения", "4–11") + tilesFor(n, 4, 11, s) + gh("Новые пробуждения", "12–14") + tilesFor(n, 12, 14, s);
+    else h += gh("Новые по теме", "4–8 · " + EV[n][2]) + tilesFor(n, 4, 8, s);
+    // v1.8: the versions of styles 4–9, appended
+    const b = n === A_WAKE ? WAKE_COUNT - 6 : LOOK_COUNT - 6;
+    h += gh("Версии новых стилей", b + "–" + (b + 5) + " · любое событие может взять их при любом стиле, как 1–3") + tilesFor(n, b, b + 5, s);
     return h + "</div>";
 }
 
@@ -300,9 +325,25 @@ function speedHTML(s) {
         '<div class="row">' + [[50, "½×"], [100, "1×"], [150, "1,5×"], [200, "2×"]].map((a) => '<button class="chip' + (sp === a[0] ? " on" : "") + '" data-sp="' + a[0] + '">' + a[1] + "</button>").join("") + "</div>", 1).replace('class="fld stack"', 'class="fld stack spd"');
 }
 
+// the «Стиль» picker (KAIA-195): a tile per style with a live thumbnail (its listening, or all 7 events in a row), the
+// draft's style selected, «на часах» on the saved one, and what the selected style plays for each event under them
+function styleTile(id, s) {
+    return '<button class="tile st' + (s.kaia_anim === id ? " sel" : "") + '" data-sty="' + id + '"><canvas></canvas><span class="tn"><b>' + id + " · " + STY[id] + "</b><i>" + STY_SUB[id] + "</i></span>" +
+        (id >= 4 ? '<em class="nw">новый</em>' : "") + (SAVED.kaia_anim === id && s.kaia_anim !== id ? '<em class="pl">на часах</em>' : "") + "</button>";
+}
+
+function stsHTML(s) {
+    const st = s.kaia_anim;
+    if (!st) return "<p><b>Выкл</b> — анимаций Каи нет; бегущий текст системы остаётся.</p>";
+    return "<p><b>" + st + " · " + STY[st] + "</b> — " + STY_IDEA[st] + "</p><div class=\"evm\">" + EV.map((e, n) => "<span>" + e[0] + ": <b>" + (st >= 4 ? STY_EV[st - 4][n] : STY[st]) + "</b>" +
+        (isState(n) ? "" : " · " + fmtS(lenOf(n, verOf(n, st), s))) + "</span>").join("") + "</div>";
+}
+
 function kayaHTML(s) {
     const on = s.kaia_anim;
-    let h = '<div class="kopts one">' + fld("kaia_anim", "Стиль", "«Выкл» отключает все анимации Каи; «Как у стиля» следует за выбранным стилем.", '<div class="seg stseg">' + STY.map((t, i) => '<button data-sty="' + i + '"' + (on === i ? ' class="on"' : "") + ">" + t + "</button>").join("") + "</div>", 1) + "</div>";
+    const pick = '<div class="sth"><span class="sub">Миниатюры</span><span class="seg">' + ["Слушает", "Все 7 событий"].map((t, i) => '<button data-thumb="' + i + '"' + (P.thumb === i ? ' class="on"' : "") + ">" + t + "</button>").join("") + "</span></div>" +
+        '<div class="stg">' + STY.map((t, i) => styleTile(i, s)).join("") + '</div><div class="sts" id="sts">' + stsHTML(s) + "</div>";
+    let h = '<div class="kopts one">' + fld("kaia_anim", "Стиль", "«Выкл» отключает все анимации Каи; события с «Как у стиля» играют версию выбранного стиля.", pick, 1) + "</div>";
     h += '<div class="evh"><h3 class="sub">Анимация для каждого события</h3><small>В списке виден выбор для всех семи событий; нажмите событие, чтобы выбрать другую анимацию.</small></div>';
     h += '<div class="kb' + (P.open ? " open" : "") + '" id="kb"><div class="evl">' + EV.map((e, n) => '<button class="er" data-ev="' + n + '"><canvas data-th="' + n + '"></canvas><span class="et"><b>' + e[0] + "</b><small></small></span><span class=\"chev\">›</span></button>").join("") + "</div>" +
         '<div class="evd" id="evd"><div class="evdh"><button class="chip back" data-close aria-label="К списку событий">‹ События</button><div class="evt"><h3 id="evt"></h3><small id="evs"></small></div></div><div id="evg"></div>' +
@@ -358,6 +399,15 @@ function updKaya() {
         if (want && !pl) t.insertAdjacentHTML("beforeend", '<em class="pl">на часах</em>');
         else if (!want && pl) pl.remove();
     });
+    $$(".st").forEach((t) => {
+        const id = +t.dataset.sty, pl = t.querySelector(".pl"), want = SAVED.kaia_anim === id && s.kaia_anim !== id;
+        t.classList.toggle("sel", s.kaia_anim === id);
+        if (want && !pl) t.insertAdjacentHTML("beforeend", '<em class="pl">на часах</em>');
+        else if (!want && pl) pl.remove();
+    });
+    const sts = $("#sts");
+    if (sts) sts.innerHTML = stsHTML(s);
+    $$("[data-thumb]").forEach((b) => b.classList.toggle("on", +b.dataset.thumb === P.thumb));
     $$("[data-sp]").forEach((b) => b.classList.toggle("on", +b.dataset.sp === s.kaia_wake_speed));
     $$('[data-f="kaia_wake_speed"] output').forEach((o) => (o.textContent = fmtVal("kaia_wake_speed", s.kaia_wake_speed)));
 }
@@ -652,8 +702,8 @@ function frameDraft() {
 
 // «Готово · 6 · Конфетти» for what plays
 function playLabel(p) {
-    let t = EV[p.anim][0] + " · " + (p.look ? p.look + " · " + lookName(p.anim, p.look) : "0 → " + lookName(p.anim, p.style));
-    if (p.anim === A_WAKE) t += " · " + p.speed + " % · " + fmtS(wakeLength(p.look || p.style, p.speed));
+    let t = EV[p.anim][0] + " · " + (p.look ? p.look + " · " + lookName(p.anim, p.look) : "0 → " + lookName(p.anim, verOf(p.anim, p.style)));
+    if (p.anim === A_WAKE) t += " · " + p.speed + " % · " + fmtS(wakeLength(wakeOf(p.style, p.look), p.speed));
     return t;
 }
 
@@ -786,6 +836,8 @@ function bindTiles() {
     const now = performance.now();
     tiles = $$(".tile canvas,.er canvas").map((c) => {
         if (c.dataset.th != null) return { c, n: +c.dataset.th, id: -1, t0: now - +c.dataset.th * 230, v: null, w: 0, play: false };
+        const st = c.closest(".tile").dataset.sty;
+        if (st != null) return { c, sty: +st, n: -1, id: -1, t0: now - st * 370, v: null, w: 0, play: false };
         const [n, id] = c.closest(".tile").dataset.tc.split(":").map(Number);
         return { c, n, id, t0: now - id * 370, v: null, w: 0, play: false };  // spread over the cycle: some play while others pause
     });
@@ -815,7 +867,20 @@ function tileBase() {
     const tm = timeNow(), night = nightFor(s, tm);
     const base = new BallMatrix(), sh = hideSet(s);
     renderFrame(base, sh, { ...tm, night, play: null, duck: 255, hide: 65535 });  // the time as it looks mid-animation
-    return { s: sh, night, base, hd: digitHide(sh, 65535), gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1) };
+    return { s: sh, tm, night, base, hd: digitHide(sh, 65535), gain: gainOf(brightNow(s, lightNow())) * (P.conn === "offline" ? 0.4 : 1) };
+}
+
+// a style tile at el ms: the style's listening, or (P.thumb 1) its 7 events in a row as «Как у стиля» plays them: the
+// wake with 1.6 s of listening after it, thinking and speaking 2.6 s each, then done, error and notify 0.45 s apart
+function styPlay(st, el) {
+    if (!P.thumb) return { anim: A_LISTENING, style: st, look: 0, t: el, ms: 1e9 };
+    const seq = [[A_WAKE, wakeLength(verOf(A_WAKE, st), 100) + 1600], [A_THINKING, 2600], [A_SPEAKING, 2600], ...[A_DONE, A_ERROR, A_NOTIFY].map((n) => [n, shotLength(n, 0, st) + 450])];
+    el %= seq.reduce((a, q) => a + q[1], 0) + 600;
+    for (const [n, len] of seq) {
+        if (el < len) return { anim: n, style: st, look: 0, lk: 0, speed: 100, t: el, ms: 1e9 };
+        el -= len;
+    }
+    return null;
 }
 
 function overlayOn(b, play) {
@@ -835,6 +900,10 @@ function tilesTick(force, half) {
     const b = tileBase(), s = b.s, now = performance.now();
     for (const tl of live) {
         if (RM && !tl.play && !force) continue;
+        if (tl.sty != null) {  // «Выкл» shows the clock as it is
+            paint(tl.v, tl.sty ? overlayOn(b, styPlay(tl.sty, RM ? 1200 : now - tl.t0)) : renderFrame(work, s, { ...b.tm, night: b.night, play: null, duck: 0 }), b.gain);
+            continue;
+        }
         const n = tl.n, look = tl.id < 0 ? s[LOOK_KEYS[n]] : tl.id, len = lenOf(n, look, s), cyc = isState(n) ? 0 : len + (n === A_WAKE ? 1500 : 1100);
         let el = RM && !tl.play ? (isState(n) ? 1200 : (len / 2) | 0) : now - tl.t0;
         if (cyc) el %= cyc;
@@ -1150,6 +1219,13 @@ document.addEventListener("click", (e) => {
         renderGroup(groupOf("kaia_anim"));
         if (+d.sty) play(ANIM_NAMES[P.ev]);
         else play("off");
+        return;
+    }
+    if (d.thumb != null) {
+        P.thumb = +d.thumb;
+        const now = performance.now();
+        tiles.forEach((x) => x.sty != null && (x.t0 = now - x.sty * 370));
+        updKaya();
         return;
     }
     if (d.tc) {

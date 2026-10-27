@@ -1,4 +1,4 @@
-// ?mock: a clock inside the page. It answers the whole v1.7 API (v1.6 and the Digit fade keys) from sample data (never the owner's) with a
+// ?mock: a clock inside the page. It answers the whole v1.8 API (v1.6, the Digit fade keys, styles 1–9) from sample data (never the owner's) with a
 // running clock, and draws /kaia/frame with the same renderer, so the page works from disk and in the shots.
 import { hash32, keyId, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, ledsHex } from "./api.js";
 import { A_WAKE, ANIM_NAMES, dimAll, useMatrix } from "./kaia.js";
@@ -7,6 +7,7 @@ import { duckAfter, hideTrack, isPlaying, playColor, renderFrame, resolvePlay } 
 import { brightNow, isNight } from "./redraw.js";
 import { LOOK_COUNT } from "./looks.js";
 import { DEFAULTS, LOOK_KEYS, TEXT_KEYS } from "./settings.js";
+import { STYLE_COUNT } from "./styles.js";
 import { WAKE_COUNT } from "./wakes.js";
 
 export const MOCK_PASS = "kaia";
@@ -106,8 +107,10 @@ export function createMock() {
                 // look= (wake= is its old name for the wake): this call's look, a try-out; absent = the saved one
                 const lq = q.has("look") ? q.get("look") : n === A_WAKE && q.has("wake") ? q.get("wake") : null;
                 if (lq != null && !(/^\d+$/.test(lq) && +lq < (n === A_WAKE ? WAKE_COUNT : LOOK_COUNT))) return { status: 400, json: { error: "look" } };
+                // style= 1–9 (v1.8), as the clock: another value is 400; without it the saved style, and «Выкл» plays nothing
+                if (q.has("style") && !(/^\d+$/.test(q.get("style")) && +q.get("style") >= 1 && +q.get("style") <= STYLE_COUNT)) return { status: 400, json: { error: "style" } };
                 const style = q.has("style") ? +q.get("style") : S.kaia_anim;
-                if (!(style >= 1 && style <= 3)) return { status: 200, json: { ok: true } };
+                if (!(style >= 1 && style <= STYLE_COUNT)) return { status: 200, json: { ok: true } };
                 M.text = false;
                 M.play = {
                     anim: n, style, start: ms, ms: q.has("ms") ? +q.get("ms") : 30000,
