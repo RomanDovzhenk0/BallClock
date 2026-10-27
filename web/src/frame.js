@@ -6,7 +6,8 @@ import {
 import { LOOK_COUNT, shotLength, shotLook, stateLook, wakeDraw } from "./looks.js";
 import { BallMatrix } from "./matrix.js";
 import { drawBack, drawClock } from "./redraw.js";
-import { WAKE_COUNT, wakeLength } from "./wakes.js";
+import { STYLE_COUNT } from "./styles.js";
+import { WAKE_COUNT, wakeLength, wakeOf } from "./wakes.js";
 
 export const KAIA_STATE_MS = 30000;
 
@@ -76,15 +77,15 @@ export const animOf = (name) => ANIM_NAMES.indexOf(name);
 
 // what plays at its t: a wake past its length is the listening after it (t from its end, in the listening's look lk),
 // a one-shot past its length or a state past its ms is nothing.
-// play: {anim, style 1–3, look (the event's; v1.5's wake for a wake), lk (the listening's look after a wake), speed, t,
+// play: {anim, style 1–9, look (the event's; v1.5's wake for a wake), lk (the listening's look after a wake), speed, t,
 // color (null = the default), ms}
 export function resolvePlay(play) {
-    if (!play || play.anim < 0 || play.anim === A_OFF || !(play.style >= 1 && play.style <= 3)) return null;
+    if (!play || play.anim < 0 || play.anim === A_OFF || !(play.style >= 1 && play.style <= STYLE_COUNT)) return null;
     const look = play.look != null ? play.look : play.anim === A_WAKE ? play.wake || 0 : 0;
     // a look past the last is the last (the clock answers 400 to one)
     let p = { ...play, look: imin(look, play.anim === A_WAKE ? WAKE_COUNT - 1 : LOOK_COUNT - 1), lk: imin(play.lk || 0, LOOK_COUNT - 1) };
     if (p.anim === A_WAKE) {
-        const len = wakeLength(p.look || p.style, p.speed || 100);
+        const len = wakeLength(wakeOf(p.style, p.look), p.speed || 100);
         if (p.t >= len) p = { ...p, anim: A_LISTENING, look: p.lk || 0, t: p.t - len };
     } else if (!isState(p.anim)) {
         if (p.t >= shotLength(p.anim, p.look, p.style)) return null;
