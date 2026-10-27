@@ -1,12 +1,14 @@
 // The page (KAIA-161 variant B «Сцена», v1.6 as KAIA-172 variant b): a big preview with «Сейчас» / «Черновик» /
 // «Сравнить», Kaya's events beside it, the settings in tabs under it, the palette picker, Kaya's look per event with
 // live thumbnails and a gallery (a sheet on the phone), the try-out on the clock and the save bar. v1.8 (KAIA-195): the
-// «Стиль» picker by sight for styles 0–9, and every event's gallery lists the new styles' versions.
+// «Стиль» picker by sight for styles 0–9, and every event's gallery lists the new styles' versions. v1.9 (KAIA-201's
+// design): the picker in groups with chips (one group on the phone, the chosen style's by default) and «Сейчас выбран»
+// under them; catalog A's Снежинка, Светлячки and Пламя (10–12).
 import { AuthError, ClockApi, fetchSend, ID_CHECK_UPDATES, ID_OTA_UPDATE, ID_WIFI_SAVE, keyId, OfflineError, parseLeds, TRY_STATE_MS, tryOut } from "./api.js";
 import { ClockSync, parseTime } from "./clock.js";
 import { animOf, digitHide, duckStep, hideTrack, isPlaying, isState, kaiaDraw, renderFrame, resolvePlay } from "./frame.js";
 import { A_WAKE, ANIM_NAMES, useMatrix } from "./kaia.js";
-import { LOOK_COUNT, LOOK_NAMES, shotLength } from "./looks.js";
+import { LOOK_COUNT, LOOK_NAMES, look_style, shotLength, style_look } from "./looks.js";
 import { BallMatrix } from "./matrix.js";
 import { createMock, MOCK_PASS } from "./mock.js";
 import { fitCanvas, IVORY, paint, readUnlit, setUnlit, unlit } from "./paint.js";
@@ -14,7 +16,7 @@ import { PAL_GROUP, PAL_GROUPS, PAL_NAMES, PAL_ORDER, PAL_RU, PALETTES } from ".
 import { brightNow, isNight } from "./redraw.js";
 import { LOOK_KEYS, normalize, rawOf } from "./settings.js";
 import { STYLE_COUNT, STYLE_NAMES } from "./styles.js";
-import { WAKE_COUNT, wakeLength, wakeOf } from "./wakes.js";
+import { style_wake, WAKE_COUNT, wake_style, wakeLength, wakeOf } from "./wakes.js";
 
 const QS = new URLSearchParams(location.search);
 const MOCK = QS.has("mock");
@@ -58,8 +60,9 @@ const sync = new ClockSync();
 // CL: the try-out on the clock {n, label, t0, dur, done}; open: the gallery's sheet on the phone
 const newHide = () => ({ h: 0, t: performance.now() | 0, end: 0, on: 0 });
 // hideD, hideN: the Digit fade's level of «Черновик» and of «Сейчас» (frame.js hideTrack)
-const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, hideD: newHide(), hideN: newHide(), cmp: 0.5, tab: "kaia", saving: false, upd: "", ev: A_WAKE, CL: null, open: false, thumb: 0 };
-// thumb: what the style tiles show, 0 the style's listening, 1 all 7 events in a row
+const P = { conn: "wait", src: "draft", live: "calc", forceNight: null, M: null, duck: 0, hideD: newHide(), hideN: newHide(), cmp: 0.5, tab: "kaia", saving: false, upd: "", ev: A_WAKE, CL: null, open: false, thumb: 0, grp: null };
+// thumb: what the style tiles show, 0 the style's listening, 1 all 7 events in a row; grp: the style group the chips
+// show (−1 all), null until a chip is pressed (styGroupShown)
 
 const S = () => Object.assign({}, SAVED, DRAFT);
 const $ = (s, r) => (r || document).querySelector(s), $$ = (s, r) => [...(r || document).querySelectorAll(s)];
@@ -75,15 +78,20 @@ const unhm = (s) => {
 const rgb = (c) => ((c >> 16) & 255) + "," + ((c >> 8) & 255) + "," + (c & 255);
 const palCss = (p) => "linear-gradient(90deg," + PALETTES[p].map((c) => "rgb(" + rgb(c) + ")").join(",") + ")";
 const STY = STYLE_NAMES;
-// the «Стиль» picker (v1.8, KAIA-195): a line under each style, what it is, and the versions of styles 4–9 by event
-const STY_SUB = ["анимаций нет", "кольца из центра", "кометы по ободу", "знак в середине", "розыгрыш через сетку", "шестикратный узор", "мягкие капли", "лицо: глаза и рот", "спираль и звёзды", "бегущий луч"];
+// the «Стиль» picker (v1.8, KAIA-195; v1.9, KAIA-201): a line under each style, what it is, and the versions of
+// styles 4–12 by event
+const STY_SUB = ["анимаций нет", "кольца из центра", "кометы по ободу", "знак в середине", "розыгрыш через сетку", "шестикратный узор", "мягкие капли", "лицо: глаза и рот", "спираль и звёзды", "бегущий луч",
+    "иней на решётке", "мягкие огоньки", "холодный огонь"];
 const STY_IDEA = ["", "Кольца расходятся из центра и сходятся к нему.", "Кометы бегут по ободу шестиугольника.", "Искры собираются в знак посередине.",
     "Часы сами из мячиков для пинг-понга, значит — розыгрыш: мяч, сетка в середине нижних рядов, ракетки по краям, стол — нижний ряд.",
     "Шестикратная симметрия самого шестиугольника: узор из шести зеркальных секторов.",
     "Мягкие капли, как в лава-лампе: сливаются и делятся сами.",
     "Кая — крошечное лицо: два глаза и рот, никакого текста. Лицо берёт табло целиком, время отступает.",
     "Двурукая спираль вокруг ядра, мерцающие звёзды.",
-    "Свет «Рыцаря дорожного»: полоса через все ряды, ярче в среднем, со следом."];
+    "Свет «Рыцаря дорожного»: полоса через все ряды, ярче в среднем, со следом.",
+    "Снежинка на самой решётке шаров: шесть лучей по три шара идут по линиям сетки, вокруг кончиков нарастает иней. По бокам падает редкий снег, по краю кое-где искрится иней.",
+    "Мягкие огоньки: у каждого своё место, вокруг которого он плавает, и свой темп — разгорается и гаснет; где двое встречаются, свет складывается.",
+    "Холодное пламя цвета Каи с белеющими кончиками: языки на нижнем ряду лижут вверх, сквозь пламя поднимается свет, над ним летят угольки."];
 const STY_EV = [
     ["Подача", "Розыгрыш", "Быстрый розыгрыш", "Подскоки", "Смэш", "В сетку", "Мячик"],
     ["Мандала", "Вращение", "Узоры", "Дыхание лепестков", "Цветок", "Осколки", "Лепестки по кругу"],
@@ -91,7 +99,24 @@ const STY_EV = [
     ["Просыпается", "Смотрит", "Задумалась", "Говорит", "Подмигивает", "Огорчение", "Удивление"],
     ["Большой взрыв", "Спираль", "Вихрь ядра", "Пульс ядра", "Сверхновая", "Чёрная дыра", "Комета"],
     ["Запуск", "Луч", "Два луча", "Ширина голосом", "Проход", "Сбой", "Три прохода"],
+    ["Иней", "Блеск", "Иней на кончиках", "Рост голосом", "Идеальная снежинка", "Оттепель", "Блик по кругу"],
+    ["Слетаются", "Огоньки", "Хоровод", "Хор", "Рой", "Разлетелись", "Вспышка"],
+    ["Розжиг", "Тихий огонь", "Пляска", "Голос огня", "Костёр", "Угасание", "Треск"],
 ];
+// the newest styles get the «новый» mark
+const STY_NEW = 10;
+// the picker's groups (KAIA-201's design): name, what is in it, the style ids in their order; catalog B's styles join
+// «Игры» and «Узоры и свет» when they come in. Every style is in exactly one group.
+const STY_GROUPS = [
+    ["Классика", "кольца, кометы, знак, луч, лицо", [0, 1, 2, 3, 9, 7]],
+    ["Природа", "капли, снег, огоньки, огонь", [6, 10, 11, 12]],
+    ["Космос", "спираль и звёзды", [8]],
+    ["Игры", "мяч", [4]],
+    ["Узоры и свет", "симметрия", [5]],
+];
+const styGroupOf = (id) => STY_GROUPS.findIndex((g) => g[2].includes(id));
+// the group the chips show: the one pressed; before that all of them, on the phone the chosen style's
+const styGroupShown = (s) => (P.grp != null ? P.grp : matchMedia("(max-width:520px)").matches ? styGroupOf(s.kaia_anim) : -1);
 
 // the 7 events by anim: name, when it plays, its theme
 const EV = [
@@ -105,8 +130,8 @@ const EV = [
 ];
 const looksOf = (n) => (n === A_WAKE ? WAKE_COUNT : LOOK_COUNT);
 const lookName = (n, c) => LOOK_NAMES[n][c] || LOOK_NAMES[n][0];
-// the event's look that is style st's version (1–3 theirs; 4–9: looks 9–14, wakes 15–20); the wake's id
-const verOf = (n, st) => (st <= 3 ? st : st + (n === A_WAKE ? 11 : 5));
+// the event's look that is style st's version (1–3 theirs; 4–12: looks 9–17, wakes 15–23, by the id tables); the wake's id
+const verOf = (n, st) => (n === A_WAKE ? style_wake[st] : st <= 3 ? st : style_look[st]);
 const wakeIdOf = (s, c) => wakeOf(s.kaia_anim || 1, c);
 // a one-shot's or the wake's length with the draft (0 for a state)
 const lenOf = (n, c, s) => (n === A_WAKE ? wakeLength(wakeIdOf(s, c), s.kaia_wake_speed) : isState(n) ? 0 : shotLength(n, c, s.kaia_anim || 1));
@@ -290,7 +315,7 @@ function choiceLabel(n, s) {
 function tileSub(n, id, s) {
     const st = s.kaia_anim || 1, now = id ? "" : "сейчас: " + LOOK_NAMES[n][verOf(n, st)] + " · ";
     // a new style's version: its name for this event
-    const fam = id >= (n === A_WAKE ? 15 : 9) ? STY_EV[id - (n === A_WAKE ? 15 : 9)][n] + " · " : "";
+    const sv = (n === A_WAKE ? wake_style : look_style)[id], fam = sv ? STY_EV[sv - 4][n] + " · " : "";
     if (isState(n)) return id ? fam + "непрерывно" : "сейчас: " + STY[st];
     return now + fam + fmtS(lenOf(n, id, s));
 }
@@ -313,9 +338,9 @@ function galleryHTML(n, s) {
     h += gh("Как у стиля и версии стиля", "0 — следует за стилем · 1 Рябь · 2 Орбита · 3 Искры") + tilesFor(n, 0, 3, s);
     if (n === A_WAKE) h += gh("Тематические пробуждения", "4–11") + tilesFor(n, 4, 11, s) + gh("Новые пробуждения", "12–14") + tilesFor(n, 12, 14, s);
     else h += gh("Новые по теме", "4–8 · " + EV[n][2]) + tilesFor(n, 4, 8, s);
-    // v1.8: the versions of styles 4–9, appended
-    const b = n === A_WAKE ? WAKE_COUNT - 6 : LOOK_COUNT - 6;
-    h += gh("Версии новых стилей", b + "–" + (b + 5) + " · любое событие может взять их при любом стиле, как 1–3") + tilesFor(n, b, b + 5, s);
+    // v1.8, v1.9: the versions of styles 4–12, appended (the ids the tables give a style)
+    const vs = n === A_WAKE ? wake_style : look_style, b = vs.findIndex((x) => x), e = Math.min(vs.length, looksOf(n)) - 1;
+    h += gh("Версии новых стилей", b + "–" + e + " · любое событие может взять их при любом стиле, как 1–3") + tilesFor(n, b, e, s);
     return h + "</div>";
 }
 
@@ -329,7 +354,24 @@ function speedHTML(s) {
 // draft's style selected, «на часах» on the saved one, and what the selected style plays for each event under them
 function styleTile(id, s) {
     return '<button class="tile st' + (s.kaia_anim === id ? " sel" : "") + '" data-sty="' + id + '"><canvas></canvas><span class="tn"><b>' + id + " · " + STY[id] + "</b><i>" + STY_SUB[id] + "</i></span>" +
-        (id >= 4 ? '<em class="nw">новый</em>' : "") + (SAVED.kaia_anim === id && s.kaia_anim !== id ? '<em class="pl">на часах</em>' : "") + "</button>";
+        (id >= STY_NEW ? '<em class="nw">новый</em>' : "") + (SAVED.kaia_anim === id && s.kaia_anim !== id ? '<em class="pl">на часах</em>' : "") + "</button>";
+}
+
+// «Сейчас выбран» under the chips: the draft's style and its group, also while another group is shown
+function styCurHTML(s) {
+    const st = s.kaia_anim;
+    return "Сейчас выбран: <b>" + (st ? st + " · " + STY[st] : "Выкл") + "</b>" + (st ? " · группа «" + STY_GROUPS[styGroupOf(st)][0] + "»" : "");
+}
+
+// the chips and the groups as styGroupShown says; the thumbnails of a group just shown get their size
+function showStyGroup() {
+    const g = styGroupShown(S());
+    $$("[data-sgr]").forEach((b) => {
+        b.classList.toggle("on", +b.dataset.sgr === g);
+        b.setAttribute("aria-pressed", String(+b.dataset.sgr === g));
+    });
+    $$(".sgr").forEach((el) => (el.hidden = g >= 0 && +el.dataset.sg !== g));
+    requestAnimationFrame(sizeTiles);
 }
 
 function stsHTML(s) {
@@ -341,8 +383,12 @@ function stsHTML(s) {
 
 function kayaHTML(s) {
     const on = s.kaia_anim;
-    const pick = '<div class="sth"><span class="sub">Миниатюры</span><span class="seg">' + ["Слушает", "Все 7 событий"].map((t, i) => '<button data-thumb="' + i + '"' + (P.thumb === i ? ' class="on"' : "") + ">" + t + "</button>").join("") + "</span></div>" +
-        '<div class="stg">' + STY.map((t, i) => styleTile(i, s)).join("") + '</div><div class="sts" id="sts">' + stsHTML(s) + "</div>";
+    const g = styGroupShown(s), chip = (i, t, k) => '<button class="chip' + (g === i ? " on" : "") + '" data-sgr="' + i + '" aria-pressed="' + (g === i) + '">' + t + "<small>" + k + "</small></button>";
+    const pick = '<div class="sth"><div class="gch" role="group" aria-label="Группы стилей">' + chip(-1, "Все", STY.length) + STY_GROUPS.map((x, i) => chip(i, x[0], x[2].length)).join("") + "</div>" +
+        '<span class="thm"><span class="sub">Миниатюры</span><span class="seg">' + ["Слушает", "Все 7 событий"].map((t, i) => '<button data-thumb="' + i + '"' + (P.thumb === i ? ' class="on"' : "") + ">" + t + "</button>").join("") + "</span></span></div>" +
+        '<div class="cur" id="scur">' + styCurHTML(s) + "</div>" +
+        STY_GROUPS.map((x, i) => '<div class="sgr" data-sg="' + i + '"' + (g >= 0 && g !== i ? " hidden" : "") + ">" + gh(x[0], x[1]) + '<div class="stg">' + x[2].map((id) => styleTile(id, s)).join("") + "</div></div>").join("") +
+        '<div class="sts" id="sts">' + stsHTML(s) + "</div>";
     let h = '<div class="kopts one">' + fld("kaia_anim", "Стиль", "«Выкл» отключает все анимации Каи; события с «Как у стиля» играют версию выбранного стиля.", pick, 1) + "</div>";
     h += '<div class="evh"><h3 class="sub">Анимация для каждого события</h3><small>В списке виден выбор для всех семи событий; нажмите событие, чтобы выбрать другую анимацию.</small></div>';
     h += '<div class="kb' + (P.open ? " open" : "") + '" id="kb"><div class="evl">' + EV.map((e, n) => '<button class="er" data-ev="' + n + '"><canvas data-th="' + n + '"></canvas><span class="et"><b>' + e[0] + "</b><small></small></span><span class=\"chev\">›</span></button>").join("") + "</div>" +
@@ -405,8 +451,9 @@ function updKaya() {
         if (want && !pl) t.insertAdjacentHTML("beforeend", '<em class="pl">на часах</em>');
         else if (!want && pl) pl.remove();
     });
-    const sts = $("#sts");
+    const sts = $("#sts"), cur = $("#scur");
     if (sts) sts.innerHTML = stsHTML(s);
+    if (cur) cur.innerHTML = styCurHTML(s);
     $$("[data-thumb]").forEach((b) => b.classList.toggle("on", +b.dataset.thumb === P.thumb));
     $$("[data-sp]").forEach((b) => b.classList.toggle("on", +b.dataset.sp === s.kaia_wake_speed));
     $$('[data-f="kaia_wake_speed"] output').forEach((o) => (o.textContent = fmtVal("kaia_wake_speed", s.kaia_wake_speed)));
@@ -1219,6 +1266,11 @@ document.addEventListener("click", (e) => {
         renderGroup(groupOf("kaia_anim"));
         if (+d.sty) play(ANIM_NAMES[P.ev]);
         else play("off");
+        return;
+    }
+    if (d.sgr != null) {
+        P.grp = +d.sgr;
+        showStyGroup();
         return;
     }
     if (d.thumb != null) {

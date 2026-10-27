@@ -28,14 +28,13 @@ const diff = (a, b) => Math.max(...[...a].map((v, i) => Math.max(Math.abs(((v >>
 const PFX = ["pp", "kal", "lava", "face", "gal", "scan"], EVS = ["Wake", "Listen", "Think", "Speak", "Done", "Error", "Notify"];
 
 test("ids appended: the names, the lengths, and where a style's versions sit", () => {
-    assert.equal(STYLE_COUNT, 9);
-    assert.deepEqual(STYLE_NAMES, ["Выкл", "Рябь", "Орбита", "Искры", "Пинг-понг", "Калейдоскоп", "Лава-лампа", "Мордашка", "Галактика", "Сканер"]);
-    assert.equal(LOOK_COUNT, 15);
-    assert.equal(WAKE_COUNT, 21);
-    for (const n of [...STATES, ...SHOTS]) assert.deepEqual(LOOK_NAMES[n].slice(9), STYLE_NAMES.slice(4), K.ANIM_NAMES[n]);
-    assert.deepEqual(WAKE_NAMES.slice(15), STYLE_NAMES.slice(4));
-    assert.deepEqual(wake_ms.slice(15), [1800, 2000, 2000, 1900, 2000, 2000]);
-    assert.deepEqual(fam_ms, [[1500, 1600, 1600], [1600, 1600, 1700], [1600, 1600, 1600], [1700, 1600, 1500], [1700, 1700, 1500], [1500, 1600, 1500]]);
+    // v1.8's ids stay where they are when v1.9 appends (nature.test.mjs checks the new ones)
+    assert.ok(STYLE_COUNT >= 9 && LOOK_COUNT >= 15 && WAKE_COUNT >= 21);
+    assert.deepEqual(STYLE_NAMES.slice(0, 10), ["Выкл", "Рябь", "Орбита", "Искры", "Пинг-понг", "Калейдоскоп", "Лава-лампа", "Мордашка", "Галактика", "Сканер"]);
+    for (const n of [...STATES, ...SHOTS]) assert.deepEqual(LOOK_NAMES[n].slice(9, 15), STYLE_NAMES.slice(4, 10), K.ANIM_NAMES[n]);
+    assert.deepEqual(WAKE_NAMES.slice(15, 21), STYLE_NAMES.slice(4, 10));
+    assert.deepEqual(wake_ms.slice(15, 21), [1800, 2000, 2000, 1900, 2000, 2000]);
+    assert.deepEqual(fam_ms.slice(0, 6), [[1500, 1600, 1600], [1600, 1600, 1700], [1600, 1600, 1600], [1700, 1600, 1500], [1700, 1700, 1500], [1500, 1600, 1500]]);
     for (let style = 1; style <= 9; style++) {
         // look 0 is the style's version: 1–3 stay 0 (the style functions take the style), 4–9 go to 9–14
         assert.equal(lookOf(style, 0), style <= 3 ? 0 : style + 5);
@@ -65,8 +64,8 @@ test("«Как у стиля» with style 4–9 plays its version, and any style
         // a style's version of an event with another look for the listening after it
         assert.ok(resolvePlay({ anim: K.A_DONE, style, t: 0 }));
     }
-    // the play takes styles 1–9 only
-    for (const style of [0, 10, -1]) assert.equal(resolvePlay({ anim: K.A_DONE, style, t: 100 }), null, "style " + style);
+    // the play takes styles 1 – STYLE_COUNT only
+    for (const style of [0, STYLE_COUNT + 1, -1]) assert.equal(resolvePlay({ anim: K.A_DONE, style, t: 100 }), null, "style " + style);
     // and a look 1–8 still plays with a new style
     assert.deepEqual(at({ ...S, kaia_anim: 7 }, K.A_ERROR, 7, 6, 300), at(S, K.A_ERROR, 1, 6, 300));
 });

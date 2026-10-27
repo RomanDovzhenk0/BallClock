@@ -72,7 +72,9 @@ test("every one-shot look ends within its length", () => {
                 assert.equal(resolvePlay({ ...p, t: du }), null);
                 // its last frame is the clock alone: the look has faded out by then
                 assert.deepEqual(frameOf(s, { ...C, play: p }), plain, K.ANIM_NAMES[n] + " " + look + " style " + style + " at " + (du - 1));
-                assert.notDeepEqual(at(s, n, look, du >> 1), plain, K.ANIM_NAMES[n] + " " + look + " draws");
+                // Светлячки · Разлетелись (look 16): its fireflies have flown past the edges by 0.73 s of 1.5, as in KAIA-201
+                const mid = n === K.A_ERROR && look === 16 ? du >> 2 : du >> 1;
+                assert.notDeepEqual(at(s, n, look, mid), plain, K.ANIM_NAMES[n] + " " + look + " draws");
             }
         }
     }
@@ -80,7 +82,7 @@ test("every one-shot look ends within its length", () => {
 
 test("every wake ends within its length at its speed", () => {
     const fns = { 4: WK.dawnShot, 5: WK.radarShot, 6: WK.spiralShot, 7: WK.heartShot, 8: WK.eyeShot, 9: WK.starsShot, 10: WK.fireworkShot, 11: WK.rainShot, 12: WK.powerOnWake, 13: WK.bunnyWake, 14: WK.nameWake };
-    for (let id = 15; id < WK.WAKE_COUNT; id++) fns[id] = (n, t, du, col) => ST.styleShot(id - 11, n, t, du, col);  // v1.8: the styles' wakes
+    for (let id = 15; id < WK.WAKE_COUNT; id++) fns[id] = (n, t, du, col) => ST.styleShot(WK.wake_style[id], n, t, du, col);  // v1.8, v1.9: the styles' wakes
     for (let id = 4; id < WK.WAKE_COUNT; id++) {
         for (const sp of [50, 75, 100, 150, 200]) {
             const len = WK.wakeLength(id, sp), du = WK.wake_ms[id];
