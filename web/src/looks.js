@@ -1,8 +1,11 @@
 // Kaya's look per event (firmware v1.6: KAIA-173's catalog in KAIA-172's layout). Each event has its own setting,
 // as kaia_wake has for the wake: kaia_listen, kaia_think, kaia_speak, kaia_done, kaia_error, kaia_notify.
 //   0 «Как у стиля»: the style's version (kaia_anim); 1–3: the Рябь, Орбита or Искры version with any style;
-//   4–8: the new ones below; 9–14 (v1.8): the versions of styles 4–9 (styles.js), look = style + 5, and look 0 with
-//   style 4–9 plays its version. The wake keeps its ids (wakes.js: 0–11, 12–14 of v1.6, 15–20 of v1.8).
+//   4–8: the new ones below; 9–14 (v1.8): the versions of styles 4–9 (styles.js); 15–17 (v1.9): the versions of
+//   styles 10–12 (nature.js). Look 0 with style 4 or later plays its version. Which look is which style's version is
+//   the table look_style (style_look the other way), so later ids can be appended anywhere: v1.9 fixes looks 18–23 for
+//   styles 13–18 and 24–27 for the singles of catalog C, each valid only once its drawing is in (LOOK_COUNT).
+//   The wake keeps its ids (wakes.js: 0–11, 12–14 of v1.6, 15–20 of v1.8, 21–23 of v1.9; wake_style).
 // The listening after a wake (and under its end) is the listening's look.
 //
 // For the firmware: as wakes.js, every function here is meant to be copied line by line into kaia.cpp.
@@ -18,10 +21,10 @@ import { MX_LED_AMOUNT } from "./matrix.js";
 import { fam_ms, STYLE_NAMES, styleShot, styleState } from "./styles.js";
 import {
     b_row, b_x, bunnyWake, dawnShot, eyeShot, fireworkShot, h1, heartShot, nameWake, powerOnWake, radarShot, rainShot, spiralShot,
-    starsShot, wake_from, wake_ms, wakeLength, wakeOf, WAKE_NAMES,
+    starsShot, wake_from, wake_ms, wake_style, wakeLength, wakeOf, WAKE_NAMES,
 } from "./wakes.js";
 
-// ids and Russian names per event, by anim (A_WAKE … A_NOTIFY); the wake's are wakes.js's; 9–14 are the styles' names
+// ids and Russian names per event, by anim (A_WAKE … A_NOTIFY); the wake's are wakes.js's; 9–17 are the styles' names
 const SN = STYLE_NAMES.slice(4);
 export const LOOK_NAMES = [
     WAKE_NAMES,
@@ -32,13 +35,18 @@ export const LOOK_NAMES = [
     ["Как у стиля", "Рябь", "Орбита", "Искры", "Нет-нет", "Крест", "Сбой", "Сирена", "Отключение", ...SN],
     ["Как у стиля", "Рябь", "Орбита", "Искры", "«!»", "Тук-тук", "Маяк", "Конверт", "Значок", ...SN],
 ];
-// looks per event but the wake: 0–14
-export const LOOK_COUNT = 15;
+// looks per event but the wake: 0–17
+export const LOOK_COUNT = 18;
 
-// the look an event plays: look 0 with style 4–9 is that style's version (9–14); with 1–3 it stays 0 (stateDraw and
-// shotDraw take the style)
+// which style each look is the version of (0: none; 1–3 go through stateDraw / shotDraw with the style), by look id
+export const look_style = [0, 0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+// and the look of each style's version, by style id (0 for 0–3)
+export const style_look = [0, 0, 0, 0, 9, 10, 11, 12, 13, 14, 15, 16, 17];
+
+// the look an event plays: look 0 with style 4 or later is that style's version (style_look); with 1–3 it stays 0
+// (stateDraw and shotDraw take the style)
 export function lookOf(style, look) {
-    return look || style <= 3 ? look : style + 5;
+    return look || style <= 3 ? look : style_look[style];
 }
 
 // the base length of the new one-shots (4–8), ms: done, error, notify
@@ -48,10 +56,10 @@ export const look_ms = [
     [1500, 1500, 1600, 1700, 1600],
 ];
 
-// a one-shot's length, ms: look 0 = the style's version, 1–3 that style's version, 4–8 the new ones, 9–14 styles 4–9
+// a one-shot's length, ms: look 0 = the style's version, 1–3 that style's version, 4–8 the new ones, 9–17 styles 4–12
 export function shotLength(n, look, style) {
     look = lookOf(style, look);
-    if (look >= 9) return fam_ms[look - 9][n - A_DONE];
+    if (look_style[look]) return fam_ms[look_style[look] - 4][n - A_DONE];
     if (look >= 4) return look_ms[n - A_DONE][look - 4];
     return shot_ms[(look ? look : style) - 1][n - A_DONE + 1];
 }
@@ -606,15 +614,15 @@ export function badgeNotify(n, t, du, col) {
 
 // ================= the event in its look =================
 
-// a state in its look; style: kaia_anim (1–9), look: the event's setting, k: how far it shows (255 = all)
+// a state in its look; style: kaia_anim (1–12), look: the event's setting, k: how far it shows (255 = all)
 export function stateLook(style, look, n, t, col, k) {
     look = lookOf(style, look);
     if (look < 4) {
         stateDraw(look ? look : style, n, t, col, k);
         return;
     }
-    if (look >= 9) {
-        styleState(look - 5, n, t, col, k);
+    if (look_style[look]) {
+        styleState(look_style[look], n, t, col, k);
         return;
     }
     if (n === A_LISTENING) {
@@ -652,8 +660,8 @@ export function shotLook(style, look, n, t, col) {
         shotDraw(look ? look : style, n, t, du, col);
         return;
     }
-    if (look >= 9) {
-        styleShot(look - 5, n, t, du, col);
+    if (look_style[look]) {
+        styleShot(look_style[look], n, t, du, col);
         return;
     }
     if (n === A_DONE) {
@@ -684,7 +692,7 @@ export function shotLook(style, look, n, t, col) {
 }
 
 // the wake with its speed (v1.5's wakeDraw, the listening now in its look)
-// t: ms since the wake started (real time); style: kaia_anim (1–9); wake: kaia_wake (0 = the style's: wakeOf);
+// t: ms since the wake started (real time); style: kaia_anim (1–12); wake: kaia_wake (0 = the style's: wakeOf);
 // lk: kaia_listen, the look of the listening that fades in under the wake and goes on after it
 export function wakeDraw(style, wake, lk, speed, t, col) {
     const id = wakeOf(style, wake);
@@ -694,7 +702,7 @@ export function wakeDraw(style, wake, lk, speed, t, col) {
     fr.lt = t - wakeLength(id, speed);  // the listening's time: it goes on at its own pace after the wake
     fr.ls = lk >= 4 ? 0 : lk ? lk : style <= 3 ? style : 0;  // the listening's style (0: a new look or a new style)
 
-    if (id >= 15) styleShot(id - 11, A_WAKE, u, du, col);
+    if (wake_style[id]) styleShot(wake_style[id], A_WAKE, u, du, col);
     else switch (id) {
         case 1: rippleShot(A_WAKE, u, du, col); break;
         case 2: orbitShot(A_WAKE, u, du, col); break;

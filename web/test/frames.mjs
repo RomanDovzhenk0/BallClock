@@ -64,3 +64,33 @@ export function idsDigestOf(frameOf, DEFAULTS) {
     }
     return { sha: h.digest("hex"), frames: n };
 }
+
+// Every id of v1.8 (styles 1–9, looks 0–14, wakes 0–20 at two speeds, the listening's look after a wake, an old one
+// and a style's version) at a few moments, folded into one SHA-256: v1.9 appends ids through tables and must leave
+// these frames as they were. Run once on the sources of v1.8 (main at 85c9f66) for nature.test.mjs.
+export function v18DigestOf(frameOf, DEFAULTS) {
+    const h = createHash("sha256");
+    let n = 0;
+    const add = (S, c) => {
+        const f = frameOf(S, c);
+        h.update(Buffer.from(f.buffer, f.byteOffset, f.byteLength));
+        n++;
+    };
+    for (let style = 1; style <= 9; style++) {
+        const S = { ...DEFAULTS, back_mode: 2, back_pal: 13, clock_style: 1, kaia_anim: style };
+        const c = (t) => ({ millis: 250000 + t, synced: true, hour: 14, minute: 32, ms: t % 1000, night: false, duck: 255, hide: 40000 });
+        for (const anim of [1, 2, 3, 4, 5, 6]) {
+            for (let look = 0; look <= 14; look++) {
+                for (const t of [120, 800, 1450]) add(S, { ...c(t), play: { anim, style, look, lk: 0, speed: 100, t, color: null, ms: 1e9 } });
+            }
+        }
+        for (let wake = 0; wake <= 20; wake++) {
+            for (const speed of [50, 150]) {
+                for (const lk of [0, 12]) {
+                    for (const t of [300, 1500, 2700]) add(S, { ...c(t), play: { anim: 0, style, look: wake, lk, speed, t, color: null } });
+                }
+            }
+        }
+    }
+    return { sha: h.digest("hex"), frames: n };
+}

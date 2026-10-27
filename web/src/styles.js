@@ -1,8 +1,10 @@
 // Kaya's styles of v1.8 (KAIA-195's catalog; the owner kept all six). A style is a whole visual language: its own
 // version of all 7 events. kaia_anim 4–9 picks one as the style, and every event with look 0 «Как у стиля» plays its
 // version; the versions also join every event's gallery as looks 9–14 and wakes 15–20, so any event can take them with
-// any style, as 1–3 do. Ids are appended: style s is look s + 5 and wake s + 11.
+// any style, as 1–3 do. Ids are appended; which look and wake is which style's version is a table (looks.js
+// look_style / style_look, wakes.js wake_style / style_wake), not arithmetic.
 //   4 Пинг-понг, 5 Калейдоскоп, 6 Лава-лампа, 7 Мордашка, 8 Галактика, 9 Сканер
+// v1.9 appends 10 Снежинка, 11 Светлячки, 12 Пламя (nature.js, catalog A); styleState and styleShot dispatch them too.
 // The wakes fade out over their last 400 ms (wakeDraw fades the listening in under their last 800), the other
 // one-shots over their last 300 ms; the states loop.
 //
@@ -15,13 +17,19 @@ import {
     mix, oct, posMod, put, segDist, sin8, smooth, tent, voice, wave,
 } from "./kaia.js";
 import { MX_LED_AMOUNT } from "./matrix.js";
+import {
+    flameDone, flameError, flameListen, flameNotify, flameSpeak, flameThink, flameWake, flyDone, flyError, flyListen, flyNotify, flySpeak,
+    flyThink, flyWake, snowDone, snowError, snowListen, snowNotify, snowSpeak, snowThink, snowWake,
+} from "./nature.js";
 import { b_row, b_x, h1, h2, h3 } from "./wakes.js";
 
-// kaia_anim: 0 Выкл, 1–3 the styles of v1.4, 4–9 these; the classic page's «Стиль» lists them in this order
-export const STYLE_NAMES = ["Выкл", "Рябь", "Орбита", "Искры", "Пинг-понг", "Калейдоскоп", "Лава-лампа", "Мордашка", "Галактика", "Сканер"];
-export const STYLE_COUNT = 9;  // the last style id
+// kaia_anim: 0 Выкл, 1–3 the styles of v1.4, 4–9 these, 10–12 v1.9's (nature.js); the classic page's «Стиль» lists
+// them in this order
+export const STYLE_NAMES = ["Выкл", "Рябь", "Орбита", "Искры", "Пинг-понг", "Калейдоскоп", "Лава-лампа", "Мордашка", "Галактика", "Сканер",
+    "Снежинка", "Светлячки", "Пламя"];
+export const STYLE_COUNT = 12;  // the last style id
 
-// the one-shot lengths of styles 4–9, ms: done, error, notify (their wakes are wake_ms[15..20])
+// the one-shot lengths of styles 4–12 (row style − 4), ms: done, error, notify (their wakes: wake_ms[style_wake[style]])
 export const fam_ms = [
     [1500, 1600, 1600],
     [1600, 1600, 1700],
@@ -29,6 +37,9 @@ export const fam_ms = [
     [1700, 1600, 1500],
     [1700, 1700, 1500],
     [1500, 1600, 1500],
+    [1800, 1800, 1600],  // 10 Снежинка
+    [1700, 1500, 1400],  // 11 Светлячки
+    [1800, 2000, 1500],  // 12 Пламя
 ];
 
 // ================= the helpers of the new styles =================
@@ -900,7 +911,7 @@ export function scanNotify(n, t, du, col) {
 
 // ================= the event in a new style =================
 
-// a state (listening, thinking, speaking) of style 4–9; k: how far it shows (255 = all)
+// a state (listening, thinking, speaking) of style 4–12; k: how far it shows (255 = all)
 export function styleState(style, n, t, col, k) {
     if (n === A_LISTENING) {
         switch (style) {
@@ -909,7 +920,10 @@ export function styleState(style, n, t, col, k) {
             case 6: lavaListen(n, t, col, k); break;
             case 7: faceListen(n, t, col, k); break;
             case 8: galListen(n, t, col, k); break;
-            default: scanListen(n, t, col, k); break;
+            case 9: scanListen(n, t, col, k); break;
+            case 10: snowListen(n, t, col, k); break;
+            case 11: flyListen(n, t, col, k); break;
+            default: flameListen(n, t, col, k); break;
         }
     } else if (n === A_THINKING) {
         switch (style) {
@@ -918,7 +932,10 @@ export function styleState(style, n, t, col, k) {
             case 6: lavaThink(n, t, col, k); break;
             case 7: faceThink(n, t, col, k); break;
             case 8: galThink(n, t, col, k); break;
-            default: scanThink(n, t, col, k); break;
+            case 9: scanThink(n, t, col, k); break;
+            case 10: snowThink(n, t, col, k); break;
+            case 11: flyThink(n, t, col, k); break;
+            default: flameThink(n, t, col, k); break;
         }
     } else {
         switch (style) {
@@ -927,12 +944,15 @@ export function styleState(style, n, t, col, k) {
             case 6: lavaSpeak(n, t, col, k); break;
             case 7: faceSpeak(n, t, col, k); break;
             case 8: galSpeak(n, t, col, k); break;
-            default: scanSpeak(n, t, col, k); break;
+            case 9: scanSpeak(n, t, col, k); break;
+            case 10: snowSpeak(n, t, col, k); break;
+            case 11: flySpeak(n, t, col, k); break;
+            default: flameSpeak(n, t, col, k); break;
         }
     }
 }
 
-// a one-shot (the wake, done, error, notify) of style 4–9, t = 0 .. du
+// a one-shot (the wake, done, error, notify) of style 4–12, t = 0 .. du
 export function styleShot(style, n, t, du, col) {
     if (n === A_WAKE) {
         switch (style) {
@@ -941,7 +961,10 @@ export function styleShot(style, n, t, du, col) {
             case 6: lavaWake(n, t, du, col); break;
             case 7: faceWake(n, t, du, col); break;
             case 8: galWake(n, t, du, col); break;
-            default: scanWake(n, t, du, col); break;
+            case 9: scanWake(n, t, du, col); break;
+            case 10: snowWake(n, t, du, col); break;
+            case 11: flyWake(n, t, du, col); break;
+            default: flameWake(n, t, du, col); break;
         }
     } else if (n === A_DONE) {
         switch (style) {
@@ -950,7 +973,10 @@ export function styleShot(style, n, t, du, col) {
             case 6: lavaDone(n, t, du, col); break;
             case 7: faceDone(n, t, du, col); break;
             case 8: galDone(n, t, du, col); break;
-            default: scanDone(n, t, du, col); break;
+            case 9: scanDone(n, t, du, col); break;
+            case 10: snowDone(n, t, du, col); break;
+            case 11: flyDone(n, t, du, col); break;
+            default: flameDone(n, t, du, col); break;
         }
     } else if (n === A_ERROR) {
         switch (style) {
@@ -959,7 +985,10 @@ export function styleShot(style, n, t, du, col) {
             case 6: lavaError(n, t, du, col); break;
             case 7: faceError(n, t, du, col); break;
             case 8: galError(n, t, du, col); break;
-            default: scanError(n, t, du, col); break;
+            case 9: scanError(n, t, du, col); break;
+            case 10: snowError(n, t, du, col); break;
+            case 11: flyError(n, t, du, col); break;
+            default: flameError(n, t, du, col); break;
         }
     } else {
         switch (style) {
@@ -968,7 +997,10 @@ export function styleShot(style, n, t, du, col) {
             case 6: lavaNotify(n, t, du, col); break;
             case 7: faceNotify(n, t, du, col); break;
             case 8: galNotify(n, t, du, col); break;
-            default: scanNotify(n, t, du, col); break;
+            case 9: scanNotify(n, t, du, col); break;
+            case 10: snowNotify(n, t, du, col); break;
+            case 11: flyNotify(n, t, du, col); break;
+            default: flameNotify(n, t, du, col); break;
         }
     }
 }
