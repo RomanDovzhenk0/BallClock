@@ -7,6 +7,16 @@
 #define MX_DIAG_W 20
 #define MX_DIAG_H 7
 
+// each channel from a towards b by k / 255, truncating toward zero (the overlay's blend and the Digit fade's)
+inline uint32_t mix(uint32_t a, uint32_t b, int k) {
+    uint32_t out = 0;
+    for (uint8_t s = 0; s <= 16; s += 8) {
+        int ca = (a >> s) & 0xff, cb = (b >> s) & 0xff;
+        out |= (uint32_t)(ca + (cb - ca) * k / 255) << s;
+    }
+    return out;
+}
+
 // BallMatrix
 class BallMatrix : public GyverGFX {
    public:
@@ -38,9 +48,15 @@ class BallMatrix : public GyverGFX {
     void setLED(int x, int y, uint32_t color) {
         int led = _diag_mode ? ledDiag(x, y) : ledXY(x, y);
         if (led < 0) return;
-        if (_marking) _marks[led >> 3] |= 1 << (led & 7);
+        if (_marking) {
+            _marks[led >> 3] |= 1 << (led & 7);
+            if (markAlpha < 255) color = mix(getLED(led), color, markAlpha);
+        }
         setLED(led, color);
     }
+
+    // v1.7: while marking, setLED(x, y, c) draws this much of the new colour over what is there (255 = all)
+    uint8_t markAlpha = 255;
 
     // marks: the balls drawn by x, y between beginMarks and endMarks (the clock digits)
     void beginMarks() {

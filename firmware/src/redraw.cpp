@@ -252,12 +252,15 @@ LP_TIMER_("redraw", 50, []() {
         matrix.setColor24(db[kk::clock_color]);
     }
 
-    // the overlay keeps the time readable on the balls the clock marks
+    // the overlay keeps the time readable on the balls the clock marks; the Digit fade melts the time into what is under it
+    uint8_t hd = kaiaDigitScale();
+    matrix.markAlpha = 255 - hd;
     matrix.beginMarks();
     drawClock();
     matrix.endMarks();
+    matrix.markAlpha = 255;
 
-    kaiaDraw(night_now);
+    kaiaDraw(night_now, hd);
 
     matrix.update();
 });

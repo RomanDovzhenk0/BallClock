@@ -267,14 +267,7 @@ static int comet(uint8_t pos, int h, uint8_t n, int tail, bool back = false) {
     return u * u / 255;
 }
 
-static uint32_t mix(uint32_t a, uint32_t b, int k) {
-    uint32_t out = 0;
-    for (uint8_t s = 0; s <= 16; s += 8) {
-        int ca = (a >> s) & 0xff, cb = (b >> s) & 0xff;
-        out |= (uint32_t)(ca + (cb - ca) * k / 255) << s;
-    }
-    return out;
-}
+// mix(): matrix.h
 
 static inline uint32_t dim(uint32_t c, int k) {
     return mix(0, c, k);
