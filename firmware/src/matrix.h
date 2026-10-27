@@ -7,15 +7,9 @@
 #define MX_DIAG_W 20
 #define MX_DIAG_H 7
 
-// each channel from a towards b by k / 255, truncating toward zero (the overlay's blend and the Digit fade's)
-inline uint32_t mix(uint32_t a, uint32_t b, int k) {
-    uint32_t out = 0;
-    for (uint8_t s = 0; s <= 16; s += 8) {
-        int ca = (a >> s) & 0xff, cb = (b >> s) & 0xff;
-        out |= (uint32_t)(ca + (cb - ca) * k / 255) << s;
-    }
-    return out;
-}
+// each channel from a towards b by k / 255, truncating toward zero (the overlay's blend and the Digit fade's;
+// in matrix.cpp, so it is not inlined into every look)
+uint32_t mix(uint32_t a, uint32_t b, int k);
 
 // BallMatrix
 class BallMatrix : public GyverGFX {

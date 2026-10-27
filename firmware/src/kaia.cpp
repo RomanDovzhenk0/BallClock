@@ -1769,8 +1769,10 @@ static uint16_t hideStep(int32_t h, uint32_t dt, bool playing, uint32_t sinceEnd
     return h;
 }
 
-// one step a frame with whether an animation is drawn now (frame.js hideTrack: ov.hide, ov.hideT, ov.hideEnd, ov.hideOn)
-static void hideTrack(const HideSet& S, bool playing, uint32_t now) {
+// one step a frame with whether an animation is drawn now (frame.js hideTrack: ov.hide, ov.hideT, ov.hideEnd, ov.hideOn).
+// It reads the settings itself, so they stay out of kaiaDraw's frame while the looks run
+static void hideTrack(bool playing, uint32_t now) {
+    HideSet S = hideSet();
     uint32_t dt = now - ov.hideT;
     ov.hideT = now;
     if (playing) ov.hideOn = true;
@@ -1899,7 +1901,7 @@ void kaiaDraw(bool night, uint8_t hide) {
 
     // the Digit fade steps every frame, before the returns below: an animation is drawn (frame.js isPlaying; the
     // running text never counts)
-    hideTrack(hideSet(), (ov.mode == M_SHOT || ov.mode == M_STATE) && style && !(night && rule == 2), now);
+    hideTrack((ov.mode == M_SHOT || ov.mode == M_STATE) && style && !(night && rule == 2), now);
 
     // the background eases back in about 0.25 s
     int target = ov.mode == M_NONE ? 0 : 255, step = (target - ov.duck) * 72 / 256;
