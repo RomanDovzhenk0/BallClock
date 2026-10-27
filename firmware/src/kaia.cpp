@@ -1982,6 +1982,8 @@ static void handleState() {
     s += ESP.getFreeHeap();
     s += F(",\"block\":");
     s += ESP.getMaxFreeBlockSize();
+    s += F(",\"stack\":");
+    s += ESP.getFreeContStack();  // the lowest free cont stack since boot (of 4096)
     s += F(",\"crash\":");
     crashJson(s);
     s += F(",\"overlay\":\"");

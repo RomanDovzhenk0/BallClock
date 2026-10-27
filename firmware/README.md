@@ -50,7 +50,7 @@ reports it with `ok` / `same`: `heap0`/`block0` free heap and largest block at t
 line), `heap_min`/`block_min` the lowest over its `stage` lines (the two minima can come from different stages).
 An update run by a v1.5.2 (or older) update boot has no such numbers: its `ok` ends at `kb=`.
 
-RTC user memory (512 bytes, 4-byte words): 0-31 eboot (the OTA bootloader's command), 32-58 the crash record
+RTC user memory (512 bytes, 4-byte words): 0-31 eboot (the OTA bootloader's command), 32-59 the crash record
 (`src/crash.cpp`), 64-105 the update record (`src/otaboot.cpp`; the network is wiped as soon as the update boot
 has read it). Words 64-101 keep the layout of v1.5.1-1.5.2 with their checksum, so a record written by an older
 update boot still reads; 102-105 (the heap, from v1.5.3 on) have a checksum of their own. It survives a restart and
@@ -67,3 +67,26 @@ The firmware that runs the update is the old one: from v1.4.1 or v1.5.0 the upda
 the old code, in the running clock, with ~29 KB of heap. Each try either works or crashes / times out and restarts
 the old firmware, so trying again costs nothing. If it keeps failing, flash v1.5.1 once over USB; from then on the
 updates run in the update boot.
+
+## The cont stack (v1.6.1)
+
+`setup()`, `loop()` and every web handler run on the core's cont stack: 4096 bytes, no more. d1_mini builds with
+`build_type = debug` (-Og), which keeps every temporary of a function in its own frame slot, so a function with many
+widgets or `db.init` calls gets a frame of 1-1.5 KB. v1.6.0 overflowed it: `/settings?action=load` (and every
+switch with `b.reload()`, such as the night mode) builds the whole classic page inside the request, and that chain
+took about 4176 bytes (the settings ticker 1296, `build()` 1584, the web server and the Settings library about
+900, BSON and realloc about 200). The overflow overwrote the stack's guard, `cont_check` at the end of `loop()`
+called `__stack_chk_fail`, and the clock restarted before the DB was written.
+
+v1.6.1 keeps the big frames off that path: the ticker's setup block is a function of its own (`settingsBegin`), and
+`build()` calls one function per group, so only one group's frame is live at a time. Measure a build's frames
+from the elf (call0 prologues: `addi a1, a1, -N`, or `movi aN, N` + `sub a1, a1, aN`):
+
+```
+xtensa-lx106-elf-objdump -d -C bin/d1_mini/firmware.elf
+```
+
+On the clock, `/kaia/state` `stack` is the lowest free cont stack since boot. A stack overflow or a panic restarts
+through `system_restart`, so the next boot reads "Software/System restart" as for `ESP.restart()`; the crash record
+keeps the core's reason (253 stack, 254 panic) and is reported as `crash.reason` `stack` / `panic` and `crash=` in
+the boot line. The Kernel counts only Exception and the watchdogs as unexpected restarts, not these.

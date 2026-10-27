@@ -397,6 +397,12 @@ v1.5's stays as above. Added:
 - `back_pal` runs 0–60: the new palettes from 31.
 - Nothing else changes.
 
+New in v1.6.1 (diagnostics, the page does not read them):
+- `/kaia/state` adds `stack`: the lowest free cont stack since boot, in bytes of 4096 (`ESP.getFreeContStack()`).
+- `crash` adds `reason`: `exception`, `hw_wdt`, `soft_wdt`, `stack` (the cont stack overflowed) or `panic` (panic,
+  abort, a failed assert or new). A `stack` or `panic` crash used to leave `crash` null: it boots as
+  `reset` "Software/System restart", like a plain restart.
+
 ## How the page uses it
 
 The state every 5 s while the tab is visible; «Сейчас» runs the renderer on the saved settings with the clock's

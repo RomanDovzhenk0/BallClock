@@ -224,8 +224,11 @@ void logBegin(const char* target) {
     for (uint8_t i = 0; i < c.nbt; i++) {
         snprintf_P(bt + strlen(bt), sizeof(bt) - strlen(bt), PSTR("%s0x%08x"), i ? "," : "", (unsigned)c.bt[i]);
     }
-    LOGF(LG_WARN, "boot", "ver=" PROJECT_VER " reason=\"%s\" heap=%u block=%u cause=%u epc1=0x%08x excvaddr=0x%08x up=%u bt=%s",
-         crashResetReason(), heap, block, (unsigned)c.cause, (unsigned)c.epc1, (unsigned)c.excvaddr, (unsigned)c.up, bt);
+    // the Kernel's keys (KAIA-156) first; crash= after them says what the record is (a panic boots as a software restart)
+    char kind[12];  // the longest word is "exception"
+    strcpy_P(kind, crashKind());
+    LOGF(LG_WARN, "boot", "ver=" PROJECT_VER " reason=\"%s\" heap=%u block=%u cause=%u epc1=0x%08x excvaddr=0x%08x up=%u bt=%s crash=%s",
+         crashResetReason(), heap, block, (unsigned)c.cause, (unsigned)c.epc1, (unsigned)c.excvaddr, (unsigned)c.up, bt, kind);
 }
 
 void logWifiDown() {
