@@ -130,6 +130,10 @@ five keys read that way. The classic page builds them in `buildKaiaHide()`, a `n
   stay out of `kaiaDraw()`'s frame while the looks run) instead of the `S` object; `hideStep` works on `int32_t` /
   `uint32_t` (the same values, the products cannot overflow); "playing" is `ov.mode` after the updates (JS
   `isPlaying` asks `resolvePlay`, which is the same thing for the clock's own play).
+- Port check (KAIA-175's method, no host C++ compiler): normalized token streams of `hideStep`, `digitHide` /
+  `kaiaDigitScale`, `hideTrack`, `put`, `mix`, the mark alpha (`setXY` / `setLED(x, y, c)`), the frame order
+  (`renderFrame` / the redraw timer) and `fr.hd` around the look in `kaiaDraw` match the JS but for the differences
+  above, the parentheses of the `(int32_t)` casts and the marks as a bitset (as since v1.4).
 
 Sizes (d1_mini, -Og), v1.6.2 → v1.7.0:
 
